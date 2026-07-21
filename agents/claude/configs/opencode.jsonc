@@ -1,0 +1,10 @@
+{
+  "provider": {
+    "id": "claude",
+    "name": "Claude Code",
+    "apiKey": "OPENCLAUDE_API_KEY"
+  },
+  "theme": "dark",
+  "model": "gpt-5.2-codex",
+  "mcpServers": {}
+}

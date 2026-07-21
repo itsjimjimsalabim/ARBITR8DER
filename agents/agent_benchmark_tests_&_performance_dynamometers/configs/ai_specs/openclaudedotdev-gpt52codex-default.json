@@ -1,0 +1,42 @@
+{
+  "spec_id": "openclaudedotdev-gpt52codex-default",
+  "display_name": "gpt-5.2-codex Default (no custom tuning) via OpenClaude",
+  "provider": {
+    "name": "openclaudedotdev",
+    "api_base": "https://openclaudedotdev.com/v1",
+    "auth_method": "api_key"
+  },
+  "model": {
+    "id": "gpt-5.2-codex",
+    "version": "2026-07-15",
+    "family": "gpt-5",
+    "context_window": 128000,
+    "max_output_tokens": 32000
+  },
+  "cli_tool": {
+    "name": "openclaude",
+    "version": "0.25.0",
+    "source": "local-build",
+    "build_date": "2026-07-20"
+  },
+  "reasoning": {
+    "depth": "high",
+    "chain_of_thought": true,
+    "self_correction": true
+  },
+  "generation_settings": {
+    "temperature": 0.0,
+    "top_p": 1.0,
+    "frequency_penalty": 0.0,
+    "presence_penalty": 0.0
+  },
+  "session_config": {
+    "repl_max_turns": 9999,
+    "auto_compact_pct": 84,
+    "compact_cooldown_ms": 300000,
+    "dangerously_skip_permissions": true,
+    "bare_mode": true
+  },
+  "env_overrides": {},
+  "notes": "Same model as Big Pickle but with all default settings. Used to measure impact of our tuning."
+}

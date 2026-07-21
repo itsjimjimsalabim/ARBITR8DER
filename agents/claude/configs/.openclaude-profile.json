@@ -1,0 +1,6 @@
+{
+  "provider": "ollama",
+  "model": "llama3.1:8b",
+  "baseUrl": "http://localhost:11434",
+  "goal": "coding"
+}

@@ -1,0 +1,17 @@
+{
+  "appId": "Claude",
+  "launcherPath": "C:\\Users\\itsji\\AppData\\Local\\Claude-3p\\Claude.exe",
+  "versionInfo": {
+    "version": "1.0.56",
+    "updateAvailable": false
+  },
+  "isFirstLaunch": false,
+  "hasCompletedOnboarding": true,
+  "theme": "dark",
+  "desktopSettings": {
+    "launchAtStartup": false,
+    "enableTray": true,
+    "defaultHeight": 800,
+    "defaultWidth": 1200
+  }
+}

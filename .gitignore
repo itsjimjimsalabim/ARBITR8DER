@@ -1,0 +1,38 @@
+# Secrets — NEVER commit
+.env
+streams/*.pem
+streams/*.key
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+*.egg-info/
+*.egg
+dist/
+build/
+.eggs/
+
+# Pytest
+.pytest_cache/
+
+# Database files
+runtime/data/*.db
+runtime/data/*.db-wal
+runtime/data/*.db-shm
+
+# Virtual environments
+.venv/
+venv/
+env/
+
+# IDE
+.vscode/
+.idea/
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Benchmark DB (large, regenerate from schema)
+agents/agent_benchmark_tests_&_performance_dynamometers/database/benchmark.db

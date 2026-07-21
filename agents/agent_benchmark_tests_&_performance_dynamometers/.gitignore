@@ -1,0 +1,12 @@
+# Database file (large, regenerate from schema)
+database/benchmark.db
+database/benchmark.db-wal
+database/benchmark.db-shm
+
+# Raw results (potentially large, contain API responses)
+results/raw/
+
+# Keep summaries and schema
+!results/summaries/
+!database/SCHEMA.sql
+!database/queries/

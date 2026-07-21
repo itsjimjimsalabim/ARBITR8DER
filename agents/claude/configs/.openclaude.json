@@ -1,0 +1,11 @@
+{
+  "project": {
+    "name": "openclaude",
+    "provider": {
+      "id": "openclaudedotdev",
+      "name": "OpenClaude.dev",
+      "model": "gpt-5.2-codex",
+      "apiKeyEnv": "OPENCLAUDE_API_KEY"
+    }
+  }
+}

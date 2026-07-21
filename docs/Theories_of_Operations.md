@@ -1,0 +1,328 @@
+Theories of Operations
+
+ARBITR8DER/
+
+Trading studio to be operated by different AI's until basic bots are developed based on the AI's strategies and datas
+
+## Kalshi/ - main connection and data scource
+
+We have all the know-how in using our Kalshi wallet, finding specific series, executing buys of Yes's+No's, and selling those contracts
+
+Kalshi is the main datas and main execution. Only BTC and ETH 15-minute yes/no markets (KXBTC15M*, KXETH15M*), no other assets for now. We need the active tickers found before the run and around each rollover, then live orderbook snapshot + deltas staying in sequence. If the book gets stale, gaps, reconnects, or loses its snapshot, it is not trusted and the AI cannot trade it until it is good again.
+
+Private Kalshi order/fill stream is for ARMED/PAPER physics and reconciliation, not a replacement for checking orders, positions, and balances.
+
+## Auxillary_Streams\
+
+Polymarket
+Coingecko
+Binance
+Coinbase
+
+Binance + Coinbase are the fast spot price/check streams. We use both so we can see movement, spread, and if they disagree.
+
+Polymarket is a slower probability/sentiment overlay, it does not mirror the Kalshi 15min markets and cannot make a Kalshi trade valid.
+
+Coingecko is slow bigger-picture data like volume/marketcap/longer changes. Context only, never an entry/exit trigger.
+
+All aux streams have to say when their datas are old/broken. None of them can cover for a broken Kalshi book.
+
+### DEVELOPMENT SHORTFALL (2026-07-17) — aux streams are NOT yet in the datas
+
+Right now only Kalshi (orderbook) + Binance (spot) are actually wired into the live path.
+Coinbase, Polymarket, and Coingecko clients exist in the code but are DEAD CODE — they are
+not started by the connection manager and their events never reach HotState or the database.
+This is a direct violation of the section above: we are running on 2 of 5 sources, not 5.
+
+The intent is: all 4 supporting streams get inputted into our datas alongside Kalshi, so the
+AI reads ONE hot snapshot that carries the full 5-source picture. With all 5 feeding the same
+local hot datas + 72HR archive, the AI can start learning the HIDDEN PATTERNS over time —
+how spot disagreement leads Kalshi moves, how Polymarket sentiment drifts vs the 15min book,
+how Coingecko macro pressure shows up in the micro book. No single stream is a trigger on its
+own (Kalshi stays the only execution source), but together they are the signal surface the AI
+trains its eye on.
+
+The long game: an AI eventually finds a glitch / repeatable edge in those patterns. We milk
+it for FREE PENNIES thousands of times over (paper + tiny sizing) until we are confident, then
+FREE DOLLARS thousands of times over (armed, still small and measured). Confidence is earned by
+volume of clean repeats, not by hope. So wiring all 4 aux streams into the datas is not a nice-
+to-have — it is the input feed for the whole pattern-discovery loop.
+
+## Data/
+
+PostrgeSQL
+We need to keep track of so much, all the data incoming from the streams for the applicable markets/assets/series needs to be seen by the ai's to make those descisions, it's gotta be as low latency as possible, we will figure out how to do this better over time
+
+Use machine RAM for the live hot datas, then SQLite for the history/audit/replays. Do not make the streams wait for database writes. The AI reads one complete local hot snapshot with timestamps, data ages, Kalshi book health, and a version number so it knows exactly what it saw. Database writer is separate and the 72HR deep datas get archived after it is safely written.
+
+Zero latency is not real, so we log it: provider time -> recieved time -> hot snapshot -> AI read -> order intent -> Kalshi response/fill. This tells us what is actually slow instead of guessing.
+
+### DEVELOPMENT SHORTFALL (2026-07-17) — not all 5 sources land in the datas yet
+
+The "one complete local hot snapshot" is currently only Kalshi + Binance. The hot snapshot and
+the database must carry ALL 5 sources (Kalshi, Binance, Coinbase, Polymarket, Coingecko) so the
+AI sees the full picture in a single read with one version number. Today the other 3 are not
+ingested, so the pattern-discovery loop described under Auxillary_Streams has no feed yet.
+
+Also short: the snapshot/version stamp exists (HotState generation) but the AI read -> order
+intent -> Kalshi fill leg of the latency trace is not yet measured in PAPER, because PAPER
+simulates latency instead of sharing the real fill path. That leg has to be logged for real
+before we trust PAPER physics as a stand-in for ARMED.
+
+### STATUS (2026-07-17) — AI agent CLI is live
+
+The rewrite completed today: Full Forward is now an interactive AI agent session that ships
+with the `arbitr8der forward start` REPL. The AI reads HotSnapshot via `snapshot` and
+`opportunities` commands, decides trades, and executes via `buy`/`sell` commands. The old
+auto-bot tick loop is removed. All 34 tests pass.
+
+## Trading_Strategies/
+
+One AI at a time to perform trades thru respective CLI app (Codex, OpenCode, antigravity, anyone else)
+
+Main idea is an AI we can talk to that sees the same fresh datas and can make/adjust its strategy during one run, not old hardcoded bots trying to do everything forever. AI gets read-only datas commands and has to record the snapshot/version it saw before it does anything. Trading commands stay separate and ARMED stays hard blocked unless explicitly armed.
+
+They each have to keep a trading log, a journal of what they saw, what they thought was going to happen and why, versus what actually happened and why, and their next strategy tweaks
+
+Only BTC and ETH on the Kalshi 15min markets (KXBTC15M*, KXETH15M*)
+
+Examine prices, examine past prices if applicable, use technical analysis if applicable and if it's fast enough
+
+The systems will have to evolve, we will figure out how to do this better over time.
+
+trading frequency: aiming for at least 3 buys/sells per 15 minute run, eventually will be trading higher frequency
+
+Minimum 2 contracts per order enforced in all entry paths. Kalshi fees at 50¢ are
+~1.75¢ per contract per leg (entry + exit = ~3.5¢ round trip). On 1 contract, fees
+eat the entire edge. At 2+ contracts, fees are amortized and small edges become viable.
+
+## Vessel_States
+
+Full_Stop - no processes, all streams off, no data in motion. The ground state.
+
+Battery - data collection only. Streams connect, hot state fills, any running database is populated with observations. Opportunities are detected and logged so any AI that reads them can see what edges existed. NO TRADING in Battery — no evaluation that could fire a buy, no risk manager gating entries, no execution engine loaded. Battery is a pure soak mode: the AI reads the data, makes notes, and waits for Full_Forward to act.
+
+Full_Forward - THE KILLSWITCH. The vessel state being Full_Forward is itself the permission for an AI to trade. When an AI launches `arbitr8der forward start`, it enters an interactive session where it — not the code — decides every buy and sell. The AI reads live HotSnapshot data, evaluates edges, and issues explicit commands:
+  `buy ETH YES 3` — execute a buy with AI-chosen parameters
+  `sell ETH KXETH15M-...` — close a specific position
+  `snapshot` — read the complete current market state as JSON
+  `opportunities` — see what edges exist across the active universe
+  `journal <text>` — log reasoning so future AIs see the thought process
+
+No automated tick loop evaluates or fires trades. The code does not decide. It only executes the AI's expressed intent, with latency simulation, price-drift checks, fee accounting, and journaling as guardrails. The AI is the trader. Full_Forward is the state that makes that legal.
+
+## PAPER Wallet & ARMED Wallet
+
+ARMED Wallet is real money, actual kalshi portfolio balance, and cash balance, held positions, realized/unrealized
+
+- System uses real money
+
+PAPER Wallet is theoretical trading, paper trading, fake money, no risk
+
+- Real connections for real data
+- every new paper run starts with the actual balance value pulled from the kalshi connection, but the wallet balances are paper, only at the start, because we only have like $17 dollars, so our paper strategies have to work with such little money
+- Paper Physics have to be exactly like ARMED physics: latencies have to logged and applied - paper strategies have to be the same once ARMED is run so that there is no confusion or surprises
+- Live Physics have to be learned to be as accurate as possible for Paper runs
+
+### DEVELOPMENT SHORTFALL + LIVE WATCH (2026-07-17) — PAPER vs ARMED parity
+
+PAPER currently simulates fill latency (random 60-100ms) instead of sharing the real Kalshi
+fill path. The AI agent flow (read snapshot → decide → `buy` command → execute) introduces
+its own latency which is visible and measurable. The gap to close: replace synthetic latency
+with the real Kalshi order lifecycle so PAPER physics match ARMED exactly.
+
+Current known gaps:
+- Fill latency is synthetic (60-100ms random) rather than real Kalshi REST round-trip
+- Settlement-based exits mean the AI never sees real limit-order fills — paper physics for
+  limit orders are untested
+- The "$17 real balance" matters: paper starts from live Kalshi balance pull, sizing is
+  constrained to that tiny float
+
+If adjustments are needed, make them in the shared physics path (ExecutionEngine /
+price_models / RiskManager), not as paper-only hacks, so ARMED inherits the same model.
+
+## Scoreboard
+
+Do not work on UI until this trading studio is first built for AI's to operate and read datas and interact with. UI is lowest priority and not to be made until at least one live trade is performed, this will be a standalone app within the trading studio, so the trading studio doesn't evolve around a UI, only speed and AI usability
+
+Pretty much we need to find out what who, what and where is doing profitable/non-profitable when, why and how
+
+This scoreboard lives in `ARBITR8DER/UI/` as a standalone local webpage. It is a passive display — no trading controls, no data writes. It reads from the runtime data and renders: market state, wallet, open positions, opportunity log, trade journal, connection health, error log. All information is selectable/copyable by clicking for pasting into an AI CLI. The `main-region` is the primary data display area; the inspector panel holds the never-ending goal text; the nav bar switches between views. No mock data — empty regions until real data is wired.
+
+## Variable Naming
+
+Use many worded variables specific to what they do, like have the variable explain itself so other AI's know what systems it works for
+
+No abbreviated variables unless neccesary, i don't know how to code so don't fully listen to me, if our kalshi wallet makes money we get more AI power
+
+Applied 2026-07-17: all 27 source modules renamed with longer, self-documenting names
+(e.g. `execution_engine.py` → `trade_execution_and_inventory_engine.py`). Follow suit
+for any new files. A filename should tell an AI what the module is for without opening it.
+
+## Hyper Modularity
+
+We want this vessel built into systems, we want all the data yes, but streams but have individual and/or grouped test in the test suite
+
+AI models or CLI-tools have to have their own folders for documentation and journal archives
+
+Database has to be flexible for different operators, ARMED/PAPER wallets and datas and trades, database has to be useful for the AI-devs and operators to see and use, we need a 72HR archiving system where the logs and data go deeper so AI's don't accidentally read data from so long ago when they are doing small tweak, but we still need that data for deeperdives in analysises
+
+No files above 1,000 lines, they can be in series, file names like variable names should be long, include any systems, and self-explanatory for AIs who may not have full context
+
+## Testing
+
+User likes tests for the tests
+
+Debugging manuals
+
+Logs for everything, even logs for how much processing power or internet the logs are using
+
+Sensors have to watch CPU, ram, queues, disk, internet bytes, connection/reconnects, stream ages, and timing thru the whole run. They have to be light: read counters and sample every few seconds, no speed tests or extra internet calls during a run, and never slow the datas or trades to measure them. If the database is busy the normal sensor samples drop/coalesce first, not the real market/order/audit stuff.
+
+## Computer languages and tools
+
+I really don't care, python, json
+
+download whatever we need just be smart with the dependencies not being uploaded to the github repo
+
+Local and for only us to use, this is not a product to ship, it's software we will be able to use on any laptop if the github repo is cloned from another machine it should work on that if it has the Kalshi API keys
+
+## Redundancies
+
+We don't need redundancies but with vibecoding they seem to appear under multiple names and systems, these trading studios always accidentally have like 3 killswitches. Regularly inspect for where we bug ourselves.
+
+## Historical Price Data — the 72HR Edge Model
+
+Current gap: zero historical data. The AI sees only the current HotSnapshot with zero context
+about whether BTC/ETH is trending up, down, or ranging.
+
+Strategy: Build a `price_history` table in SQLite that stores 1-minute OHLCV candles for
+BTC and ETH from Binance. On session start, backfill any missing candles up to 72 hours.
+Then calculate:
+
+- P(up) = probability that close > open 15 minutes later over last N windows
+- P(down) = 1 - P(up)
+- Edge = historical_P(up) - market_YES_price (in cents)
+- If |edge| > threshold (e.g. 10c), flag as tradeable opportunity
+
+This gives the AI a data-driven prior. Over time, we tune the window size, threshold,
+and weighting (recent candles weighted higher).
+
+Requirements to enable this (see TODOs):
+1. Binance REST klines endpoint (already have Binance client, need REST helper)
+2. SQLite migration for `price_history` table
+3. Backfill job on session start
+4. Probability calculation in detect_opportunities()
+
+## Found Issues during 2026-07-17 12:45 PDT Paper Run
+
+### Market Depth is Critically Thin
+BTC YES ask size was 1-2 contracts. ETH YES ask size hit 0 mid-session. The "insufficient
+depth" check blocked most trades. Need minimum-depth gating before attempt.
+
+### Price Drift Between Read and Execute
+60-100ms synthetic latency caused BTC YES price to swing from 50c to 18c between snapshot
+and fill. The AI's snapshot is stale by the time the trade lands. Need to report drift
+back to the AI so it can adjust.
+
+### Paper Inventory is Not Persistent
+Positions opened in a session die when the session exits. No SQLite persistence for
+PaperPositions. Every fresh session starts with zero inventory. Need to save/restore.
+
+### No Auto-Settlement
+15-minute markets expire at their close_time (e.g. 20:00Z). Paper positions are never
+settled — they just sit in memory until the session ends, then evaporate. Need a
+settlement watcher that polls Kalshi for market resolution and settles paper positions,
+realizing PnL.
+
+### Strike Price Not Resolved
+active_universe always shows strike=0. Without the strike, Black-Scholes edge model
+cannot calculate fair value. Need to fetch market detail from Kalshi GET /markets/{ticker}
+during universe discovery.
+
+### Binance WebSocket Not Flowing
+binance:spot_ticker stream delivered 0 messages in every session. Only REST-based spot
+updates arrive via the monitor thread's 30-tick cycle. Need to fix the WS subscription.
+
+### Piped stdin is Fragile for Timed Workflows
+The REPL blocks on input() and exits on EOFError when stdin is consumed. No way to
+insert delays between piped commands. Need a --script FILE mode or a non-interactive
+command queue.
+
+## Limit Orders
+
+Support for limit orders via `buy ASSET SIDE N LIMIT_CENTS`. When the limit price
+is below the current market ask, a `PendingLimitOrder` is placed in the inventory
+(in-memory, session-scoped). On every `snapshot()` call, pending orders are checked:
+if the market ask has dropped to or below the limit price, the order fills automatically
+(balance deducted, position created). The AI can check pending orders with the `pending`
+REPL command.
+
+Kalshi real limit orders use `POST /portfolio/events/orders` with `side: "bid"` for
+buying YES, `price: "0.1500"` format, and `client_order_id` for deduplication. Our
+PAPER system mirrors this flow. ARMED mode will call the real endpoint.
+
+Minimum 2 contracts per order enforced (fees make single-contract trades unprofitable).
+
+## REPL Command Reference
+
+| Command | Description |
+|---|---|
+| `monitor` | Start background health tick display |
+| `snapshot` | Dump live market data (order books, spot, wallet as JSON) |
+| `opportunities` | Show detected trade opportunities with edge estimates |
+| `positions` | Show current open positions with PnL |
+| `buy ASSET SIDE N` | Buy at market: `buy ETH YES 3` or `buy BTC NO 5` |
+| `buy ASSET SIDE N LIMIT` | Buy with limit order in cents: `buy ETH NO 3 15` |
+| `sell ASSET TICKER` | Close position: `sell ETH KXETH15M-...` |
+| `pending` | Show pending limit orders waiting to fill |
+| `journal TEXT` | Append AI reasoning to the trading journal |
+| `help` | Print command reference |
+| `exit` | Shut down the session |
+
+## Speed
+
+We want to be fast, we want to be fast
+
+## Repo Organization — All Trading Studio Code Lives Under ARBITR8DER/
+
+Every piece of trading studio code — scripts, tools, configs, launchers — must live inside
+the ARBITR8DER/ repo directory. Nothing goes in AppData, Temp, .config, or any other path
+outside the repo.
+
+### Where Things Go
+
+| Path | Purpose |
+|------|---------|
+| `src/` | Core library modules (long, self-documenting names) |
+| `scripts/` | Scratch/debug/utility scripts (check_markets, check_db, auto_trader, manual_archive, etc.) |
+| `agent/<name>/` | Per-agent desks: notes, journals, strategy drafts (no code) |
+| `config/` | Config module (pydantic settings) |
+| `tests/` | Test suite |
+| `docs/` | Documentation, plan drafts |
+| `runtime/` | Runtime data (DB, archives) — gitignored |
+| `.opencode/` | opencode workspace config |
+
+### Moved from AppData (2026-07-21)
+
+The following scripts were orphaned in `AppData\Local\Temp\opencode\` and have been
+moved to `scripts/`:
+
+- `auto_trader.py` — automated trading bot (launches session, scans, trades, monitors)
+- `manual_archive.py` — manual DB-to-JSON archiver
+- `check_active.py` / `check_active2.py` — Kalshi REST market queries
+- `check_all_markets.py` / `check_markets.py` / `check_markets2.py` / `check_markets3.py` / `check_markets4.py` — market listing variants
+- `check_streams.py` — DB stream value inspector
+- `check_strikes.py` — strike price checker
+- `check_trades.py` — trade journal inspector
+- `check_db.py` / `check_db2.py` — DB table inspectors
+
+The launcher `start-opencode.ps1` was in `.config\opencode\` and has been moved to
+`scripts/` as well.
+
+### Rule for Future Sessions
+
+No file written by any session should land outside `C:\Users\itsji\ARBITR8DER\`.
+If an agent or tool writes to its own cache/config directory, the trading-studio-relevant
+files must be copied or symlinked into the repo. The repo is the source of truth.
+
