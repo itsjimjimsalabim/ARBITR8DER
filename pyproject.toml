@@ -28,14 +28,14 @@ dependencies = [
 ]
 
 [project.scripts]
-arbitr8der = "arbitr8der.cli.application_main:main"
+arbitr8der = "arbitr8der.cli.cli_application_entrypoint_main:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]
 include = ["arbitr8der*"]
 
 [tool.setuptools.dynamic]
-version = {attr = "arbitr8der.version_identifier.__version__"}
+version = {attr = "arbitr8der.application_version_identifier_module.__version__"}
 
 [tool.ruff]
 target-version = "py311"

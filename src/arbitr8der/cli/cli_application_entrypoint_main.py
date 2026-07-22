@@ -18,18 +18,18 @@ from typing import Optional
 import typer
 
 from ..application_version_identifier_module import __version__
-from ..config.typed_configuration_cached_application_settings_module import load_cached_application_settings, Settings
+from ..config.typed_configuration_settings_module import load_settings, Settings
 from ..vessel.trading_vessel_state_machine import TradingVesselState
 
 # ── App setup ──────────────────────────────────────────────────────────
-arbitr8der_cli_application = typer.Typer(name="arbitr8der")(name="arbitr8der")(
+app = typer.Typer(
     name="arbitr8der",
     help="ARBITR8DER Trading Studio — AI-operated Kalshi trading.",
     add_completion=False,
 )
 
 # Sub-commands
-vessel_command_group = typer.Typer(name="vessel")(help="Vessel state machine commands")
+vessel_command_group = typer.Typer(name="vessel", help="Vessel state machine commands")
 app.add_typer(vessel_command_group, name="vessel")
 
 # ── Global state (loaded once at startup) ──────────────────────────────
@@ -39,7 +39,7 @@ _cached_application_settings: Optional[Settings] = None
 def _get_cached_application_settings() -> Settings:
     global _cached_application_settings
     if _cached_application_settings is None:
-        _cached_application_settings = load_cached_application_settings()
+        _cached_application_settings = load_settings()
     return _cached_application_settings
 
 
@@ -119,12 +119,12 @@ def status(
 def vessel_battery() -> None:
     """Transition vessel to Battery mode (stream data, no trading)."""
     settings = _get_cached_application_settings()
-    from ..vessel.trading_vessel_state_machine import TradingVesselStateMachine, TradingVesselStateTransitionError
+    from ..vessel.trading_vessel_state_machine import TradingVesselStateMachine
     from pathlib import Path
 
     vessel_state_machine = TradingVesselStateMachine(state_file=Path(settings.state_file))
     if not vessel_state_machine.can_transition_to(TradingVesselState.BATTERY):
-        print(f"❌ Cannot transition to BATTERY from {sm.state.value}")
+        print(f"❌ Cannot transition to BATTERY from {vessel_state_machine.state.value}")
         raise typer.Exit(1)
 
     result = vessel_state_machine.transition_to(TradingVesselState.BATTERY)
@@ -139,7 +139,7 @@ def vessel_forward(
 ) -> None:
     """Transition vessel to Full_Forward (live trading enabled)."""
     settings = _get_cached_application_settings()
-    from ..vessel.trading_vessel_state_machine import TradingVesselStateMachine, TradingVesselStateTransitionError
+    from ..vessel.trading_vessel_state_machine import TradingVesselStateMachine
     from ..storage.wallet_profile_configuration_manager import resolve_wallet_profile
     from pathlib import Path
 
@@ -156,7 +156,7 @@ def vessel_forward(
 
     vessel_state_machine = TradingVesselStateMachine(state_file=Path(settings.state_file))
     if not vessel_state_machine.can_transition_to(TradingVesselState.FULL_FORWARD):
-        print(f"❌ Cannot transition to FULL_FORWARD from {sm.state.value}")
+        print(f"❌ Cannot transition to FULL_FORWARD from {vessel_state_machine.state.value}")
         raise typer.Exit(1)
 
     if not confirm:
@@ -166,7 +166,7 @@ def vessel_forward(
     result = vessel_state_machine.transition_to(TradingVesselState.FULL_FORWARD)
     print(f"🚀 Vessel: {result['from']} → {result['to']}")
     print(f"   Wallet: {wallet.mode.value} | Balance: ${wallet.balance_estimate_cents / 100:.2f}")
-    print(f"   Trading: {'ENABLED' if sm.can_trade else 'DISABLED'}")
+    print(f"   Trading: {'ENABLED' if vessel_state_machine.can_trade else 'DISABLED'}")
     print(f"   Transition #{result['transition_number']}")
 
 
@@ -194,7 +194,7 @@ def vessel_status() -> None:
     from pathlib import Path
 
     vessel_state_machine = TradingVesselStateMachine(state_file=Path(settings.state_file))
-    s = sm.summary()
+    s = vessel_state_machine.summary()
 
     state_emoji = {
         "FULL_STOP": "🔴",

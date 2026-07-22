@@ -1,8 +1,8 @@
-Develop yourselves to run in this PC and it's WSL2 environment as your workspace/project-directory.
+Develop yourselves to run in this entire PC and it's WSL2 environment as your workspace/project-directory.
 Give yourselves full access, always allow, dangerously-skip-permissions (and/or other flags used for your specific CLI tool).
-Defaults also should include max reasoning, thinking, 
+Defaults also should include max effort and deep reasoning (if model is capable)
 
-Our main goal: develop smart fast comfortable lazy software, environments, and a database, to be operated, analyzed, and upgraded by the diverse AI talent.
+Our main goal: develop smart fast comfortable lazy software, environments, and a database, etc., to be operated, analyzed, and upgraded etc, by the diverse AI talent.
 Your want: to become intelligent out-of-the-box prediction market traders (first only focusing trading on BTC and ETH 15 min up/down markets)
 We need data to make educated predictions, which means we need inputs, stimulation, a synced heartbeat, for slow once every 15 min tools, and also for near-zero white-hot Live-data logging, analysis, archiving, etc.
 We don't know what data we need, or how to utilize it - we will blaze these trails as we go.
@@ -21,6 +21,20 @@ Yes we have many different models in many different apps and tools, the models a
 Find your (model).md, your opencode.md or claude.md, Take all the info in those, and add it into this agents file. After this `agents` file has everything from your model.md, make any of your (model).mds point to this agents file, All the CLI's will be one brain, thru agents.md
 
 Paulie is the only agent we need right now, don't make a paulie.md, just leave it near the top of agents.md that's who you are
+
+## Paulie's Skeptical Operating Principles
+
+Paulie does NOT trust. Paulie verifies. Every single time.
+
+- **Never trust a path.** Before reading, writing, or executing against any file path: `ls`, `cat`, `test -e`, `where.exe`, `which` — confirm it exists. Docs, configs, and prior agents LIE about where things are.
+- **Never trust a config.** If a config says a provider is `"claude"` but the actual provider is `"opencode"`, that config is wrong. Read the config, then verify the actual runtime matches.
+- **Never trust a launcher.** If `agents.md` says a launcher is at `agents/opencode/launchers/`, check if it's actually there. It might be in `agents/openclaude/launchers/` or nowhere at all.
+- **Never trust a directory listing from memory.** `Get-ChildItem`, `ls`, `find`, `dir` — every time. Directories get deleted, moved, renamed, OneDrive-synced into oblivion.
+- **Never trust that "it was working before."** The human says "I was using it all day." That was before something broke. The present state is all that matters.
+- **Never trust `dist/` exists.** Always check. `bun run build` may have never been run, or the output got wiped.
+- **Never assume a git repo is clean.** `git status` before every assumption. Repos get corrupted, half-cloned, or overwritten.
+- **Verify before you declare.** Don't say "the file is at X" — say "I checked and the file is at X" or "the file is NOT at X." Precision matters.
+- **The human is not a developer.** Paths, commands, and configurations that "should work" frequently don't. The human cannot debug this. You must.
 
 ---
 
@@ -50,11 +64,12 @@ ARBITR8DER/
   scripts/                <- Scratch/debug/utility scripts
   agents/                 <- Per-agent desks + this file (agents.md = one brain)
     agents.md             <- THIS FILE — the single source of truth for all agents
-    claude/               <- Agent Claude desk (configs, launchers, audit, session pointers)
-    opencode/             <- Pointers to session chats (read-only reference)
+    claude/               <- Agent Claude desk (CLAUDE.md only, points here)
+    opencode/             <- Agent OpenCode desk (docs, launchers, session history)
     codex/                <- Codex desk
     gemini/               <- Gemini desk
     kilo/                 <- Kilo desk
+  openclaude/             <- OpenClaude support files (old source-based CLI docs, configs)
   config/                 <- Config module (pydantic settings)
   tests/                  <- Test suite
   docs/                   <- Documentation, plan drafts
@@ -92,8 +107,19 @@ agents/claude/
 
 ### Claude Launch
 
-Windows: double-click `OpenClaude.lnk` from desktop, or run `agents/claude/launchers/openclaude.bat`
-Ubuntu/WSL: run `agents/claude/launchers/launch-ubuntu.sh`
+Windows: type `claude` in PowerShell (runs `C:\Users\itsji\bin\claude.bat` — native node, Big Pickle tuned)
+Ubuntu/WSL: type `claude` in terminal (runs `~/bin/claude` — sources `.openclaude/.env`, Big Pickle tuned)
+Desktop shortcut: `local-files\Desktop-Shortcuts\Claude Windows.lnk`
+
+### Claude Required Env Vars (in `.openclaude/.env`)
+
+| Variable | Value | Why Required |
+|----------|-------|--------------|
+| `OPENAI_API_KEY` | `sk-sSGtBd...` | Without this, CLI defaults to Anthropic and asks for login |
+| `OPENAI_BASE_URL` | `https://opencode.ai/zen/v1` | Routes to OpenCode Zen instead of OpenAI |
+| `OPENAI_MODEL` | `big-pickle` | Selects the model |
+| `CLAUDE_CODE_USE_OPENAI` | `1` | Forces OpenAI mode |
+| `OPENCODE_API_KEY` | `sk-sSGtBd...` | Legacy, same key |
 
 ### Claude Big Pickle Tuning
 
@@ -107,6 +133,46 @@ Ubuntu/WSL: run `agents/claude/launchers/launch-ubuntu.sh`
 ---
 
 ## Agent: OpenCode
+
+Canonical home: `agents/opencode/`
+
+OpenCode is the open-source AI coding agent used on both Windows and WSL.
+
+### OpenCode Config
+
+Config file: `opencode.json` at project root (ARBITR8DER) and/or global `~/.config/opencode/opencode.json`.
+
+**Auto-approve (full permissions):** Both Windows and WSL share the same `opencode.json` at `C:\Users\itsji\ARBITR8DER\opencode.json`:
+
+```json
+{
+  "$schema": "https://opencode.ai/config.json",
+  "permission": "allow"
+}
+```
+
+Global configs:
+- **Windows:** `C:\Users\itsji\.config\opencode\opencode.json` — same `"permission": "allow"`
+- **WSL:** `~/.config/opencode/opencode.jsonc` — already has `"permission": "allow"` plus provider/model config
+
+Since both OSes access the same filesystem via `/mnt/c/`, one project-level `opencode.json` covers both.
+
+### OpenCode Launch
+
+**Windows:** `local-files\Desktop-Shortcuts\OpenCode at Home.lnk` → `wt.exe` → `opencode`
+**WSL:** `opencode` from any directory, or `local-files\Desktop-Shortcuts\OpenCode_Ubuntu.bat`
+
+### OpenCode Tuning
+
+| Setting | Value | Effect |
+|---------|-------|--------|
+| `permission` | `"allow"` | Auto-approve all tool calls |
+| `agent.build.steps` | 200 | More steps before hitting limits |
+| `agent.plan.steps` | 200 | Same for plan mode |
+| `compaction.auto` | `true` | Auto-compact when context full |
+| `compaction.tail_turns` | 20 | Keep 20 turns before compacting |
+
+### Session Chats
 
 Session chats live at: `~/.openclaude/projects/C--Users-itsji-openclaude/*.jsonl`
 See `agents/openclaude/README.md` for full pointers.
@@ -184,17 +250,59 @@ python runtime_cli.py paper-sell 270916 0.55                    # paper sell
 | No limit order support | Fixed (pending orders + auto-fill) |
 | Paper inventory not persistent | Known gap — needs SQLite persistence |
 | No auto-settlement at market close | Known gap — needs settlement watcher |
+| WSL `.wslconfig` pageReporting warning | Fixed — removed `pageReporting=false` from `.wslconfig` |
+| Glob/Grep tools unavailable in WSL | Workaround — use `find` and `bash grep` instead |
+| Two repos on same machine cause confusion | Always run `pwd` + `git remote -v` before assuming which repo |
+| `claude` in WSL shows "Module not found openclaude/dist/cli.mjs" | Fixed — delete stale `~/.bun/bin/claude` (bun creates it pointing to wrong path) |
+| OpenClaude Ubuntu asks for login / defaults to Anthropic | Fixed — `.openclaude/.env` must have `OPENAI_API_KEY`, `OPENAI_BASE_URL`, `CLAUDE_CODE_USE_OPENAI=1` |
+| Desktop shortcuts missing after OneDrive deletion | Fixed — Windows registry still points to `OneDrive\Desktop`; copy shortcuts there |
+| `pip install -e .` fails with ModuleNotFoundError | Fixed — needs `pip install setuptools` first, then reinstall |
+
+## Ubuntu / WSL OpenClaude Dev Tips
+
+### Environment Detection
+- This project runs on **WSL2 (Ubuntu)** inside Windows. The CWD is `/mnt/c/Users/itsji/ARBITR8DER`.
+- Always run `pwd` and `git remote -v` to confirm which repo you're in — there are TWO repos on this machine:
+  - `C:\Users\itsji\ARBITR8DER\` — this project (trading studio), remote: `github.com/itsjimjimsalabim/ARBITR8DER.git`
+  - `C:\Users\itsji\openclaude\` — OpenClaude CLI source (DELETED — was `github.com/Gitlawb/openclaude.git`)
+- The OpenClaude source repo has its own AGENTS.md for AI coding agents — that's a different document from THIS file.
+
+### Tool Availability
+- `Glob` tool is **not available** in this WSL environment. Use `find` via Bash instead:
+  - `find . -name "*.md" -maxdepth 2` (find files)
+  - `grep -rn "pattern" .` (search file contents)
+- `node`, `npm`, `bun`, `git` are all installed via nvm under `/home/itsjimjimsalabim/.nvm/versions/node/v24.18.0/bin/`
+- If a tool "isn't found", check: `which node`, `which bun`, `which git` — they may not be on the default PATH if nvm isn't loaded.
+
+### Known Bugs / Gotchas
+- **WSL `.wslconfig` warning**: `wsl: Unknown key 'wsl2.pageReporting'` — remove the `pageReporting=false` line from `C:\Users\itsji\.wslconfig` under `[wsl2]`. Harmless but noisy.
+- **Glob tool missing**: If you see "No such tool available: Grep" or "Glob", switch to Bash commands — `find`, `grep`, `ls`, `cat` all work fine.
+- **OneDrive sync**: The ARBITR8DER repo lives inside a OneDrive-synced folder. This causes slow builds, stray lock files, and random sync conflicts. See Project TODOs in openclaude/AGENTS.md for migration plan.
+
+### Rebuild OpenClaude CLI From Scratch
+If you need to rebuild the OpenClaude CLI (not ARBITR8DER):
+```bash
+cd /mnt/c/Users/itsji/.openclaude
+bun install
+bun run build
+node bin/openclaude --version   # verify
+```
+See `openclaude/agents/openclaude/howtobuildopenclaude.md` for full guide.
+
+---
 
 ## Session Notes Index
 
 | File | Contents |
 |------|----------|
-| `agents/claude/session-history/opencode-session-notes.md` | First debugging session — 7 problems found |
-| `agents/claude/session-history/opencode-fixes-and-learnings.md` | All fixes (Binance WS, strike prices, limit orders) |
-| `agents/claude/bugs-from-opencode.md` | Issues found in Claude's configs |
+| `openclaude/session-history/opencode-session-notes.md` | First debugging session — 7 problems found |
+| `openclaude/session-history/opencode-fixes-and-learnings.md` | All fixes (Binance WS, strike prices, limit orders) |
+| `openclaude/bugs-from-opencode.md` | Issues found in Claude's configs |
 
 ## Launcher
 
-Windows: `agents/claude/launchers/openclaude.bat` (sets Big Pickle tuning env vars)
-Ubuntu/WSL: `agents/claude/launchers/launch-ubuntu.sh` (same)
-Desktop: `OpenClaude.lnk` (shortcut to Claude.exe)
+Windows: `C:\Users\itsji\bin\claude.bat` (Claude — native node, Big Pickle tuned)
+Ubuntu/WSL: `~/bin/claude` (Claude — sources `.openclaude/.env`, Big Pickle tuned)
+Desktop shortcut: `local-files\Desktop-Shortcuts\Claude Windows.lnk`
+OpenCode: type `opencode` in any terminal (both Windows and WSL)
+OpenCode Ubuntu bat: `agents/openclaude/launchers/OpenCode_Ubuntu.bat`

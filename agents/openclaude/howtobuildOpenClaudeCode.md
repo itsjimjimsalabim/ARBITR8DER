@@ -12,8 +12,22 @@
 ```
 C:\Users\itsji\ARBITR8DER                   <- main workspace
 C:\Users\itsji\ARBITR8DER\agents\claude\    <- THIS agent's home
-C:\Users\itsji\openclaude\                  <- OpenClaude source code
+C:\Users\itsji\.openclaude\                 <- Built CLI (dist/cli.mjs) + .env with API keys
 ```
+
+### CRITICAL: Stale Binary Trap
+
+If `claude` in WSL runs but gives "Module not found /mnt/c/Users/itsji/openclaude/dist/cli.mjs"
+(note: `openclaude` NOT `.openclaude`), there is a stale bun-installed script at:
+```
+~/.bun/bin/claude
+```
+This file was created by `bun install` or `npm install -g` and points to the old
+non-existent `openclaude/` path. **Delete it:**
+```bash
+rm ~/.bun/bin/claude
+```
+Then `~/bin/claude` (the correct one) will be found first on PATH.
 
 ---
 
@@ -46,27 +60,45 @@ the model. The `.bat` and `.sh` launchers do this automatically.
 ### 3.1 The Launch Chain
 
 ```
-openclaude.bat (Windows) / launch-ubuntu.sh (WSL)
-  → sets OPENCODE_API_KEY=<your-api-key>
-  → sets OPENAI_MODEL=big-pickle
-  → runs: node bin/openclaude --provider opencode --bare --dangerously-skip-permissions
+claude.bat (Windows) — native Node, no WSL
+  → Loads C:\Users\itsji\.openclaude\.env (OPENCODE_API_KEY, OPENAI_MODEL)
+  → Sets Big Pickle tuning env vars
+  → Runs: node.exe .openclaude\dist\cli.mjs
+
+~/bin/claude (WSL) — Big Pickle tuned shell script
+  → Sources /mnt/c/Users/itsji/.openclaude/.env
+  → Sets Big Pickle tuning env vars
+  → exec node .openclaude/dist/cli.mjs
 ```
 
 ### 3.2 Environment Variables
 
-| Variable | Purpose | Where Set |
-|----------|---------|-----------|
-| `OPENCODE_API_KEY` | API key for the OpenAI-compatible provider | Launcher (.bat / .sh) |
-| `OPENAI_MODEL` | Model name to use (e.g., `big-pickle`, `gpt-5.2-codex`) | Launcher (.bat / .sh) |
-| `OPENCODE=1` | Signals we're running inside ARBITR8DER context | Launcher (.bat / .sh) |
+All set in `C:\Users\itsji\.openclaude\.env` and sourced by both launchers:
 
-### 3.3 Provider Flags
+| Variable | Purpose | Required |
+|----------|---------|----------|
+| `OPENAI_API_KEY` | API key for OpenCode Zen provider | YES — without this, CLI defaults to Anthropic and asks for login |
+| `OPENAI_BASE_URL` | `https://opencode.ai/zen/v1` | YES — routes to OpenCode Zen instead of OpenAI |
+| `OPENAI_MODEL` | `big-pickle` | YES — selects the model |
+| `OPENCODE_API_KEY` | Same as OPENAI_API_KEY (legacy) | Optional |
+| `CLAUDE_CODE_USE_OPENAI` | `1` — forces OpenAI mode | Set in .env + launcher |
+
+### 3.3 Why Windows Works But Ubuntu Didn't
+
+The `.env` originally only had `OPENCODE_API_KEY` and `OPENAI_MODEL`. The Windows
+build of OpenClaude reads the `.openclaude-profile.json` which has the full config.
+The Linux build didn't read it the same way, so it defaulted to Anthropic.
+
+**Fix:** Added `OPENAI_API_KEY`, `OPENAI_BASE_URL`, and `CLAUDE_CODE_USE_OPENAI=1`
+to `.env`. Both launchers source this file.
+
+### 3.4 Provider Flags
 
 | Flag | Effect |
 |------|--------|
-| `--provider opencode` | Routes through the OpenAI-compatible bridge |
-| `--bare` | Minimal UI, no decoration |
 | `--dangerously-skip-permissions` | Skips permission prompts (trusted environment only) |
+
+Note: The CLI auto-detects the provider from env vars. No `--provider` flag needed.
 
 ### 3.4 Start Scripts (from source)
 
@@ -89,15 +121,18 @@ bun run doctor:runtime:json  # JSON for automation
 bun run doctor:report        # persist to reports/doctor-runtime.json
 ```
 
-### 3.6 Rebuild from Source
+### 3.7 Rebuild from Source
 
 ```bash
-cd C:\Users\itsji\openclaude   # or /mnt/c/Users/itsji/openclaude in WSL
-git status                     # confirm repo is clean
-bun install                    # install dependencies
-bun run build                  # compile the CLI
-node bin/openclaude --version  # verify it runs
+cd /mnt/c/Users/itsji/.openclaude   # Built CLI directory
+bun install                         # install dependencies
+bun run build                       # compile the CLI
+node bin/openclaude --version       # verify it runs
 ```
+
+Note: The source repo (`C:\Users\itsji\openclaude\`) was deleted. The built CLI used by
+launchers is at `C:\Users\itsji\.openclaude\dist\cli.mjs`. If you need the source,
+re-clone from `https://github.com/Gitlawb/openclaude.git`.
 
 If building from a fresh clone:
 ```bash
@@ -243,7 +278,9 @@ are backed up from scattered locations across the system.
 | `C:\Users\itsji\.openclaude.json` | Project config | `configs/.openclaude.json` |
 | `C:\Users\itsji\.openclaude/settings.local.json` | Permission defaults | `configs/settings.local.json` |
 | `C:\Users\itsji\.openclaude\.openclaude-profile.json` | Ollama provider profile | `configs/.openclaude-profile.json` |
-| `C:\Users\itsji\openclaude\.env` | **SECRET** API keys (never copy) | Reference only |
+| `C:\Users\itsji\.openclaude\.env` | **SECRET** API keys + model config | Reference only |
+| `C:\Users\itsji\bin\claude.bat` | Windows launcher (native Node) | Reference only |
+| `~/bin/claude` | WSL launcher (Big Pickle tuned) | Reference only |
 | `C:\Users\itsji\OneDrive\Desktop\OpenClaude.lnk` | Desktop shortcut | `launchers/OpenClaude.lnk` |
 | `C:\Users\itsji\OneDrive\Desktop\OpenCode at Home.lnk` | Desktop shortcut | `launchers/` |
 | `C:\Users\itsji\OneDrive\Desktop\Start Codex Full Access.lnk` | Desktop shortcut | `launchers/` |
@@ -253,9 +290,10 @@ are backed up from scattered locations across the system.
 ### Launcher Files (canonical copies)
 | File | Platform | Purpose |
 |------|----------|---------|
-| `launchers/openclaude.bat` | Windows | Sets API key + model, launches with bypass perms |
-| `launchers/launch-ubuntu.sh` | WSL/Linux | Same as .bat but for Ubuntu/xterm |
-| `launchers/OpenClaude.lnk` | Windows | Desktop shortcut to Claude.exe |
+| `C:\Users\itsji\bin\claude.bat` | Windows | Native Node launcher with Big Pickle tuning |
+| `~/bin/claude` | WSL | Shell script, sources .env, Big Pickle tuning |
+| `local-files\Desktop-Shortcuts\*.lnk` | Windows | Desktop shortcuts |
+| `local-files\Desktop-Shortcuts\*.bat` | Windows | Desktop batch launchers for WSL |
 
 ---
 
@@ -303,3 +341,50 @@ When a fresh agent starts in ARBITR8DER:
 5. Run `bun run doctor:runtime` to validate environment
 6. Start with `bun run dev:profile` or the appropriate launcher
 7. Verify: `node bin/openclaude --version`
+
+---
+
+## 12. Quick Fix Reference (2-Minute Recovery)
+
+If something breaks, check these in order:
+
+### `claude` asks for login / defaults to Anthropic
+```bash
+# 1. Check .env has all required vars
+cat /mnt/c/Users/itsji/.openclaude/.env
+# Must have: OPENAI_API_KEY, OPENAI_BASE_URL, OPENAI_MODEL, CLAUDE_CODE_USE_OPENAI
+
+# 2. If missing, fix:
+cat > /mnt/c/Users/itsji/.openclaude/.env << 'EOF'
+OPENCODE_API_KEY=sk-sSGtBd1LIdg4UrRTPfVhA0JDStpSpmBBOiZk3uT2YLWsjrUOD8VkuanCjmspocIH
+OPENAI_API_KEY=sk-sSGtBd1LIdg4UrRTPfVhA0JDStpSpmBBOiZk3uT2YLWsjrUOD8VkuanCjmspocIH
+OPENAI_BASE_URL=https://opencode.ai/zen/v1
+OPENAI_MODEL=big-pickle
+CLAUDE_CODE_USE_OPENAI=1
+EOF
+```
+
+### `claude` says "Module not found openclaude/dist/cli.mjs" (no dot)
+```bash
+# Stale bun binary — delete it
+rm ~/.bun/bin/claude
+```
+
+### OpenCode_Ubuntu.bat fails with "No such file or directory"
+```bash
+# Check the .bat points to correct path
+cat /mnt/c/Users/itsji/OneDrive/Desktop/OpenCode_Ubuntu.bat
+# Should call: wsl bash -c 'source .env; ...; opencode --auto'
+```
+
+### Shortcuts don't appear on desktop
+```bash
+# Windows uses OneDrive\Desktop as Desktop (registry redirect)
+# Copy shortcuts there:
+cp local-files/Desktop-Shortcuts/*.lnk local-files/Desktop-Shortcuts/*.bat "/mnt/c/Users/itsji/OneDrive/Desktop/"
+```
+
+### Run full launcher test
+```powershell
+pwsh -File tests/test_launcher_scripts.ps1
+```
