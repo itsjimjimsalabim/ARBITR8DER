@@ -6,8 +6,9 @@ This repo is the canonical workspace. Older separate agent folders are deprecate
 
 Primary orientation docs:
 
-- `docs/Theories_of_Operations.md`
-- `docs/overwatch_workflow.md`
-- `agents/codex/AWAKENING.md`
+- `agents/Product_Requirements_&_Theories_of_Operations.md`
+- `agents/overwatch_workflow.md`
+- `agents/agents.md`
+- `agents/github_connectivity.md`
 
 Safety baseline: no process may trade without an explicit ARMED wallet configuration and operator action. The intended default vessel state is `Full_Stop`.

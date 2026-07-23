@@ -47,8 +47,9 @@ ARBITR8DER is a local AI-operated trading studio for binary event markets.
 - All 5 data sources (Kalshi, Binance, Coinbase, Polymarket, Coingecko) must feed the hot snapshot.
 
 Read these before making architecture changes:
-- `docs/Theories_of_Operations.md`
-- `docs/overwatch_workflow.md`
+- `agents/Product_Requirements_&_Theories_of_Operations.md`
+- `agents/overwatch_workflow.md`
+- `agents/github_connectivity.md`
 
 ## Canonical Home
 
@@ -64,6 +65,7 @@ ARBITR8DER/
   scripts/                <- Scratch/debug/utility scripts
   agents/                 <- Per-agent desks + this file (agents.md = one brain)
     agents.md             <- THIS FILE — the single source of truth for all agents
+    github_connectivity.md <- GitHub HTTPS, SSH, PAT, and MCP fallback notes
     claude/               <- Agent Claude desk (CLAUDE.md only, points here)
     opencode/             <- Agent OpenCode desk (docs, launchers, session history)
     codex/                <- Codex desk
