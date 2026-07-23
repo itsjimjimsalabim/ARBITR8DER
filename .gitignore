@@ -1,7 +1,10 @@
 # Secrets — NEVER commit
 .env
+.env.*
 streams/*.pem
 streams/*.key
+agents/KEYS
+agents/**/keys
 
 # Python
 __pycache__/
@@ -36,3 +39,8 @@ Thumbs.db
 
 # Benchmark DB (large, regenerate from schema)
 agents/agent_benchmark_tests_&_performance_dynamometers/database/benchmark.db
+
+# OpenCode session databases (symlinked from system paths, ~1GB+)
+agents/opencode/session-history/*.db
+agents/opencode/session-history/*.db-shm
+agents/opencode/session-history/*.db-wal

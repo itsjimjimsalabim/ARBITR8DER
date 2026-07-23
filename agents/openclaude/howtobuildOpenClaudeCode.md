@@ -121,7 +121,40 @@ bun run doctor:runtime:json  # JSON for automation
 bun run doctor:report        # persist to reports/doctor-runtime.json
 ```
 
-### 3.7 Rebuild from Source
+### 3.7 Global Settings (`.openclaude/settings.json`)
+
+This file controls runtime behavior for both Windows and Ubuntu OpenClaude.
+Both environments share the same settings file.
+
+```json
+{
+  "permissions": {
+    "defaultMode": "fullAccess",
+    "allowBypassPermissionsMode": false,
+    "additionalDirectories": ["C:\\"],
+    "skipDangerousModePermissionPrompt": true
+  },
+  "skipDangerousModePermissionPrompt": true,
+  "skipFullAccessModePermissionPrompt": true,
+  "maxTurns": 9999,
+  "contextWindow": 500000
+}
+```
+
+| Field | Value | Why |
+|-------|-------|-----|
+| `defaultMode` | `"fullAccess"` | Auto-approve all tool calls (replaces old `bypassPermissions`) |
+| `allowBypassPermissionsMode` | `false` | Disabled — we use `fullAccess` now |
+| `maxTurns` | `9999` | Unlimited REPL turns (default was 50) |
+| `contextWindow` | `500000` | 500K token context window (default was 200K) |
+| `skipDangerousModePermissionPrompt` | `true` | No prompts when using dangerous flags |
+| `skipFullAccessModePermissionPrompt` | `true` | No prompts when using fullAccess mode |
+
+**Schema fields verified from cli.mjs source:**
+`permissions.defaultMode`, `permissions.allowBypassPermissionsMode`, `permissions.additionalDirectories`,
+`maxTurns`, `maxSteps`, `contextWindow`, `allowedTools`, `hooks`, `mcpServers`
+
+### 3.8 Rebuild from Source
 
 ```bash
 cd /mnt/c/Users/itsji/.openclaude   # Built CLI directory
@@ -160,7 +193,7 @@ bun run build
 |-----------|---------|-------------|-----------------|-------------|
 | **Context & Output** | | | | |
 | `MODEL_CONTEXT_WINDOW_DEFAULT` | 200,000 | 200,000 | `CLAUDE_CODE_MAX_CONTEXT_TOKENS` | `src/utils/context.ts` |
-| `OPENAI_FALLBACK_CONTEXT_WINDOW` | 128,000 | **256,000** | `CLAUDE_CODE_OPENAI_FALLBACK_CONTEXT_WINDOW` | `src/utils/context.ts` |
+| `OPENAI_FALLBACK_CONTEXT_WINDOW` | 128,000 | **500,000** | `CLAUDE_CODE_OPENAI_FALLBACK_CONTEXT_WINDOW` | `src/utils/context.ts` |
 | `MAX_OUTPUT_TOKENS_DEFAULT` | 32,000 | **64,000** | `CLAUDE_CODE_MAX_OUTPUT_TOKENS` | `src/utils/context.ts` |
 | `CAPPED_DEFAULT_MAX_TOKENS` | 8,000 | **16,000** | _(code only)_ | `src/utils/context.ts` |
 | `ESCALATED_MAX_TOKENS` | 64,000 | 64,000 | _(code only)_ | `src/utils/context.ts` |
@@ -190,7 +223,7 @@ Set these in `openclaude.bat` / `launch-ubuntu.sh`:
 
 ```bash
 # Context & Output — push higher for Big Pickle
-export CLAUDE_CODE_OPENAI_FALLBACK_CONTEXT_WINDOW=256000
+export CLAUDE_CODE_OPENAI_FALLBACK_CONTEXT_WINDOW=500000
 export CLAUDE_CODE_MAX_OUTPUT_TOKENS=64000
 
 # Auto-compact fires at 85% of context instead of ~84%
@@ -205,7 +238,7 @@ export OPENCLAUDE_AUTOCOMPACT_FAILURE_COOLDOWN_MS=120000
 
 | Tweak | Reasoning |
 |-------|-----------|
-| **Fallback context 256K** | Big Pickle is OpenAI-compatible; 128K is conservative. 256K matches gpt-5.2-codex's actual capacity and delays compaction. |
+| **Fallback context 500K** | Big Pickle is OpenAI-compatible; 128K is conservative. 500K maximizes context before compaction. |
 | **Max output 64K** | Default 32K truncates large code blocks. 64K lets Big Pickle finish complex responses without retry escalation. |
 | **Capped default 16K** | The 8K cap over-reserves for p99 output of ~5K. 16K gives more room before the escalation retry. |
 | **Auto-compact at 85%** | The default ~84% threshold fires compaction early. 85% lets you use more context before the summary. Rare compaction in OpenCode confirms Big Pickle handles full context well. |
@@ -356,8 +389,8 @@ cat /mnt/c/Users/itsji/.openclaude/.env
 
 # 2. If missing, fix:
 cat > /mnt/c/Users/itsji/.openclaude/.env << 'EOF'
-OPENCODE_API_KEY=sk-sSGtBd1LIdg4UrRTPfVhA0JDStpSpmBBOiZk3uT2YLWsjrUOD8VkuanCjmspocIH
-OPENAI_API_KEY=sk-sSGtBd1LIdg4UrRTPfVhA0JDStpSpmBBOiZk3uT2YLWsjrUOD8VkuanCjmspocIH
+OPENCODE_API_KEY=<redacted-opencode-api-key>
+OPENAI_API_KEY=<redacted-opencode-api-key>
 OPENAI_BASE_URL=https://opencode.ai/zen/v1
 OPENAI_MODEL=big-pickle
 CLAUDE_CODE_USE_OPENAI=1
@@ -388,3 +421,4 @@ cp local-files/Desktop-Shortcuts/*.lnk local-files/Desktop-Shortcuts/*.bat "/mnt
 ```powershell
 pwsh -File tests/test_launcher_scripts.ps1
 ```
+

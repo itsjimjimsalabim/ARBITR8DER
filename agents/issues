@@ -1,0 +1,9 @@
+ARBITR8DER issue notes
+
+- SSH push failed with: Permission denied (publickey).
+- Existing local SSH public key fingerprint differs from the fresh user-provided fingerprint.
+  Existing local fingerprint: SHA256:0aCVhSRMtGFNtF+p0Ff6Zpa9AgJzKr3RPWUj4g5zoKg
+  Fresh user-provided fingerprint: SHA256:PAQfiRWlqUXMisrEl1leaHOWmFP904scntu5bus/hjI
+- pytest fails during collection because PyJWT/jwt is missing.
+- gh is authenticated as itsjimjimsalabim, but Git operations may need HTTPS fallback if SSH remains unavailable.
+- Full API token values and a private key block were present in tracked markdown/session notes; full values were moved to the ignored local agents/KEYS file and placeholders were left in tracked files.

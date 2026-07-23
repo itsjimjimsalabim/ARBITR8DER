@@ -167,7 +167,7 @@ Configured in `~/.config/opencode/opencode.jsonc`:
 
 | Provider | Models | API Key |
 |----------|--------|---------|
-| **NVIDIA NIM** | Nemotron Ultra 253B, Super 49B v1.5, Nano 9B v2, Nemotron 3 Ultra 550B, Nemotron 3 Super 120B, DeepSeek V4 Pro/Flash, Qwen3 Coder 480B, Qwen3.5 122B, Qwen3 Next 80B, MiniMax M2.7, GLM 5.2/5.1, Kimi K2 Thinking/Instruct, Llama 3.1 405B, Llama 3.3 70B, GPT-OSS 120B, Mistral Nemotron, Nemotron Nano 12B VL | `nvapi-GKWWame...` |
+| **NVIDIA NIM** | Nemotron Ultra 253B, Super 49B v1.5, Nano 9B v2, Nemotron 3 Ultra 550B, Nemotron 3 Super 120B, DeepSeek V4 Pro/Flash, Qwen3 Coder 480B, Qwen3.5 122B, Qwen3 Next 80B, MiniMax M2.7, GLM 5.2/5.1, Kimi K2 Thinking/Instruct, Llama 3.1 405B, Llama 3.3 70B, GPT-OSS 120B, Mistral Nemotron, Nemotron Nano 12B VL | `<redacted-nvidia-api-key>...` |
 | **OpenCode Zen** | big-pickle (default) | `sk-sSGtBd...` |
 | **Ollama** | localhost:11434 (no models downloaded) | — |
 
@@ -252,3 +252,4 @@ Windows also syncs them to: `C:\Users\itsji\OneDrive\Desktop\` (registry redirec
 ---
 
 ## End of Database
+

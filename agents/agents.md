@@ -125,7 +125,7 @@ Desktop shortcut: `local-files\Desktop-Shortcuts\Claude Windows.lnk`
 
 | Env Var | Value | Effect |
 |---------|-------|--------|
-| `CLAUDE_CODE_OPENAI_FALLBACK_CONTEXT_WINDOW` | 256000 | 2x more context before compaction |
+| `CLAUDE_CODE_OPENAI_FALLBACK_CONTEXT_WINDOW` | 500000 | ~4x more context before compaction |
 | `CLAUDE_CODE_MAX_OUTPUT_TOKENS` | 64000 | No truncation on complex responses |
 | `CLAUDE_AUTOCOMPACT_PCT_OVERRIDE` | 85 | More room before auto-summarizing |
 | `OPENCLAUDE_AUTOCOMPACT_FAILURE_COOLDOWN_MS` | 120000 | Faster retry after compact failures |

@@ -53,14 +53,14 @@
 ### 7. OpenCode WSL config has hardcoded NVIDIA API key
 - **Status:** Open
 - **File:** `~/.config/opencode/opencode.jsonc`
-- **Key:** `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`
+- **Key:** `<redacted-nvidia-api-key>`
 - **Impact:** API key in plaintext config. If repo is public, key is exposed.
 - **Fix:** Move to `.env` or use environment variable injection
 
 ### 8. OpenClaude settings.local.json has hardcoded API key
 - **Status:** Open
 - **File:** `~/.openclaude/settings.local.json`
-- **Key:** `sk-sSGtBd1LIdg4UrRTPfVhA0JDStpSpmBBOiZk3uT2YLWsjrUOD8VkuanCjmspocIH`
+- **Key:** `<redacted-opencode-api-key>`
 - **Impact:** Same as above — plaintext key exposure
 - **Fix:** Move to environment variable
 
@@ -177,3 +177,4 @@
 ---
 
 ## End of Report
+
