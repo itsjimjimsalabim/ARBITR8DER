@@ -1,46 +1,50 @@
-# Secrets — NEVER commit
+# Local env — NEVER commit. Single source of truth: ARBITR8DER/.env
 .env
-.env.*
-streams/*.pem
-streams/*.key
+.env.bak
+.env.local
+
+# Local key storage — NEVER commit. Contains PATs, API keys, SSH references.
 agents/KEYS
-agents/**/keys
 
 # Python
-__pycache__/
 *.pyc
-*.pyo
+__pycache__/
 *.egg-info/
 *.egg
 dist/
 build/
-.eggs/
 
-# Pytest
+# Trading studio runtime data — only trading_studio/runtime/ is real.
+# The runtime/ at the repo root is vestigial and ignored so it cannot come back.
+runtime/
+trading_studio/runtime/data/
+trading_studio/runtime/state/
+trading_studio/runtime/logs/
+trading_studio/runtime/archives/
+trading_studio/runtime/*.db
+trading_studio/runtime/*.db-wal
+trading_studio/runtime/*.db-shm
+trading_studio/runtime/*.log
+trading_studio/runtime/*.lock
+trading_studio/runtime/*.pid
+trading_studio/runtime/*.tmp
+
+# Local virtualenv + package metadata
+trading_studio/.env
+trading_studio/.venv/
+
+# IDE / editor junk
+.idea/
+.vscode/
+.qodo/            # VSCode Qodo extension auto-creates this — delete on sight
+.dart_tool/
+.cache/
 .pytest_cache/
 
-# Database files
-runtime/data/*.db
-runtime/data/*.db-wal
-runtime/data/*.db-shm
-
-# Virtual environments
-.venv/
-venv/
-env/
-
-# IDE
-.vscode/
-.idea/
-
-# OS
+# OS junk
 .DS_Store
 Thumbs.db
 
-# Benchmark DB (large, regenerate from schema)
-agents/agent_benchmark_tests_&_performance_dynamometers/database/benchmark.db
-
-# OpenCode session databases (symlinked from system paths, ~1GB+)
-agents/opencode/session-history/*.db
-agents/opencode/session-history/*.db-shm
-agents/opencode/session-history/*.db-wal
+# Streams (Kalshi private key) — gitignored at repo level defensively.
+# trading_studio/.gitignore also covers this locally.
+trading_studio/streams/kalshi_private.pem

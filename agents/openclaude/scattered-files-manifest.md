@@ -11,12 +11,12 @@
 
 | Category | Count | Status |
 |----------|-------|--------|
-| Claude/OpenClaude configs | 6 | Consolidated to `agents/claude/configs/` |
-| Launchers/shortcuts | 7 | Consolidated to `agents/claude/launchers/` |
+| Claude/OpenClaude configs | 6 | Consolidated to `agents/openclaude/configs/` |
+| Launchers/shortcuts | 7 | Consolidated to `agents/openclaude/launchers/` |
 | Claude Desktop (MSIX) | 2 | App-managed, backed up |
 | OpenCode data | 3 | Reference only (591MB DB) |
 | Deprecated dirs | 3 | Read-only reference |
-| Prompt/session files | 2 | Consolidated to `agents/claude/session-history/` |
+| Prompt/session files | 2 | Consolidated to `agents/openclaude/session-history/` |
 | **Total scattered** | **23** | |
 
 ---
@@ -100,7 +100,7 @@ find /mnt/c/Users/itsji -maxdepth 3 \
 ```
 
 If new files appear, add them to this manifest and consolidate to
-`agents/claude/` or the appropriate agent directory.
+`agents/openclaude/` or the appropriate agent directory.
 
 ---
 
@@ -109,9 +109,9 @@ If new files appear, add them to this manifest and consolidate to
 1. Run the find command above
 2. Compare results against this manifest
 3. Any NEW file not listed = needs investigation
-4. If it's a config: back up to `agents/claude/configs/`
-5. If it's a launcher: back up to `agents/claude/launchers/`
-6. If it's a session/prompt: back up to `agents/claude/session-history/` or `prompts/`
+4. If it's a config: back up to `agents/openclaude/configs/`
+5. If it's a launcher: back up to `agents/openclaude/launchers/`
+6. If it's a session/prompt: back up to `agents/openclaude/session-history/` or `prompts/`
 7. If it's sensitive (.env, keys): note location but NEVER copy contents
 8. Update this manifest with the new entry
 9. Report findings to operator

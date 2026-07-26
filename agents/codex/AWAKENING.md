@@ -24,8 +24,8 @@ ARBITR8DER is a local AI-operated trading studio for binary event markets. The i
 
 The current source of truth for system design is:
 
-- `docs/Theories_of_Operations.md`
-- `docs/overwatch_workflow.md`
+- `agents/Product_Requirements_&_Theories_of_Operations.md`
+- `agents/overwatch_workflow.md`
 - `agents/*/journal_*.md` for prior agent handoffs
 
 ## Hard rules
@@ -48,7 +48,7 @@ We are behind because the market context moved:
 The pragmatic next work should be:
 
 1. Verify the live repo state before editing.
-2. Read `docs/Theories_of_Operations.md` before architecture changes.
+2. Read `agents/Product_Requirements_&_Theories_of_Operations.md` before architecture changes.
 3. Prioritize wiring missing auxiliary streams only if they improve the Kalshi decision surface.
 4. Preserve auditability: every data source needs freshness, health, timestamps, and replayable storage.
 5. Keep the system local, cloneable, and usable on another laptop with only repo setup plus Kalshi credentials.

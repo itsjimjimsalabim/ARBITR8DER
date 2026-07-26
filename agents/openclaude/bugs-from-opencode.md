@@ -10,8 +10,8 @@
 
 The same `OPENCODE_API_KEY` value appears in plaintext in three files:
 
-- `agents/claude/launchers/openclaude.bat` (line 4)
-- `agents/claude/launchers/launch-ubuntu.sh` (line 3)
+- `agents/openclaude/launchers/openclaude.bat` (line 4)
+- `agents/openclaude/launchers/launch-ubuntu.sh` (line 3)
 - `OneDrive/Desktop/OpenCode_Ubuntu.bat` (line 8)
 
 These files are NOT in `.gitignore`. If the repo is ever pushed, the key is exposed.
@@ -45,6 +45,6 @@ These are clearly failed script creation attempts (likely from a session that mi
 
 ## 4. Session History Files Are Duplicated
 
-`agents/claude/session-history/opencode-fixes-and-learnings.md` is a near-duplicate of `agents/opencode/2026-07-17_fixes-and-learnings.md`. Same content, different location.
+`agents/openclaude/session-history/opencode-fixes-and-learnings.md` is a near-duplicate of `agents/opencode/session-history/2026-07-17_fixes-and-learnings.md`. Same content, different location.
 
 **Fix**: Keep the canonical copy in `agents/opencode/` (where the opencode agent reads from) and symlink or remove the Claude copy. Or keep both if Claude needs its own reference — but document which is canonical.

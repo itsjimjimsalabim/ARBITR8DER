@@ -301,7 +301,7 @@ This section documents where they live so any agent can find them.
 
 ---
 
-## 7. Custom Files — Consolidated to agents/claude/
+## 7. Custom Files — Consolidated to agents/openclaude/
 
 These are **our** files. They live in the canonical ARBITR8DER repo and
 are backed up from scattered locations across the system.

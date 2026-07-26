@@ -1,6 +1,3 @@
-# ARBITR8DER dependencies
-psycopg[binary]>=3.1.0
-python-dotenv>=1.0.0
-httpx>=0.25.0
-websocket-client>=1.6.0
-cryptography>=41.0.0
+# STALE — this file is kept as a placeholder only.
+# Dependencies are defined in trading_studio/pyproject.toml
+# Install with: pip install -e ./trading_studio

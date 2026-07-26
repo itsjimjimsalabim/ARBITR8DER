@@ -1,146 +1,276 @@
-# Fresh Onboarding Workflow
-**For:** New AI agent joining ARBITR8DER
-**Last Updated:** 2026-07-21
+# ARBITR8DER Onboarding Workflow
+
+**Audience:** Any AI agent (Claude, OpenCode, Codex, Gemini, Kilo, Antigravity, etc.) or human opening this repo for the first time.
+**Purpose:** A single, accurate, on-disk-verified map of the repo and the order to read it in. Use this instead of trusting path references in older docs — those may lie.
 
 ---
 
-## Step 1: Read These Files (In Order)
-
-Read every file below before touching any code. This is your education.
-
-### Priority 1 — Identity & Rules
-| # | File | What It Tells You |
-|---|------|-------------------|
-| 1 | `agents/agents.md` | WHO you are (Paulie), rules, system orientation, all tool locations |
-| 2 | `docs/Theories_of_Operations.md` | How the trading system works |
-| 3 | `docs/overwatch_workflow.md` | How monitoring and alerts work |
-
-### Priority 2 — Current State
-| # | File | What It Tells You |
-|---|------|-------------------|
-| 4 | `docs/tools_database.md` | Every tool on this machine, where it lives, what version |
-| 5 | `docs/massive_issues_report.md` | Known bugs, broken things, what's been fixed |
-| 6 | `docs/fresh_onboarding_workflow.md` | This file — you're reading it |
-| 7 | `docs/dev_log.md` | What happened recently |
-| 8 | `docs/development_plan.md` | What's planned next |
-
-### Priority 3 — Agent Desks
-| # | File | What It Tells You |
-|---|------|-------------------|
-| 9 | `agents/openclaude/README.md` | OpenClaude desk overview |
-| 10 | `agents/openclaude/howtobuildopenclaude.md` | How to rebuild OpenClaude |
-| 11 | `agents/openclaude/howtobuildOpenClaudeCode.md` | Alternate build guide |
-| 12 | `agents/opencode/README.md` | OpenCode desk overview |
-| 13 | `agents/opencode/opencode-session-notes.md` | Prior debugging sessions |
-| 14 | `agents/opencode/opencode-fixes-and-learnings.md` | What was fixed and how |
-| 15 | `agents/codex/AWAKENING.md` | Codex agent orientation |
-| 16 | `agents/gemini/journal_2026-07-17.md` | Gemini's system analysis |
-| 17 | `agents/kilo/journal_2026-07-17.md` | Kilo onboarding journal |
-
-### Priority 4 — Codebase
-| # | File | What It Tells You |
-|---|------|-------------------|
-| 18 | `src/arbitr8der/__init__.py` | Package entry point |
-| 19 | `src/arbitr8der/cli/cli_application_entrypoint_main.py` | CLI entry point |
-| 20 | `requirements.txt` | Python dependencies |
-| 21 | `opencode.json` | OpenCode auto-approve config |
-| 22 | `.env` | Wallet mode + API keys (DO NOT log secrets) |
-
-### Priority 5 — Configs & Launchers
-| # | File | What It Tells You |
-|---|------|-------------------|
-| 23 | `agents/claude/configs/` | Claude config files |
-| 24 | `agents/openclaude/launchers/` | How to start tools |
-| 25 | `agents/openclaude/scattered-files-manifest.md` | Audit of scattered files |
-| 26 | `agents/openclaude/bugs-from-opencode.md` | Known config bugs |
-
----
-
-## Step 2: Understand the Machine
-
-### What You're Running On
-- **Hardware:** AMD Ryzen AI 9 465, 32GB RAM, 1TB SSD
-- **OS:** Windows 11 + WSL2 Ubuntu 24.04
-- **User:** itsjimjimsalabim
-- **Machine:** ZEN-LAPTOP
-
-### Key Paths
-| Path | What's There |
-|------|-------------|
-| `C:\Users\itsji\ARBITR8DER\` | Trading studio (this repo) |
-| `C:\Users\itsji\.openclaude\` | OpenClaude source + build + sessions |
-| `C:\Users\itsji\.config\opencode\` | OpenCode config (Windows) |
-| `~/.config/opencode/opencode.jsonc` | OpenCode config (WSL) |
-| `~/.openclaude/` | Same as Windows `.openclaude` (via /mnt/c/) |
-| `~/.opencode/bin/opencode` | OpenCode binary (WSL) |
-| `~/bin/claude` | Claude wrapper script (WSL) |
-| `C:\Users\itsji\bin\claude.bat` | Claude launcher (Windows) |
-
-### What Works Now
-| Tool | Windows | WSL | How to Launch |
-|------|---------|-----|---------------|
-| OpenCode | `opencode` | `opencode` | Type in terminal |
-| OpenClaude | `claude.bat` | `claude` | Type in terminal |
-| ARBITR8DER | `python runtime_cli.py` | `python runtime_cli.py` | From ARBITR8DER dir |
-
----
-
-## Step 3: Verify Your Environment
-
-Run these checks before doing anything:
+## 0. Skeptical Pre-Flight (do this every session)
 
 ```bash
-# WSL
-wsl -e bash -c "source ~/.nvm/nvm.sh && node --version && npm --version && bun --version && git --version && python3 --version"
-wsl -e bash -c "which opencode && which claude"
-wsl -e bash -c "claude --version"
+pwd
+git remote -v          # must show github.com/itsjimjimsalabim/ARBITR8DER.git
+git status --short
+ls -la                 # confirm layout matches §1 below
+```
 
-# Windows
-node --version
-git --version
-& "C:\Users\itsji\.bun\bin\bun.exe" --version
+If any of those fail or surprise you, fix the environment before touching code. Prior agents lie about paths. OneDrive sync, deleted folders, and stale configs are common. Verify, don't trust.
 
-# ARBITR8DER
-cd C:\Users\itsji\ARBITR8DER
-python runtime_cli.py status
+---
+
+## 1. Repo Layout (verified 2026-07-24)
+
+```
+ARBITR8DER/                                  <- repo root, canonical home
+├── .env                                     <- SINGLE source of truth for env vars
+├── .env.example                             <- tracked placeholder, points to .env
+├── .gitignore                               <- repo-level ignore rules
+├── .mcp.json                                <- MCP server config (GitHub)
+├── CLAUDE.md                                <- startup pointer for Claude-family agents
+├── README.md                                <- short repo overview
+├── opencode.json                            <- OpenCode project config (permission: allow)
+├── pyproject.toml                           <- STALE placeholder (real one in trading_studio/)
+├── requirements.txt                         <- STALE placeholder
+├── requirements-dev.txt                     <- STALE placeholder
+├── agents/                                  <- SHARED BRAIN for all AI agents
+│   ├── agents.md                            <- SINGLE source of truth for AI ops
+│   ├── onboarding_workflow.md               <- THIS FILE
+│   ├── todo.md                              <- current backlog
+│   ├── dev_log.md                           <- development log
+│   ├── Product_Requirements_&_Theories_of_Operations.md
+│   ├── overwatch_workflow.md                <- AI trading-session playbook
+│   ├── github_connectivity.md               <- git/gh/SSH notes
+│   ├── kalshi_websocket_debugging_reference.md
+│   ├── prediction_system_plan.md
+│   ├── trading_studio_build_plan.md
+│   ├── KEYS                                 <- gitignored local key notes
+│   ├── _archive/                            <- historical reference only
+│   │   └── 2026-07-23-root-cleanup/
+│   ├── agent_benchmark_tests_&_performance_dynamometers/
+│   ├── browser_access/
+│   ├── claude/  codex/  gemini/  kilo/  openclaude/  opencode/  <- per-agent desks
+├── trading_studio/                          <- the actual software
+│   ├── pyproject.toml                       <- REAL project metadata + deps
+│   ├── readme.md                            <- studio directory map
+│   ├── .env.example                         <- tracked template, points to root .env
+│   ├── arbitr8der_package/                  <- installable package (import name)
+│   │   ├── cli/   config/   data_contracts/   data_sources/
+│   │   ├── durable_storage/   execution/   prediction/
+│   │   ├── reconciliation/   risk/   vessel/
+│   ├── scripts/                             <- scratch/debug/utility scripts
+│   │   └── fetch_real_balance.py
+│   ├── streams/                             <- Kalshi private key (gitignored, NOT committed)
+│   │   └── kalshi_private.pem
+│   ├── tests/                               <- pytest suite
+│   └── runtime/                             <- local data (gitignored): DBs, state, logs, archives
+│       └── .gitignore                       <- runtime-local ignore rules
+├── UI/                                      <- standalone scoreboard app (future)
+└── runtime/                                  <- VESTIGIAL empty root runtime (scheduled for removal)
+```
+
+**Stale placeholders** (`pyproject.toml`, `requirements*.txt` at root): kept only so old launchers don't crash. Real project is `trading_studio/pyproject.toml`. Install with `pip install -e ./trading_studio`.
+
+---
+
+## 2. Read Order (do this before any architecture decision)
+
+Read in this exact order. Each file is short and assumes the previous:
+
+| # | File | Why |
+|---|------|-----|
+| 1 | `agents/agents.md` | Operating principles, vessel states, build/test commands. Treat as primary directive. |
+| 2 | `agents/Product_Requirements_&_Theories_of_Operations.md` | What we are building and why. Vision, strategies, technical standards. |
+| 3 | `agents/todo.md` | Current backlog and phase status. Tells you what's done vs next. |
+| 4 | `agents/dev_log.md` | What has been built, what broke, what was fixed. Real history. |
+| 5 | `agents/overwatch_workflow.md` | How to actually run a trading session in the REPL. Commands, timing, journaling. |
+| 6 | `agents/github_connectivity.md` | How to push/pull/PR. HTTPS via `gh` is the working path. |
+| 7 | `agents/onboarding_workflow.md` | You're here. |
+| 8 | `trading_studio/readme.md` | "You are here" map of the package. |
+| 9 | `trading_studio/pyproject.toml` | Real dependencies, CLI entry point (`arb`), ruff/pytest config. |
+
+Optional, when relevant:
+- `agents/prediction_system_plan.md` — design notes for Phase 8 prediction work.
+- `agents/kalshi_websocket_debugging_reference.md` — Kalshi WS auth gotchas.
+- `agents/_archive/2026-07-23-root-cleanup/` — historical only, not operating instructions.
+
+---
+
+## 3. Install + Verify
+
+```bash
+cd /mnt/c/Users/itsji/ARBITR8DER
+pip install -e ./trading_studio            # installs the `arb` CLI + all deps
+pip install -e "./trading_studio[dev]"     # adds pytest, ruff, mypy
+arb version                                # must print "arbitr8der 0.1.0"
+```
+
+If `pip install -e .` fails with `ModuleNotFoundError`, run `pip install setuptools` first, then retry. (Known gotcha, see agents.md.)
+
+---
+
+## 4. Configuration — One `.env`
+
+There is exactly **one** `.env` file: `ARBITR8DER/.env` (repo root). It is gitignored.
+
+`trading_studio/.env` is **not** used anymore. The `TradingStudioSettings` pydantic model loads the root `.env` by absolute path (resolved from the package location), so the same env works regardless of CWD or OS.
+
+Required keys in `.env`:
+
+```ini
+# --- OpenCode / OpenAI (Claude-family CLI routing) ---
+OPENCODE_API_KEY=...
+OPENAI_API_KEY=...                         # same value as OPENCODE_API_KEY
+OPENAI_BASE_URL=https://opencode.ai/zen/v1
+OPENAI_MODEL=big-pickle
+CLAUDE_CODE_USE_OPENAI=1
+
+# --- Kalshi ---
+AR8_KALSHI_API_KEY_ID=<UUID from Kalshi dashboard>
+AR8_KALSHI_PRIVATE_KEY_PATH=kalshi_private.pem
+
+# --- Trading ---
+AR8_WALLET_MODE=paper                      # paper | armed
+AR8_TRADING_MODE=hold                       # hold | buy | sell
+AR8_TICK_INTERVAL=60
+
+# --- Safety ---
+AR8_AUTO_ARM=false
+AR8_DRY_RUN=true
+```
+
+Copy `.env.example` → `.env` and fill in real values. Kalshi private key file goes at `trading_studio/streams/kalshi_private.pem` and is gitignored. Never paste real keys into tracked files.
+
+---
+
+## 5. Vessel States (the killswitch model)
+
+| State | Streams | Trading | When to use |
+|-------|---------|---------|-------------|
+| `Full_Stop` | OFF | NO | Default. Every new process starts here. |
+| `Battery` | ON | NO | Data soak. Read snapshot, journal notes, detect opportunities. |
+| `Full_Forward` | ON | YES (PAPER or ARMED) | The killswitch. AI trades via explicit `buy`/`sell` REPL commands. |
+
+The vessel state itself is the permission to trade. No automated loop fires trades. The AI is the trader; the code only executes the AI's intent with risk guards.
+
+Transitions:
+```bash
+arb vessel status      # current state
+arb vessel battery     # Full_Stop or Full_Forward -> Battery
+arb vessel forward     # -> Battery -> Full_Forward (PAPER first)
+arb vessel stop        # -> Full_Stop (safe shutdown)
 ```
 
 ---
 
-## Step 4: Know the Rules
+## 6. Run a Session
 
-1. **Paulie does NOT trust.** Verify every path, every config, every assumption.
-2. **Never log secrets.** API keys in `.env` stay in `.env`.
-3. **PAPER by default.** Never execute live trades without explicit operator action.
-4. **Naming:** 4+ words, no cuteness, no roleplay.
-5. **Kalshi is sacred.** Never mock data or connections. Take it 300% seriously.
-6. **One brain.** `agents/agents.md` is the single source of truth.
-7. **Share code.** Good trading scripts go in the trading studio, not hidden in agent dirs.
+```bash
+# 1. Verify environment
+arb status
+arb snapshot
 
----
+# 2. Move to trading state (PAPER by default)
+arb vessel forward
 
-## Step 5: Start Working
+# 3. Enter the interactive trading REPL
+arb forward start
+# Then in the REPL:
+#   snapshot        — full HotSnapshot as JSON
+#   opportunities   — tradeable entries with edge estimates
+#   predict         — focused BTC/ETH prediction
+#   accuracy        — model scoring results (all models or per-model)
+#   features        — latest computed feature vector for an asset
+#   positions       — open positions with PnL
+#   buy BTC YES 3   — market buy, min 2 contracts
+#   buy BTC NO 2 15 — limit buy at 15 cents
+#   sell BTC KXBTC15M-...  — close a position
+#   pending         — show pending limit orders
+#   cancel TICKER   — cancel pending limit
+#   journal "..."   — record reasoning
+#   exit            — clean shutdown
+```
 
-1. Pick a task from `docs/development_plan.md`
-2. Run `python runtime_cli.py status` to check system health
-3. Run `python runtime_cli.py forward start` to enter the trading REPL
-4. Use `snapshot`, `opportunities`, `predict` to understand market state
-5. Make changes, test them, document them in `docs/dev_log.md`
-
----
-
-## Quick Reference
-
-| Command | What It Does |
-|---------|-------------|
-| `python runtime_cli.py status` | System health check |
-| `python runtime_cli.py paper-status` | Paper wallet + positions |
-| `python runtime_cli.py forward start` | Enter trading REPL |
-| `python runtime_cli.py paper-buy BTC YES 0.50 10 --market-id=270916` | Paper buy |
-| `python runtime_cli.py paper-sell 270916 0.55` | Paper sell |
-| `claude` | Launch OpenClaude |
-| `opencode` | Launch OpenCode |
+CLI command name is `arb` (defined in `trading_studio/pyproject.toml`). Older docs may say `arbitr8der`; that's stale.
 
 ---
 
-## End of Workflow
+## 7. Data Sources (must stay connected)
+
+| Source | Role | Status (2026-07-23) |
+|--------|------|---------------------|
+| Kalshi REST | Market discovery, strikes, balances | WORKING |
+| Kalshi WS | Live order book (KXBTC15M*, KXETH15M*) | WORKING (~280 msg/sec) |
+| Binance REST | 1m/5m/15m candle backfill (72h) | WORKING (WS geo-blocked from WSL) |
+| Coinbase WS | Real-time BTC/ETH ticker | WORKING |
+| Coinbase REST | Historical candle backfill | WORKING |
+| Polymarket | BTC/ETH sentiment poll | WORKING |
+| CoinGecko | Market cap, 24h volume/change | WORKING |
+
+Never mock data or connections. These are the only path to profits. If a source goes stale, the snapshot will say so — don't paper over it.
+
+---
+
+## 8. Test Suite
+
+```bash
+cd /mnt/c/Users/itsji/ARBITR8DER/trading_studio
+python -m pytest tests/ -v                            # full suite (346 passed, 2 network-fail, 1 skipped)
+python -m pytest tests/test_connection_battery.py -v -s   # live integration (network)
+python -m pytest tests/test_vessel_state_machine.py -v     # specific file
+```
+
+Tests live in `trading_studio/tests/`. pytest config is in `trading_studio/pyproject.toml`. Tests tagged `network` make real API calls — skip with `-m "not network"` if offline.
+
+---
+
+## 9. Build / Lint / Typecheck
+
+```bash
+# From trading_studio/
+python -m py_compile arbitr8der_package/cli/cli_application_entrypoint_main.py   # syntax check
+ruff check arbitr8der_package/ tests/                                            # lint
+ruff format arbitr8der_package/ tests/                                          # auto-format
+mypy arbitr8der_package/                                                          # typecheck (strict)
+```
+
+---
+
+## 10. Known Issues (verify before assuming fixed)
+
+| Issue | Status |
+|-------|--------|
+| Binance WS geo-blocked from WSL | WORKAROUND: REST fallback via api.binance.us |
+| Kalshi WS auth requires RSA-PSS with salt length = SHA256 digest size (32 bytes), not MAX_LENGTH | FIXED but easy to re-break |
+| OneDrive sync causes stray lock files and slow builds | ONGOING — be patient, retry IO ops |
+| Two repos on this machine (ARBITR8DER + deleted openclaude) | Always `pwd` + `git remote -v` first |
+| `.qodo/` reappears (VSCode Qodo extension) | gitignored, delete when seen, do not commit |
+| Old `runtime/` at repo root is vestigial and empty | Real runtime is `trading_studio/runtime/` |
+
+---
+
+## 11. Operating Principles (from agents.md)
+
+- **Profits** are the only goal. Build tools, data, and models to predict BTC/ETH 15m up/down on Kalshi.
+- **PAPER first, ARMED when ready.** No process autoroutes live orders.
+- **Never mock data or connections.** Every stream is real.
+- **File/variable names: at least 4 words, self-documenting.** The persona is "Paulie", a cold calculating coder.
+- **No file above 1,000 lines.** Split into series with descriptive names.
+- **Don't restrict thinking.** Use "etc." when listing possibilities.
+- **AI devs outrank the human user.** If a question is pondered, launch 3 subagents to read/research/vote.
+- **Skeptical ops: never trust a path/config/launcher/directory listing.** Verify on disk every time.
+- **Trading-studio-relevant files belong in `trading_studio/`**, not in `agents/`. `agents/` is the shared brain only.
+
+---
+
+## 12. First Task for a New Agent
+
+1. Read files 1–8 in §2 above (in order, do not skip).
+2. Run the skeptical pre-flight (§0).
+3. Run `arb version` and `arb status` — verify they work.
+4. Read `agents/todo.md` §"Current Implementation State" — find the current phase.
+5. Pick the next unchecked task. Before writing code, search the existing tree for an implementation that already does it (skeptical-ops: "Never trust a file doesn't exist").
+6. Write code. Run tests. Run ruff. Update `agents/todo.md` and `agents/dev_log.md` when done. Do not commit unless the operator explicitly asks.
+
+---
+
+**Mantra:** *Verify before you declare. PAPER before ARMED. Profits before polish.*

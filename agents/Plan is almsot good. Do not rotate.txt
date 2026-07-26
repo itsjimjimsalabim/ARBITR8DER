@@ -1,6 +1,0 @@
-Plan is almsot good. Do not rotate or deprecate Keys it will kill me i will die. They could be gitignored smartly.
-  literally use gigtignore (hopefully you still added those keys i still want them and all the other keys in a
-  reference file to be used for a lot of different things. Even old keys could be listed under the old keys but labeled
-  possibly deprecated.)
-  Our focus is to push as is only adding the fresh ssh keys, any issues you see with our softwares just take notes of
-  them and make a file named issues in the agents\ root

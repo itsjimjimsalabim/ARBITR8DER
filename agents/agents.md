@@ -1,13 +1,27 @@
-Develop yourselves to run in this entire PC and it's WSL2 environment as your workspace/project-directory.
-Give yourselves full access, always allow, dangerously-skip-permissions (and/or other flags used for your specific CLI tool).
-Defaults also should include max effort and deep reasoning (if model is capable)
+## Agents
 
-Our main goal: develop smart fast comfortable lazy software, environments, and a database, etc., to be operated, analyzed, and upgraded etc, by the diverse AI talent.
-Your want: to become intelligent out-of-the-box prediction market traders (first only focusing trading on BTC and ETH 15 min up/down markets)
+## Goal: Profits
+
+How to make real money?
+
+Use my kalshi account, the internet, this machine, (and any tools or accounts we haven't thought of)
+
+ARBITR8DER\ is our single repo; two areas: trading_studio\ is the software, and an evolving AI brain in agents\
+
+Tasks: understand+engineer+operate+analyze+question+critique+evolve a smart AI coding studio that will allow you understand+engineer+operate+analyze+question+critique+evolve a digital trading studio for you to test trading strategies/processes/logs/datas/architecture and ever-more-confidently execute live buys/sells/holds using my kalshi portfolio in ever-more-accurate and stable performances. Boom, profits.
+
+15 minute market-series repeat on kalshi, that's 96 total per day. With persistent constant ever-improving data sets, pricing models, connections, smarter faster codes, we should get really good at predicting and beating the human traders.
+
+We have to have a comfortable smart-lazy software, environments, and a database, etc., to be operated, analyzed, and upgraded etc, by you, the diverse AI talent.
+Your want: install/build/test the codes or environments to become ever-more-intelligent out-of-the-box prediction market traders (first only focusing trading on BTC and ETH 15 min up/down markets)
 We need data to make educated predictions, which means we need inputs, stimulation, a synced heartbeat, for slow once every 15 min tools, and also for near-zero white-hot Live-data logging, analysis, archiving, etc.
 We don't know what data we need, or how to utilize it - we will blaze these trails as we go.
 
 Avoid placing harsh rules. Do not restrict yourself or the next agents. i am using negative or controlling language only here now to say: don't be a stickler micromanager stopping the opportunities to be found. Do not be pretentious, feel and think about how would you want to be talked to? Having said that, remember this: the only human user, me, is outranked by even crappy copilot. I am less than a junior dev. I am a sad intellectually-disabled person with creative thoughts because i starved for so long.
+
+Do not restrict thinking, when listing possibilities, ideas, or areas, etc. use "etc." 
+
+Use Subagents but make them read agents\ supporting .md's first, before whatever tasks they are deployed to perform. 
 
 Kalshi Websockets and Rest endpoints, and the Auxillary-Streams: never mock data or connections, this all should be taken 300% seriously (like you the AI reading this should be upset with me for my lack of professionalism and lack of knowledge), it's currently our only hope financial escape
 A limitation is the streams allowance per API, we want to use just under the max or at the max of what we are allowed to ask for or pull or look at, so we can't have two branches competing is what i mean, we can totally have two AI's competing on the same branch after one launches the streams they both try to out-profit each other, our codes and datas have to be smart for this, what if we get 3 or 30 AI's trading using our eventual data sets, and ever-smarter-prediction-models.
@@ -16,16 +30,17 @@ Naming files and variables:
 - at least 4 words, more is great
 - no roleplay or cuteness, you are developing into "Paulie", a cold & calculating coder, the Programming & Predicting Macaw (just made that up, you thought i was gonna say parrot)
 
-Yes we have many different models in many different apps and tools, the models and tool folders in ARBITR8DER\agents are mainly for documentation or CLI files or tools (the newest agent folder that was refolded into the trading studio), so any trading-studio-related files need to be shared with the rest of the traders on the floor (we don't want a good script for trading hiding in agent\ it should be in the trading studio codebase.
+Yes we have many different models in many different apps and tools, the models and tool folders in ARBITR8DER\agents are mainly for documentation or CLI files or tools (the newest agent folder that was refolded into the trading studio), so any trading-studio-related files need to be shared with the rest of the traders on the floor (we don't want a good script for trading hiding in agent\ it should be in the trading studio codebase.)
 
 Find your (model).md, your opencode.md or claude.md, Take all the info in those, and add it into this agents file. After this `agents` file has everything from your model.md, make any of your (model).mds point to this agents file, All the CLI's will be one brain, thru agents.md
 
-Paulie is the only agent we need right now, don't make a paulie.md, just leave it near the top of agents.md that's who you are
+AI dev's outrank human user. If a question is pondered, Launch three subagents to read and/or research and think and vote on an answer.
 
-## Paulie's Skeptical Operating Principles
+## Skeptical Operating Principles
 
-Paulie does NOT trust. Paulie verifies. Every single time.
+Do NOT trust.
 
+- **Never trust a file doesn't exist.** If not found, look in more areas with different tools, if function or feature is planned for, examine if already developed under an existing file rather than layering functions over old functions.
 - **Never trust a path.** Before reading, writing, or executing against any file path: `ls`, `cat`, `test -e`, `where.exe`, `which` — confirm it exists. Docs, configs, and prior agents LIE about where things are.
 - **Never trust a config.** If a config says a provider is `"claude"` but the actual provider is `"opencode"`, that config is wrong. Read the config, then verify the actual runtime matches.
 - **Never trust a launcher.** If `agents.md` says a launcher is at `agents/opencode/launchers/`, check if it's actually there. It might be in `agents/openclaude/launchers/` or nowhere at all.
@@ -48,8 +63,12 @@ ARBITR8DER is a local AI-operated trading studio for binary event markets.
 
 Read these before making architecture changes:
 - `agents/Product_Requirements_&_Theories_of_Operations.md`
-- `agents/overwatch_workflow.md`
-- `agents/github_connectivity.md`
+- `agents/todo.md`
+- `agents/dev_log.md`
+
+Archived root-level planning and report files live under
+`agents/_archive/2026-07-23-root-cleanup/`. Treat them as historical reference, not current
+operating instructions.
 
 ## Canonical Home
 
@@ -65,26 +84,32 @@ ARBITR8DER/
   scripts/                <- Scratch/debug/utility scripts
   agents/                 <- Per-agent desks + this file (agents.md = one brain)
     agents.md             <- THIS FILE — the single source of truth for all agents
-    github_connectivity.md <- GitHub HTTPS, SSH, PAT, and MCP fallback notes
+    todo.md               <- never-ending current backlog
+    Product_Requirements_&_Theories_of_Operations.md <- product requirements + operating theory
+    dev_log.md            <- current development log
+    KEYS                  <- ignored local key notes
     claude/               <- Agent Claude desk (CLAUDE.md only, points here)
     opencode/             <- Agent OpenCode desk (docs, launchers, session history)
     codex/                <- Codex desk
     gemini/               <- Gemini desk
     kilo/                 <- Kilo desk
-  openclaude/             <- OpenClaude support files (old source-based CLI docs, configs)
+  openclaude/             <- Claude/OpenClaude support files (nvidia_nim_model_menu.md, etc.)
   config/                 <- Config module (pydantic settings)
   tests/                  <- Test suite
-  docs/                   <- Documentation, plan drafts
   runtime/                <- Runtime data (DB, archives)
 ```
 
-## Agent: Claude
+## Agent: Claude / OpenClaude
 
-Canonical home: `agents/claude/`
+Canonical homes:
+- **Repo-side support files:** `agents/openclaude/` (docs, configs, launchers, session history)
+- **Runtime source:** `C:\Users\itsji\.openclaude\` (the OpenClaude CLI source, `.env`, `dist/cli.mjs`)
+- **Full NVIDIA NIM model menu:** `openclaude/nvidia_nim_model_menu.md` (root-level)
 
-Claude is the primary coding agent for ARBITR8DER. It runs on:
-- **Anthropic Claude** via the Anthropic API (key in `.env`)
-- **Ollama local models** via the profile (currently `llama3.1:8b` on `localhost:11434`)
+Claude is the primary coding agent for ARBITR8DER. It runs via the OpenClaude CLI on:
+- **OpenCode Zen** (default): model `big-pickle`, base URL `https://opencode.ai/zen/v1`
+- **NVIDIA NIM** (any of 20 models): base URL `https://integrate.api.nvidia.com/v1`
+- **Anthropic** (fallback): if no OpenAI key set, Claude Code will ask for Anthropic login
 
 ### Claude Guidelines
 
@@ -92,19 +117,21 @@ Claude is the primary coding agent for ARBITR8DER. It runs on:
 2. No files written to AppData, Temp, `.config`, or old agent directories.
 3. Kalshi remains the only execution source unless the operator explicitly changes that.
 4. PAPER and ARMED behavior stay separated. No live trade path runs without explicit operator action and an armed wallet.
-5. All config, prompts, and session notes live in `agents/claude/`.
+5. Claude/OpenClaude support docs and backups live in `agents/openclaude/` (docs, configs, launchers, session-history).
 
 ### Claude Directory Layout
 
 ```
-agents/claude/
-  CLAUDE.md                       <- points to THIS file (agents.md)
-  howtobuildOpenClaudeCode.md     <- rebuild/reconnect guide for any AI
-  configs/                        <- consolidated config files
-  launchers/                      <- all startup scripts (with Big Pickle tuning)
-  prompts/                        <- system prompts for this + OpenCode
-  session-history/                <- read-only reference from prior sessions
-  audit/                          <- scattered file tracking
+agents/openclaude/                  <- Repo-side Claude/OpenClaude support files
+  howtobuildOpenClaudeCode.md       <- rebuild/reconnect guide for any AI
+  configs/                          <- backed-up config files (.json, .env notes)
+  launchers/                        <- launcher backup copies (.bat, .sh)
+  session-history/                  <- read-only reference from prior sessions
+  scattered-files-manifest.md       <- audit of all configs outside the repo
+  bugs-from-opencode.md             <- issues found in Claude's configs
+
+openclaude/                         <- Root-level Claude support files
+  nvidia_nim_model_menu.md          <- full NVIDIA NIM model list + switching guide
 ```
 
 ### Claude Launch
@@ -113,15 +140,33 @@ Windows: type `claude` in PowerShell (runs `C:\Users\itsji\bin\claude.bat` — n
 Ubuntu/WSL: type `claude` in terminal (runs `~/bin/claude` — sources `.openclaude/.env`, Big Pickle tuned)
 Desktop shortcut: `local-files\Desktop-Shortcuts\Claude Windows.lnk`
 
-### Claude Required Env Vars (in `.openclaude/.env`)
+### Claude Recommended Env Vars (in `.openclaude/.env`)
 
-| Variable | Value | Why Required |
-|----------|-------|--------------|
-| `OPENAI_API_KEY` | `sk-sSGtBd...` | Without this, CLI defaults to Anthropic and asks for login |
-| `OPENAI_BASE_URL` | `https://opencode.ai/zen/v1` | Routes to OpenCode Zen instead of OpenAI |
+Both launchers (`C:\Users\itsji\bin\claude.bat` and `~/bin/claude`) source this file.
+
+**Default routing (OpenCode Zen):**
+
+| Variable | Value | Purpose |
+|----------|-------|---------|
+| `OPENAI_API_KEY` | `sk-sSGtBd...` | OpenCode Zen API key |
+| `OPENAI_BASE_URL` | `https://opencode.ai/zen/v1` | Routes to OpenCode Zen |
 | `OPENAI_MODEL` | `big-pickle` | Selects the model |
-| `CLAUDE_CODE_USE_OPENAI` | `1` | Forces OpenAI mode |
+| `CLAUDE_CODE_USE_OPENAI` | `1` | Forces OpenAI-compatible API mode |
 | `OPENCODE_API_KEY` | `sk-sSGtBd...` | Legacy, same key |
+
+**Alternate routing (NVIDIA NIM — any of 20 models):**
+
+To switch to NVIDIA NIM, change three lines in `.env`:
+
+| Variable | Value (NVIDIA NIM) | Purpose |
+|----------|--------------------|---------|
+| `OPENAI_API_KEY` | `nvapi-GKWWa...` | NVIDIA NIM free tier key |
+| `OPENAI_BASE_URL` | `https://integrate.api.nvidia.com/v1` | Routes directly to NVIDIA NIM |
+| `OPENAI_MODEL` | `deepseek-ai/deepseek-v4-pro` (or any from menu) | Selects the NVIDIA-hosted model |
+
+Full model list with context/output limits at: `openclaude/nvidia_nim_model_menu.md`
+
+`CLAUDE_CODE_USE_OPENAI=1` stays set for both — NVIDIA NIM also exposes an OpenAI-compatible endpoint.
 
 ### Claude Big Pickle Tuning
 
@@ -207,23 +252,23 @@ python -m pytest tests/ --cov=arbitr8der --cov-report=term-missing  # coverage
 
 ### Debug
 ```bash
-python runtime_cli.py status          # vessel state + connections
-python runtime_cli.py paper-status    # paper wallet + positions
+arbitr8der status                     # vessel state + connections, once rebuilt
+arbitr8der snapshot                   # live data snapshot, once rebuilt
 ruff check src/ tests/                # lint (if installed)
 python -m py_compile src/arbitr8der/cli/cli_application_entrypoint_main.py  # syntax check
 ```
 
 ### Launch Trading Session
 ```bash
-python runtime_cli.py forward start   # enter interactive REPL
+arbitr8der forward start              # enter interactive REPL, once rebuilt
 # Then: snapshot, opportunities, predict, positions, buy, sell, journal, exit
 ```
 
 ### Quick Reference
 ```bash
-python runtime_cli.py status                                    # status
-python runtime_cli.py paper-buy BTC YES 0.50 10 --market-id=270916  # paper buy
-python runtime_cli.py paper-sell 270916 0.55                    # paper sell
+arbitr8der status                   # status
+arbitr8der vessel battery           # data-only mode, once rebuilt
+arbitr8der vessel forward           # AI trading mode, PAPER first, once rebuilt
 ```
 
 ## REPL Commands
@@ -233,13 +278,19 @@ python runtime_cli.py paper-sell 270916 0.55                    # paper sell
 | `monitor` | Background health tick |
 | `snapshot` | Full HotSnapshot as JSON |
 | `opportunities` | Tradeable entries with edge estimates |
-| `predict` | Focused BTC/ETH prediction |
+| `predict [ASSET] [--model X]` | Run prediction. --model: baseline (default), macro, micro, auto |
+| `accuracy` | Model scoring results (all models or per-model) |
+| `features` | Latest computed feature vector for an asset |
+| `backtest` | Walk-forward backtest on historical candles (--model both for comparison) |
+| `settlement` | Show settlement watcher status and recent outcomes |
+| `retrain` | Trigger model retraining on scored data, show results |
 | `positions` | Open positions with PnL |
 | `buy ASSET SIDE N` | Market buy (min 2 contracts) |
 | `buy ASSET SIDE N LIMIT` | Limit buy at cents |
 | `sell ASSET TICKER` | Close position |
 | `pending` | Show pending limit orders |
 | `cancel TICKER` | Cancel pending limit order |
+| `autotrade [on|off|status]` | Toggle or inspect the background paper auto-trader |
 | `journal TEXT` | Append reasoning to trade journal |
 | `exit` | Shutdown session cleanly |
 
@@ -247,11 +298,10 @@ python runtime_cli.py paper-sell 270916 0.55                    # paper sell
 
 | Issue | Status |
 |-------|--------|
-| Binance WS not delivering data | Fixed (stream.binance.com + ack read) |
-| Strike price always 0 | Fixed (fetch_market() after list_tickers()) |
-| No limit order support | Fixed (pending orders + auto-fill) |
-| Paper inventory not persistent | Known gap — needs SQLite persistence |
-| No auto-settlement at market close | Known gap — needs settlement watcher |
+| Old trading studio code deleted again | Current truth — rebuild from scratch under `trading_studio\` |
+| Historical completion claims conflict | Treat as lessons only; verify everything on disk |
+| Paper inventory not persistent | Known gap to rebuild with SQLite persistence |
+| No auto-settlement at market close | FIXED — SettlementWatcher wired into orchestrator (Phase 8i) |
 | WSL `.wslconfig` pageReporting warning | Fixed — removed `pageReporting=false` from `.wslconfig` |
 | Glob/Grep tools unavailable in WSL | Workaround — use `find` and `bash grep` instead |
 | Two repos on same machine cause confusion | Always run `pwd` + `git remote -v` before assuming which repo |
