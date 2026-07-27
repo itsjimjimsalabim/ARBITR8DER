@@ -142,7 +142,7 @@ ARMED Wallet is real money, actual kalshi portfolio balance, and cash balance, h
 PAPER Wallet is theoretical trading, paper trading, fake money, no risk
 
 - Real connections for real data
-- every new paper run starts with the actual balance value pulled from the kalshi connection, but the wallet balances are paper, only at the start, because we only have like $17 dollars, so our paper strategies have to work with such little money
+- **Real Balance Synchronization (Theory of Operation)**: Every new paper run automatically initializes its starting balance from the trader's actual live Kalshi portfolio cash balance (fetched via Kalshi REST `/portfolio/balance` or `KalshiRestMarketDiscoveryClient.get_balance()`). While order fills and position tracking remain paper simulated, starting equity reflects true live account capital (e.g. ~$17.00 or live balance). This forces paper trading strategies, position sizing (2-contract minimum @ ~50c = $1.00), and risk limits to operate under real-world account constraints before live money is armed.
 - Paper Physics have to be exactly like ARMED physics: latencies have to logged and applied - paper strategies have to be the same once ARMED is run so that there is no confusion or surprises
 - Live Physics have to be learned to be as accurate as possible for Paper runs
 

@@ -263,6 +263,14 @@ From domain knowledge and backtesting experience:
   - **Kalshi Trading Physics**: Research 15-minute binary market settlement rules (CFTC compliance, underlying index strike settlement formula, settlement verification lag).
   - **Short-Term BTC/ETH Prediction Models**: Research micro-momentum indicators (1m-15m timeframe), realized volatility metrics, order flow imbalance, and Bayesian frequency lookups for 15-minute horizons.
   - **Community & Market Insights**: Research Kalshi 15-minute BTC/ETH market dynamics across Reddit (r/Kalshi, r/AlgorithmicTrading), trading forums, and market maker quote behavior.
+- [ ] **Live Kalshi Portfolio Balance Auto-Sync on Session Start**:
+  - **Theory of Operation**: Paper trading physics must match live portfolio equity constraints (e.g. ~$17 real cash). At the start of every 15-minute paper session, query Kalshi REST API `/portfolio/balance` via `KalshiRestMarketDiscoveryClient.get_balance()`.
+  - **Auto-Initialization**: Automatically override `PaperVenueAdapter` starting/current balance with the real live portfolio cash balance (falling back cleanly to `paper_wallet.db` if API key is unconfigured or offline).
+  - **Position & Risk Sizing Realism**: Ensure contract quantity rules (minimum 2 contracts @ ~50c = $1.00 cost) and risk caps are evaluated against true live equity at the beginning of each 15-minute market run.
+  - **Reprogramming Plan**:
+    1. Update `PaperVenueAdapter` to support async `sync_live_balance(kalshi_client)` or auto-sync on init.
+    2. Wire `run_ai_trading_session.py` to auto-fetch live balance from Kalshi REST and invoke `sync_live_balance()` before enabling `AutoTradingEngine`.
+    3. Update `TradeJournal` session headers to log `real_kalshi_balance_usd` alongside paper balance.
 - [ ] **Model Retraining & Brier Scorecard Feedback Loop**:
   - Log settled outcomes into `prediction.db` scorecards to continuously evaluate model calibration (Brier score & LogLoss tracking).
   - Trigger walk-forward auto-retraining on new candle/settlement batches to continuously adapt model parameters.
