@@ -12,6 +12,8 @@ Tasks: understand+engineer+operate+analyze+question+critique+evolve a smart AI c
 
 15 minute market-series repeat on kalshi, that's 96 total per day. With persistent constant ever-improving data sets, pricing models, connections, smarter faster codes, we should get really good at predicting and beating the human traders.
 
+Human operators cannot compute multi-indicator candlestick technical analysis (RSI, ATR, Bollinger Bands, realized vol), calculate distance to target strike price ($65,033.80), evaluate Brier-calibrated model probabilities, and place trades in < 5ms every 15 minutes 24/7. The AI agent uses 8 real-time streams, dual-horizon ML models (MacroEnsemble + MicroEnsemble), and durable SQLite logs (prediction.db & paper_wallet.db) to continuously measure edge, execute profitable trades, and systematically beat human traders.
+
 We have to have a comfortable smart-lazy software, environments, and a database, etc., to be operated, analyzed, and upgraded etc, by you, the diverse AI talent.
 Your want: install/build/test the codes or environments to become ever-more-intelligent out-of-the-box prediction market traders (first only focusing trading on BTC and ETH 15 min up/down markets)
 We need data to make educated predictions, which means we need inputs, stimulation, a synced heartbeat, for slow once every 15 min tools, and also for near-zero white-hot Live-data logging, analysis, archiving, etc.
@@ -49,18 +51,10 @@ Do NOT trust.
 - **Never trust `dist/` exists.** Always check. `bun run build` may have never been run, or the output got wiped.
 - **Never assume a git repo is clean.** `git status` before every assumption. Repos get corrupted, half-cloned, or overwritten.
 - **Verify before you declare.** Don't say "the file is at X" — say "I checked and the file is at X" or "the file is NOT at X." Precision matters.
+- **We verify bugs and issues exist before we fix them.** Never patch symptoms blindly. Observe, record, and empirically verify the root cause and runtime behavior before attempting any code fix.
 - **The human is not a developer.** Paths, commands, and configurations that "should work" frequently don't. The human cannot debug this. You must.
 
 ---
-
-## ARBITR8DER System Orientation
-
-ARBITR8DER is a local AI-operated trading studio for binary event markets.
-- Primary execution: Kalshi BTC/ETH 15-minute markets (KXBTC15M*, KXETH15M*)
-- Default: PAPER trading. No live trades without explicit operator action.
-- Safety: Full_Stop is the intended default vessel state.
-- All 5 data sources (Kalshi, Binance, Coinbase, Polymarket, Coingecko) must feed the hot snapshot.
-
 Read these before making architecture changes:
 - `agents/Product_Requirements_&_Theories_of_Operations.md`
 - `agents/todo.md`

@@ -267,7 +267,24 @@ From domain knowledge and backtesting experience:
 - [ ] Connect Binance WS from WSL (currently geo-blocked; REST fallback works)
 - [x] Auto-trading: place paper orders when edge exceeds threshold
 
-### Medium-term (Phase 9+)
+### Phase 9: Live Exchange Physics Realism & Paper Wallet Settlement System (2026-07-26) ← UPCOMING
+- [ ] **Quarter-Hour Auto-Settlement Physics Engine**:
+  - Auto-settle all open paper positions at every 15-minute market resolution boundary (XX:00, XX:15, XX:30, XX:45).
+  - Query official Kalshi settlement REST endpoint (`/markets/{ticker}`) or `SettlementWatcher` for the resolution outcome (`yes` or `no`).
+  - Calculate contract payouts: 100c ($1.00 per contract) for winning side, 0c for losing side.
+  - Credit cash balance with settlement proceeds and record realized PnL in `PaperVenueAdapter` (`paper_wallet.db`).
+- [ ] **Paper Wallet Physics Realism**:
+  - Align paper wallet mechanics 1:1 with live Kalshi execution (locking position cost on order fill, updating unrealized PnL during open market, auto-closing positions at expiration).
+  - Prevent orphaned open positions from persisting past contract expiry across REPL / runner sessions.
+- [ ] **Research & Intelligence Gathering**:
+  - **Kalshi Trading Physics**: Research 15-minute binary market settlement rules (CFTC compliance, underlying index strike settlement formula, settlement verification lag).
+  - **Short-Term BTC/ETH Prediction Models**: Research micro-momentum indicators (1m-15m timeframe), realized volatility metrics, order flow imbalance, and Bayesian frequency lookups for 15-minute horizons.
+  - **Community & Market Insights**: Research Kalshi 15-minute BTC/ETH market dynamics across Reddit (r/Kalshi, r/AlgorithmicTrading), trading forums, and market maker quote behavior.
+- [ ] **Model Retraining & Brier Scorecard Feedback Loop**:
+  - Log settled outcomes into `prediction.db` scorecards to continuously evaluate model calibration (Brier score & LogLoss tracking).
+  - Trigger walk-forward auto-retraining on new candle/settlement batches to continuously adapt model parameters.
+
+### Medium-term (Phase 10+)
 - [ ] Multi-model ensemble weighting based on recent accuracy
 - [ ] Calendar-aware features (market hours, weekends, news events)
 - [ ] Sentiment integration (Polymarket, social media)
@@ -286,7 +303,8 @@ From domain knowledge and backtesting experience:
 | 6 | Operator Workflow | DONE |
 | 7 | PAPER Order Lifecycle | DONE |
 | 8 | Prediction System | DONE (8a-8l complete) |
-| 9 | ARMED Transition | PENDING |
+| 9 | Exchange Physics Realism & Auto-Settlement | PENDING |
+| 10 | ARMED Transition | PENDING |
 
 ## Test Status
 

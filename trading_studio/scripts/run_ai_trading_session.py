@@ -161,4 +161,4 @@ async def run_trading_session(duration_seconds: int = 45):
         print("Session completed successfully.")
 
 if __name__ == "__main__":
-    asyncio.run(run_trading_session(25))
+    asyncio.run(run_trading_session(870))
