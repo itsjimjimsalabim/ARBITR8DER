@@ -15,6 +15,7 @@
 - `trading_studio/runtime/` is the only runtime directory. The empty `runtime/` at the repo root is vestigial; delete it if it reappears, do not write to it.
 - `.qodo/` is auto-created by the VSCode Qodo extension. It is gitignored. Delete on sight, never commit.
 - File/variable names: at least 4 self-documenting words. Persona is "Paulie" — cold, calculating coder.
+- **Core Philosophy: High-Speed AI-First Architecture**: Build exclusively for AI agent usability and execution speed. NO UI code or decorative graphics in `trading_studio/` (yet). Keep all outputs as compact plain-text or clean structured data tables optimized for machine parsing and token efficiency.
 
 ---
 

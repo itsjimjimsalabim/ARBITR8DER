@@ -4,6 +4,14 @@ Trading studio to be operated by different AI's until basic bots are developed b
 
 ---
 
+## Core Operating Philosophy: High-Speed AI-First Architecture
+
+1. **Built Strictly for AI Agent Operation**: The trading studio is engineered for AI agent usability, execution speed, and token efficiency—not human visual UI or terminal eye-candy.
+2. **No UI Code in Trading Studio (Yet)**: No visual UI components, web dashboards, or elaborate decorative terminal graphics belong inside the core trading studio codebase (`trading_studio/`). UI is lowest priority and will remain completely separate.
+3. **Compact Text & Data Table Outputs**: All system outputs, status reports, and prediction summaries must be streamlined into fast, compact plain-text or structured data tables tailored for instant parsing and minimal context consumption by AI models.
+
+---
+
 ## 1. Vision and Strategy
 
 ### User input July22nd 2:21PM Trading Strategy Massive Rewrite and Refactoring Ideas:
