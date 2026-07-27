@@ -264,6 +264,7 @@ class IngestionOrchestrator:
         )
         self._scoring_engine = AutoScoringEngine(
             model_run_store=self._model_run_store,
+            candle_store=self._candle_store,
         )
 
         # Phase 8i — create settlement watcher
@@ -632,6 +633,7 @@ class IngestionOrchestrator:
 
     async def _run_scoring_engine(self) -> None:
         """Run the auto-scoring engine periodically to resolve model runs."""
+        cycles_since_retrain = 0
         while self._running:
             try:
                 if self._scoring_engine is not None:
@@ -646,6 +648,18 @@ class IngestionOrchestrator:
                     scored = await self._scoring_engine.score_pending_model_runs()
                     if scored > 0:
                         logger.info("Scoring engine resolved %d model runs", scored)
+
+                    # Retrain models every 10 cycles (150 seconds) if there are scored predictions
+                    cycles_since_retrain += 1
+                    if cycles_since_retrain >= 10:
+                        cycles_since_retrain = 0
+                        logger.info("Triggering periodic background model retraining...")
+                        results = await self._scoring_engine.retrain_models()
+                        for asset, info in results.items():
+                            if info.get("trained"):
+                                logger.info("Background retrained %s: OK (%d samples)", asset, info.get("samples", 0))
+                            else:
+                                logger.debug("Background retrained %s: SKIPPED (%s)", asset, info.get("reason", ""))
             except Exception as exc:
                 logger.error("Scoring engine error: %s", exc)
 
