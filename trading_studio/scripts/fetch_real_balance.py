@@ -13,16 +13,18 @@ Your paper trading will then start with your actual balance (~$17),
 making the experience realistic for when you go live.
 """
 
+from __future__ import annotations
+
 import asyncio
+import sqlite3
 import sys
 from pathlib import Path
 
-# Add parent directory to path
-sys.path.insert(0, str(Path(__file__).parent.parent))
-
-from arbitr8der_package.data_sources.kalshi_rest_market_discovery_client import KalshiRestMarketDiscoveryClient
-from arbitr8der_package.execution.paper_venue_adapter import PaperVenueAdapter
 from arbitr8der_package.config.typed_configuration_settings_module import load_settings
+from arbitr8der_package.data_sources.kalshi_rest_market_discovery_client import (
+    KalshiRestMarketDiscoveryClient,
+)
+from arbitr8der_package.execution.paper_venue_adapter import PaperVenueAdapter
 
 
 async def fetch_balance() -> float | None:
@@ -51,17 +53,16 @@ async def fetch_balance() -> float | None:
 
 def set_paper_balance(balance_usd: float) -> None:
     """Update paper wallet to match real balance."""
-    db_path = Path(__file__).parent.parent / "runtime" / "paper_wallet.db"
+    db_path = Path(__file__).resolve().parent.parent / "runtime" / "paper_wallet.db"
     db_path.parent.mkdir(parents=True, exist_ok=True)
 
     # Delete existing wallet to force recreation with new balance
-    import sqlite3
     if db_path.exists():
         conn = sqlite3.connect(str(db_path))
         conn.execute("DELETE FROM wallet WHERE id = 1")
         conn.commit()
         conn.close()
-        print(f"Deleted existing wallet entry.")
+        print("Deleted existing wallet entry.")
 
     # Create new adapter with real balance
     venue = PaperVenueAdapter(db_path=db_path, initial_balance=balance_usd)
@@ -87,7 +88,7 @@ async def main() -> None:
         print("\nDone! Paper trading will now start with your real balance.")
     else:
         print(f"\nTo set paper wallet to ${balance:.2f}, run:")
-        print(f"  python scripts/fetch_real_balance.py --set-balance")
+        print("  python scripts/fetch_real_balance.py --set-balance")
 
 
 if __name__ == "__main__":

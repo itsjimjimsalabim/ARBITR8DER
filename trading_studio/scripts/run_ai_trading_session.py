@@ -10,25 +10,16 @@ Steps:
 7. Display positions, paper wallet balance, and trading journal
 """
 
+from __future__ import annotations
+
 import asyncio
-import sys
-import time
-from pathlib import Path
 
-# Ensure arbitr8der_package is importable
-repo_root = Path(__file__).resolve().parents[2]
-sys.path.insert(0, str(repo_root / "trading_studio"))
-
-from arbitr8der_package.config.typed_configuration_settings_module import load_settings
-from arbitr8der_package.vessel.vessel_state_machine import VesselStateMachine, VesselState
-from arbitr8der_package.data_sources.ingestion_orchestrator import IngestionOrchestrator
-from arbitr8der_package.prediction.baseline_prediction_engine import BaselinePredictionEngine
-from arbitr8der_package.execution.paper_venue_adapter import PaperVenueAdapter
-from arbitr8der_package.risk.risk_controls_module import RiskController, OrderIntent
 from arbitr8der_package.cli.structured_trade_journal_module import TradeJournal
+from arbitr8der_package.data_sources.ingestion_orchestrator import IngestionOrchestrator
+from arbitr8der_package.vessel.vessel_state_machine import VesselState, VesselStateMachine
 
 
-async def run_trading_session(duration_seconds: int = 45):
+async def run_trading_session(duration_seconds: int = 45) -> None:
     print("=" * 70)
     print("  ARBITR8DER AI TRADING STUDIO — PAPER TRADING SESSION")
     print("=" * 70)
@@ -99,7 +90,11 @@ async def run_trading_session(duration_seconds: int = 45):
                 decisions = [d for d in orchestrator.auto_trader.recent_decisions if d.asset == asset]
                 if decisions:
                     d = decisions[-1]
-                    print(f"  Auto-Trade Decision: traded={d.traded}, model={d.model_name}, P(YES)={d.yes_probability:.1%}, edge={d.edge_pct:+.2f}%, skip_reason='{d.skip_reason}'")
+                    dec_str = (
+                        f"  Auto-Trade Decision: traded={d.traded}, model={d.model_name}, "
+                        f"P(YES)={d.yes_probability:.1%}, edge={d.edge_pct:+.2f}%, skip_reason='{d.skip_reason}'"
+                    )
+                    print(dec_str)
 
         # 6. Perform a Manual Paper Trade Demonstration if edge or test signal exists
         paper_venue = orchestrator.paper_venue
@@ -128,7 +123,11 @@ async def run_trading_session(duration_seconds: int = 45):
                     midpoint_cents=float(mid),
                     model_version="gemini_flash_demo",
                 )
-                print(f"  Order ID: {order.order_id} | Status: {order.status} | Fill Price: {order.fill_price_cents}c | Cost: ${order.fill_cost_usd:.2f}")
+                order_str = (
+                    f"  Order ID: {order.order_id} | Status: {order.status} | "
+                    f"Fill Price: {order.fill_price_cents}c | Cost: ${order.fill_cost_usd:.2f}"
+                )
+                print(order_str)
 
                 # Log to journal
                 entry = journal.start_entry(
@@ -144,7 +143,11 @@ async def run_trading_session(duration_seconds: int = 45):
             print(f"\nUpdated Paper Wallet Balance: ${wallet.balance:,.2f}")
             print(f"Updated Open Positions: {len(positions)}")
             for p in positions:
-                print(f"  Position: {p.contracts}x {p.side.upper()} {p.ticker} @ {p.avg_entry_cents:.1f}c (Cost: ${p.total_cost_usd:.2f})")
+                pos_info = (
+                    f"  Position: {p.contracts}x {p.side.upper()} {p.ticker} "
+                    f"@ {p.avg_entry_cents:.1f}c (Cost: ${p.total_cost_usd:.2f})"
+                )
+                print(pos_info)
 
         # Soak for remaining duration
         remaining = max(1, duration_seconds - 15)
@@ -159,6 +162,7 @@ async def run_trading_session(duration_seconds: int = 45):
         machine.transition(VesselState.FULL_STOP, reason="AI Operator: Session End")
         print(f"Vessel State -> {machine.current_state.value}")
         print("Session completed successfully.")
+
 
 if __name__ == "__main__":
     asyncio.run(run_trading_session(870))

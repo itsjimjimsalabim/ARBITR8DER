@@ -16,7 +16,7 @@ build/
 
 # Trading studio runtime data — only trading_studio/runtime/ is real.
 # The runtime/ at the repo root is vestigial and ignored so it cannot come back.
-runtime/
+/runtime/
 trading_studio/runtime/data/
 trading_studio/runtime/state/
 trading_studio/runtime/logs/

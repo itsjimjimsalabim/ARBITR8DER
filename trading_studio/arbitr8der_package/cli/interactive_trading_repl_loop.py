@@ -16,13 +16,11 @@ from __future__ import annotations
 
 import asyncio
 import json
-import signal
-import sys
 import threading
 import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from pathlib import Path
-from typing import Any, NoReturn
+from typing import Any
 
 from arbitr8der_package.cli.scorecard_module import (
     ScorecardGenerator,
@@ -34,7 +32,6 @@ from arbitr8der_package.cli.session_archive_module import (
     format_archive_summary_human,
 )
 from arbitr8der_package.cli.structured_trade_journal_module import (
-    EntryStatus,
     JournalEntry,
     TradeJournal,
     format_entry_human,
@@ -42,7 +39,6 @@ from arbitr8der_package.cli.structured_trade_journal_module import (
 )
 from arbitr8der_package.config.structured_logging_configuration_module import get_logger
 from arbitr8der_package.data_contracts.event_data_models import Asset, SourceHealthStatus
-from arbitr8der_package.data_contracts.hot_snapshot_merger import SnapshotMerger
 from arbitr8der_package.data_sources.ingestion_orchestrator import IngestionOrchestrator
 from arbitr8der_package.execution.paper_venue_adapter import PaperVenueAdapter
 from arbitr8der_package.prediction.prediction_scorer import PredictionScorer
@@ -243,7 +239,7 @@ class TradingREPL:
             print("Check lease file or network connectivity.")
 
         self._running = True
-        print(f"Data ingestion running. Type 'help' for commands.\n")
+        print("Data ingestion running. Type 'help' for commands.\n")
 
         self._repl_loop()
 
@@ -409,17 +405,16 @@ Commands:
           predict --model auto    Use retrained if available, else baseline
           predict --model baseline Force baseline engine (default)
         """
-        from arbitr8der_package.prediction.baseline_prediction_engine import (
-            BaselinePredictionEngine,
-            PredictionRecord,
-            format_prediction_human,
-            format_prediction_json,
-        )
-        from arbitr8der_package.prediction.feature_extraction_engine import FeatureExtractionEngine
         from arbitr8der_package.prediction.backtest_engine import (
             aggregate_1m_to_15m_candles,
             compute_macro_features_from_candles,
         )
+        from arbitr8der_package.prediction.baseline_prediction_engine import (
+            BaselinePredictionEngine,
+            format_prediction_human,
+            format_prediction_json,
+        )
+        from arbitr8der_package.prediction.feature_extraction_engine import FeatureExtractionEngine
 
         # Parse args
         parts = args.split()
@@ -835,7 +830,7 @@ Commands:
 
     def _journal_legacy(self, text: str) -> None:
         """Legacy text journal for backward compat."""
-        timestamp = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        timestamp = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
         entry_text = f"[{timestamp}] {text}"
         self._journal_lines.append(entry_text)
         self._archive.record_note(text)
@@ -980,7 +975,7 @@ Commands:
         if snap:
             # Approximate book age from snapshot timestamp
             from datetime import datetime
-            age = (datetime.now(timezone.utc) - snap.created_ts).total_seconds()
+            age = (datetime.now(UTC) - snap.created_ts).total_seconds()
             book_age = age
 
         verdict = self._risk.check(
@@ -1496,6 +1491,51 @@ Commands:
             if self._machine.current_state != VesselState.FULL_FORWARD:
                 print("Auto-trading requires Full_Forward. Run 'vessel forward' first.")
                 return
+
+            print("\n--- Startup Reconciliation ---")
+            wallet = self._venue.get_wallet()
+            print(
+                f"Paper Wallet: ${wallet.balance:.2f} "
+                f"(PnL: ${wallet.total_pnl:.2f}, Win Rate: {wallet.win_rate_pct:.1f}%)"
+            )
+
+            open_positions = self._venue.get_open_positions()
+            if open_positions:
+                print(f"⚠ {len(open_positions)} open position(s) will interact with auto-trader decisions:")
+                for pos in open_positions:
+                    print(
+                        f"  {pos.market_ticker} {pos.side.name} "
+                        f"{pos.contract_count} contracts @ {pos.average_entry_price}"
+                    )
+            else:
+                print("No open positions. Clean start.")
+
+            print("\nRunning preflight check...")
+            try:
+                future = asyncio.run_coroutine_threadsafe(
+                    engine.run_preflight_check(), self._loop
+                )
+                preflight = future.result(timeout=10.0)
+
+                print("Preflight results:")
+                for check in preflight.get("passed_checks", []):
+                    print(f"  [✓] {check}")
+                for warn in preflight.get("warnings", []):
+                    print(f"  [!] {warn}")
+
+                blockers = preflight.get("blockers", [])
+                if blockers:
+                    print("\nPreflight failed due to blockers:")
+                    for blocker in blockers:
+                        print(f"  [X] {blocker}")
+                    print("Auto-trading NOT enabled.")
+                    return
+                print("Preflight OK.\n")
+            except Exception as e:
+                print(f"\nPreflight check failed: {e}")
+                print("Auto-trading NOT enabled.")
+                return
+
             engine.enable()
             print("Auto-trading enabled.")
             return

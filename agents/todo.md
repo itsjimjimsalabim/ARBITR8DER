@@ -22,23 +22,6 @@
 
 We built a lot vibecoding. We now have to audit, review, and clean. Goals: stop the env/runtime/tooling bugs that come from duplicate and stale paths, get the repo into a single sane shape so the next AI's onboarding is deterministic.
 
-### Done today
-- [x] Audit on-disk state to verify every path (found: stale `agents/agents.md` Directory Layout, stale `overwatch_workflow.md`/`github_connectivity.md` pointers, two `.env` files, two `runtime/` dirs, `.qodo/` junk directory, `trading_studio/.venv/` polluting path lookups)
-- [x] Write `agents/onboarding_workflow.md` — fresh, accurate, on-disk-verified read order and layout. Supersedes the archived 2026-07-21 version.
-- [x] Restore `agents/overwatch_workflow.md` and `agents/github_connectivity.md` from `agents/_archive/2026-07-23-root-cleanup/` so all doc references resolve
-- [x] Consolidate `.env`: removed `trading_studio/.env`; single source of truth is `ARBITR8DER/.env` at repo root
-- [x] `trading_studio/.env.example` reduced to a pointer comment that directs operators to `ARBITR8DER/.env`
-- [ ] Audit `agents/codex/AWAKENING.md` — references `docs/overwatch_workflow.md`
-- [ ] Audit root stale placeholders (`pyproject.toml`, `requirements.txt`, `requirements-dev.txt`, `.env.example`) — decide: delete vs keep with pointer comment (current: kept as pointers)
-- [ ] Sweep `trading_studio/arbitr8der_package/` for any hardcoded `.env` paths other than the settings module
-- [ ] Move `agents/openclaude/launchers/.mcp.json` and `agents/openclaude/launchers/.venv/` — launchers/ should be launcher scripts only, not tooling state
-- [ ] Audit `trading_studio/scripts/` content for stale or duplicate utilities
-- [ ] Audit `trading_studio/runtime/.gitignore` vs root `.gitignore` — ensure no contradictions
-- [ ] Consider: should `trading_studio/runtime/` move to `ARBITR8DER/runtime/` so multiple agents/studios can share? Out of scope for now, log as future question.
-
-### Process discipline going forward
-- **Never trust a path from docs.** Verify on disk with `ls`, `cat`, `test -e`.
-- **Never trust "it was working before."** Present state is all that matters.
 - **One .env, one runtime, one trading_studio.** Duplicate paths breed bugs.
 - **Launch 3 subagents to research/vote** on architecture questions, per agents.md.
 
@@ -248,13 +231,13 @@ From domain knowledge and backtesting experience:
 - [x] Predict --model flag (baseline|macro|micro|auto)
 
 ### Paper Trading Readiness (2026-07-26)
-- [ ] Run a preflight check before `autotrade on`: fresh snapshot, active Kalshi ticker, recent candles, wallet status, and model availability.
-- [ ] Make the auto-trade risk estimate price-aware for market orders so the risk gate uses the real midpoint instead of a fixed 50c fallback.
-- [ ] Persist auto-trade decisions and skip reasons outside memory so a restart does not erase the audit trail.
-- [ ] Expose an auto-trade heartbeat / last-evaluated timestamp in `autotrade status` so a stalled loop is visible quickly.
-- [ ] Add integration tests for `autotrade on|off|status`, one-trade-per-window gating, and the main skip paths (`no_snapshot`, `no_midpoint`, `no_candles`, stale data, risk block).
-- [ ] Define the unattended-session kill switch: max loss, max trades, and the manual stop command the operator should use first.
-- [ ] Reconcile and display any existing paper positions and wallet state at startup before enabling autonomous trades.
+- [x] Run a preflight check before `autotrade on`: fresh snapshot, active Kalshi ticker, recent candles, wallet status, and model availability.
+- [x] Make the auto-trade risk estimate price-aware for market orders so the risk gate uses the real midpoint instead of a fixed 50c fallback.
+- [x] Persist auto-trade decisions and skip reasons outside memory so a restart does not erase the audit trail.
+- [x] Expose an auto-trade heartbeat / last-evaluated timestamp in `autotrade status` so a stalled loop is visible quickly.
+- [x] Add integration tests for `autotrade on|off|status`, one-trade-per-window gating, and the main skip paths (`no_snapshot`, `no_midpoint`, `no_candles`, stale data, risk block).
+- [x] Define the unattended-session kill switch: max loss, max trades, and the manual stop command the operator should use first.
+- [x] Reconcile and display any existing paper positions and wallet state at startup before enabling autonomous trades.
 
 ### Local Model Setup Docs (2026-07-26)
 - [x] Create `agents/qwen_local_model_ops_guide.md` with the Qwen manager/coder split, download checks, and PC impact notes.

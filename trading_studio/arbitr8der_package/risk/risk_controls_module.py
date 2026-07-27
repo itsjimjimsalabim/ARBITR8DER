@@ -23,7 +23,7 @@ from __future__ import annotations
 
 import time
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from enum import StrEnum
 from typing import Any
 
@@ -73,6 +73,7 @@ class OrderIntent:
     contracts: int
     ticker: str = ""
     limit_cents: int | None = None  # None = market order
+    midpoint_cents: float | None = None  # real market midpoint for price-aware risk
     snapshot_version: int | None = None  # required for Full_Forward
     timestamp: float = field(default_factory=time.time)
 
@@ -157,8 +158,9 @@ class RiskController:
                 f"Minimum order is {self._min_contracts} contracts, got {intent.contracts}.",
             )
 
-        # 5. Balance sufficiency
-        cost = intent.contracts * (intent.limit_cents or 50) / 100.0
+        # 5. Balance sufficiency (price-aware: prefer limit > midpoint > 50c fallback)
+        effective_price_cents = intent.limit_cents or intent.midpoint_cents or 50
+        cost = intent.contracts * effective_price_cents / 100.0
         if cost > self._balance:
             return RiskVerdict.blocked(
                 RiskBlockReason.INSUFFICIENT_BALANCE,
@@ -281,7 +283,7 @@ class RiskController:
     # ------------------------------------------------------------------
 
     def _today_str(self) -> str:
-        return datetime.now(timezone.utc).strftime("%Y-%m-%d")
+        return datetime.now(UTC).strftime("%Y-%m-%d")
 
     def _maybe_reset_daily(self) -> None:
         today = self._today_str()

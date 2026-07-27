@@ -718,3 +718,42 @@ Upgraded `_cmd_predict` with `--model` flag and ML model inference path.
 | `agents/todo.md` | Marked 8k done |
 | `agents/dev_log.md` | This entry |
 | `agents/agents.md` | Updated predict command in REPL table |
+
+## Phase 8m: Startup Reconciliation and Preflight Check (2026-07-26)
+
+### Problem
+When the operator starts the auto-trader (`autotrade on`), it blindly enabled the engine without warning about existing open paper positions, or ensuring the engine's preflight checks (wallet state, active ticker, model availability) had passed.
+
+### Solution
+Modified `_cmd_autotrade` in `interactive_trading_repl_loop.py` to:
+1. **Reconciliation Display**: Query and display the paper wallet balance, total PnL, and win rate. Warn the operator if there are any open positions that could interact with the auto-trader.
+2. **Preflight Check**: Run the engine's `async def run_preflight_check()` method via `asyncio.run_coroutine_threadsafe()` on the background orchestrator loop (`self._loop`).
+3. **Blockers Gate**: Display passed checks, warnings, and blockers. If blockers exist, fail fast and do NOT enable auto-trading.
+
+### Files Modified
+- `arbitr8der_package/cli/interactive_trading_repl_loop.py`: Modified `_cmd_autotrade` logic and resolved lint/formatting errors.
+
+## Cleanup & Audit Pass (2026-07-26)
+
+### Audit & Fix Summary
+
+1. **`agents/codex/AWAKENING.md` Audit**:
+   - Verified content. Confirmed path references point to `agents/overwatch_workflow.md`.
+
+2. **`.env` Path Sweep (`arbitr8der_package/`)**:
+   - Swept all `.py` files in `trading_studio/arbitr8der_package/`.
+   - Confirmed only `typed_configuration_settings_module.py` handles loading `.env` (`ARBITR8DER/.env` at repo root). Zero hardcoded `.env` paths in package code.
+
+3. **`trading_studio/scripts/` Audit & Refactor**:
+   - `execute_paper_bid.py`: Removed hardcoded expired ticker (`KXBTC15M-26JUL262230-30`). Refactored to dynamically discover active Kalshi BTC 15M markets via `KalshiRestMarketDiscoveryClient` or take CLI arguments `[TICKER] [SIDE] [CONTRACTS] [PRICE_CENTS]`.
+   - `fetch_real_balance.py`: Standardized import formatting and path resolution using `Path(__file__).resolve()`.
+   - `run_ai_trading_session.py`: Verified dynamic market discovery (`orchestrator.active_markets()`). Cleaned unused imports and fixed formatting for ruff compliance.
+
+4. **`.gitignore` Audit & Fixes**:
+   - Created missing `trading_studio/runtime/.gitignore` (`*`, `!.gitignore`) to keep the runtime directory tracked while ignoring generated databases, logs, state, and archives.
+   - Fixed root `.gitignore`: Updated line 19 from `runtime/` to `/runtime/` to avoid inadvertently matching `trading_studio/runtime/`.
+
+5. **Linter Verification**:
+   - `ruff check scripts/` and `ruff format --check scripts/` both pass with 0 errors.
+
+
