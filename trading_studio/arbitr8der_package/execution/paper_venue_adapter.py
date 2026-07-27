@@ -625,7 +625,7 @@ class PaperVenueAdapter:
             if outcome_val is None and discovery_client is not None:
                 try:
                     detail = await discovery_client.get_market_detail(position.ticker)
-                    if detail and detail.status.lower() in ("settled", "closed"):
+                    if detail and detail.status.lower() in ("settled", "closed", "finalized"):
                         result = detail.raw.get("result")
                         if result == "yes":
                             outcome_val = 1
