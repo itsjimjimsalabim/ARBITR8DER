@@ -88,6 +88,8 @@ ARBITR8DER/
     Product_Requirements_&_Theories_of_Operations.md <- product requirements + operating theory
     dev_log.md            <- current development log
     KEYS                  <- ignored local key notes
+    qwen_local_model_ops_guide.md <- local Ollama/Qwen runtime guide + machine inventory
+    System Information (PC SPECS).txt <- verified hardware inventory for this laptop
     claude/               <- Agent Claude desk (CLAUDE.md only, points here)
     opencode/             <- Agent OpenCode desk (docs, launchers, session history)
     codex/                <- Codex desk
@@ -224,6 +226,28 @@ Since both OSes access the same filesystem via `/mnt/c/`, one project-level `ope
 Session chats live at: `~/.openclaude/projects/C--Users-itsji-openclaude/*.jsonl`
 See `agents/openclaude/README.md` for full pointers.
 
+## Local Machine Tool Inventory
+
+Current verified tools on this laptop:
+
+| Tool | Verify | Version | Notes |
+|------|--------|---------|-------|
+| Git | `git --version` | `2.55.0.windows.2` | source control |
+| GitHub CLI | `gh --version` | `2.96.0` | push/pull/PR tooling |
+| Python | `python --version` | `3.12.4` | primary interpreter here; use `python`, not `python3` |
+| Node.js | `node --version` | `v24.18.0` | JavaScript tooling |
+| Bun | `bun --version` | `1.3.14` | OpenCode / JS runtime support |
+| Ollama | `ollama --version` | `0.32.3` | local model runtime |
+
+Installed local Ollama models:
+
+| Model | Size | Role |
+|-------|------|------|
+| `qwen3:4b-instruct` | `2.5 GB` | small manager / router |
+| `qwen3-coder:30b` | `18 GB` | large on-demand coding worker |
+
+Download and progress checks live in `agents/qwen_local_model_ops_guide.md`.
+
 ---
 
 ## Build, Test, Debug
@@ -231,9 +255,11 @@ See `agents/openclaude/README.md` for full pointers.
 ### Prerequisites
 | Dependency | Version | Verify |
 |-----------|---------|--------|
-| Python | >= 3.12 | `python3 --version` |
+| Python | >= 3.12 | `python --version` |
 | Node.js | >= 22.0.0 | `node --version` |
 | Bun | latest | `bun --version` |
+
+On this Windows shell, `python3` is not an alias. Use `python`.
 
 ### Install
 ```bash

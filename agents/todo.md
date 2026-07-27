@@ -28,18 +28,6 @@ We built a lot vibecoding. We now have to audit, review, and clean. Goals: stop 
 - [x] Restore `agents/overwatch_workflow.md` and `agents/github_connectivity.md` from `agents/_archive/2026-07-23-root-cleanup/` so all doc references resolve
 - [x] Consolidate `.env`: removed `trading_studio/.env`; single source of truth is `ARBITR8DER/.env` at repo root
 - [x] `trading_studio/.env.example` reduced to a pointer comment that directs operators to `ARBITR8DER/.env`
-- [x] `TradingStudioSettings` (`typed_configuration_settings_module.py`) now resolves `.env` by absolute path from package location, not CWD
-- [x] Remove `.qodo/` directory; gitignore it
-- [x] Remove vestigial empty `runtime/` at repo root; gitignore it so it never comes back
-- [x] Update root `.gitignore` to cover: root `runtime/`, `.qodo/`, VSCode-like extension junk
-- [x] Fix `agents/agents.md` Directory Layout (was listing `src/`, `scripts/`, `config/`, `tests/`, `runtime/` at the repo root — they live under `trading_studio/`)
-- [x] Fix `README.md` and `CLAUDE.md` references (overwatch_workflow / github_connectivity now resolve)
-- [x] `arb version` + `arb status` smoke test after rewiring
-- [x] Append today's dev_log.md entry
-
-### Audit backlog (next agent picks these up)
-- [ ] Sweep every file in `agents/` for stale path references (openclaude/opencode/codex/gemini/kilo desks)
-- [ ] Audit `agents/opencode/prompts_windows.md` and `prompts_ubuntu.md` — known to contain old `docs/onboarding_workflow.md` and `C:\Users\...\ARBITR8DER\overwatch_workflow.md` paths
 - [ ] Audit `agents/codex/AWAKENING.md` — references `docs/overwatch_workflow.md`
 - [ ] Audit root stale placeholders (`pyproject.toml`, `requirements.txt`, `requirements-dev.txt`, `.env.example`) — decide: delete vs keep with pointer comment (current: kept as pointers)
 - [ ] Sweep `trading_studio/arbitr8der_package/` for any hardcoded `.env` paths other than the settings module
@@ -118,7 +106,7 @@ Risk controls, paper venue adapter, reconciliation module, and REPL trading comm
 - [x] `--set-balance` flag updates paper wallet to match
 - [x] Default balance: $17.00 (your real Kalshi balance)
 
-## Phase 8: Prediction System ← CURRENT
+## Phase 8: Prediction System ← COMPLETE
 
 Dual-horizon prediction models for BTC/ETH 15-minute markets.
 
@@ -259,6 +247,20 @@ From domain knowledge and backtesting experience:
 - [x] 1m→15m candle aggregation
 - [x] Predict --model flag (baseline|macro|micro|auto)
 
+### Paper Trading Readiness (2026-07-26)
+- [ ] Run a preflight check before `autotrade on`: fresh snapshot, active Kalshi ticker, recent candles, wallet status, and model availability.
+- [ ] Make the auto-trade risk estimate price-aware for market orders so the risk gate uses the real midpoint instead of a fixed 50c fallback.
+- [ ] Persist auto-trade decisions and skip reasons outside memory so a restart does not erase the audit trail.
+- [ ] Expose an auto-trade heartbeat / last-evaluated timestamp in `autotrade status` so a stalled loop is visible quickly.
+- [ ] Add integration tests for `autotrade on|off|status`, one-trade-per-window gating, and the main skip paths (`no_snapshot`, `no_midpoint`, `no_candles`, stale data, risk block).
+- [ ] Define the unattended-session kill switch: max loss, max trades, and the manual stop command the operator should use first.
+- [ ] Reconcile and display any existing paper positions and wallet state at startup before enabling autonomous trades.
+
+### Local Model Setup Docs (2026-07-26)
+- [x] Create `agents/qwen_local_model_ops_guide.md` with the Qwen manager/coder split, download checks, and PC impact notes.
+- [x] Update `agents/agents.md` with the verified machine tool inventory and current Ollama models.
+- [x] Update `agents/onboarding_workflow.md` so new agents can find the local model guide during onboarding.
+
 ### Short-term
 - [ ] Push local commits to GitHub — GitHub push protection blocks PAT in old commit ac2e110 (agents/KEYS). Either unblock via the GitHub secret-scanning URL, or rebase to remove the PAT from history. KEYS is now gitignored and PAT redacted locally.
 - [ ] Kalshi WebSocket prediction feed integration
@@ -283,7 +285,7 @@ From domain knowledge and backtesting experience:
 | 5 | Forecast Evidence | DONE |
 | 6 | Operator Workflow | DONE |
 | 7 | PAPER Order Lifecycle | DONE |
-| 8 | Prediction System | IN PROGRESS (8a-8i done, 8j next) |
+| 8 | Prediction System | DONE (8a-8l complete) |
 | 9 | ARMED Transition | PENDING |
 
 ## Test Status

@@ -120,7 +120,7 @@ class FeatureExtractionEngine:
         self,
         asset: str,
         snapshot_version: int,
-        snapshot: Any,
+        snapshot: Any | None = None,
         candles: list[Any] | None = None,
         kalshi_market: Any = None,
         coingecko_obs: Any = None,

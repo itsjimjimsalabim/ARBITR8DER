@@ -185,6 +185,8 @@ class SnapshotMerger:
             if kalshi_event:
                 if kalshi_event.yes_bid is not None and kalshi_event.yes_ask is not None:
                     midpoint = round((kalshi_event.yes_bid + kalshi_event.yes_ask) / 2)
+                elif getattr(kalshi_event, "midpoint", None) is not None:
+                    midpoint = int(kalshi_event.midpoint)
                 elif polymarket_event:
                     midpoint = round(polymarket_event.yes_price * 100)
 

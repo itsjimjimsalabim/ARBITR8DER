@@ -63,8 +63,8 @@ def aggregate_1m_to_15m_candles(one_minute_candles: list[dict]) -> list[dict]:
         lows = [c["low"] for c in candles]
         closes = [c["close"] for c in candles]
         volumes = [c["volume"] for c in candles]
-        quote_volumes = [c.get("quote_volume", 0.0) for c in candles]
-        trades_list = [c.get("trades", 0) for c in candles]
+        quote_volumes = [c.get("quote_volume") or 0.0 for c in candles]
+        trades_list = [c.get("trades") or 0 for c in candles]
 
         result.append({
             "asset": candles[0]["asset"],

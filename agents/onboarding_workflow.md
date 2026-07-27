@@ -43,6 +43,8 @@ ARBITR8DER/                                  <- repo root, canonical home
 │   ├── kalshi_websocket_debugging_reference.md
 │   ├── prediction_system_plan.md
 │   ├── trading_studio_build_plan.md
+│   ├── qwen_local_model_ops_guide.md        <- local Ollama/Qwen runtime guide + machine inventory
+│   ├── System Information (PC SPECS).txt    <- verified hardware inventory for this laptop
 │   ├── KEYS                                 <- gitignored local key notes
 │   ├── _archive/                            <- historical reference only
 │   │   └── 2026-07-23-root-cleanup/
@@ -91,6 +93,8 @@ Read in this exact order. Each file is short and assumes the previous:
 Optional, when relevant:
 - `agents/prediction_system_plan.md` — design notes for Phase 8 prediction work.
 - `agents/kalshi_websocket_debugging_reference.md` — Kalshi WS auth gotchas.
+- `agents/qwen_local_model_ops_guide.md` — local Ollama/Qwen model roles, progress checks, and machine inventory.
+- `agents/System Information (PC SPECS).txt` — hardware reference for CPU/RAM/disk sizing and model choice.
 - `agents/_archive/2026-07-23-root-cleanup/` — historical only, not operating instructions.
 
 ---

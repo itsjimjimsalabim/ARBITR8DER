@@ -10,6 +10,27 @@
 
 **Profits.** Build software to give us all the tools and data required to become an effective prediction market trader. Primary execution venue: Kalshi BTC/ETH 15-minute markets. PAPER mode first, ARMED when ready.
 
+## 2026-07-26: Phase 8 Optimization, Data Backfills & Paper Trading Runner (Antigravity)
+
+### What Was Done
+
+**Fixed Ingestion & Prediction Engine Bugs:**
+- **`candle_collection_battery.py`**: Fixed `self._binance_usable` / `self._coinbase_usable` attribute lookups to reference `self._state.binance_usable` and `self._state.coinbase_usable`, enabling automated historical candle backfill from Binance.US and Coinbase REST endpoints.
+- **`backtest_engine.py`**: Updated `aggregate_1m_to_15m_candles` to safely default `None` values in `quote_volume` and `trades` from Coinbase sources.
+- **`event_data_models.py`**: Fixed `KalshiOrderBookEvent` depth typing to accept `dict[int, float]` alongside `list[OrderBookLevel]`, resolving Pydantic validation errors on live orderbook snapshot updates.
+- **`hot_snapshot_merger.py`**: Added fallback to `kalshi_event.midpoint` so `HotSnapshot` retains continuous Kalshi pricing.
+- **`cli_application_entrypoint_main.py`**: Fixed `arb predict` command to execute predictions via `BaselinePredictionEngine` and updated `arb status` owner reporting.
+
+**Data Seeding & Backtesting:**
+- Ingested **10,000 1-minute historical candles** (5,000 BTC, 5,000 ETH) and aggregated 334 15-minute candles.
+- Derived **133 15-minute market outcomes** in SQLite (`prediction.db`).
+- Ran walk-forward backtest suite:
+  - **Macro Model (LightGBM + Frequency Lookup)**: 89.5% accuracy, Brier score 0.0943, +2,272.3¢ PnL. Top features: `streak_direction` (333.9), `return_1` (295.0), `body_ratio` (44.1).
+  - **Micro Model (Logistic Regression + Momentum Lookup)**: 85.3% accuracy, Brier score 0.1629, +5,195.6¢ PnL, Sharpe 120.1.
+
+**Paper Trading Session Script:**
+- Created `scripts/run_ai_trading_session.py` to drive complete live paper trading sessions (Vessel FSM state transition `Full_Stop` -> `Battery` -> `Full_Forward`, real-time 8-stream data ingestion, Kalshi RSA-PSS WebSocket authentication, model prediction, edge evaluation, paper order fill simulation, and trade journaling).
+
 ---
 
 ## 2026-07-26: Phase 8l Completion - Auto-Trading Wiring

@@ -116,9 +116,8 @@ class KalshiOrderBookEvent(ProviderEvent):
     yes_bid: int | None = Field(default=None, ge=0, le=100)
     yes_ask: int | None = Field(default=None, ge=0, le=100)
     no_bid: int | None = Field(default=None, ge=0, le=100)
-    no_ask: int | None = Field(default=None, ge=0, le=100)
-    yes_depth: list[OrderBookLevel] = Field(default_factory=list)
-    no_depth: list[OrderBookLevel] = Field(default_factory=list)
+    yes_depth: list[OrderBookLevel] | dict[int, float] | Any = Field(default_factory=list)
+    no_depth: list[OrderBookLevel] | dict[int, float] | Any = Field(default_factory=list)
     last_sequence: int | None = None
     fee_rate_bps: float | None = None
     is_snapshot: bool = True

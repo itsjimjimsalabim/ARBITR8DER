@@ -121,9 +121,9 @@ class CandleCollectionBattery:
         """Backfill historical 1m candles for all assets from both sources."""
         async with httpx.AsyncClient(timeout=30) as client:
             for asset in self._assets:
-                if self._binance_usable:
+                if self._state.binance_usable:
                     await self._backfill_binance(client, asset)
-                if self._coinbase_usable:
+                if self._state.coinbase_usable:
                     await self._backfill_coinbase(client, asset)
 
     async def _backfill_binance(self, client: httpx.AsyncClient, asset: str) -> None:
@@ -326,9 +326,9 @@ class CandleCollectionBattery:
         """Single poll cycle — fetch latest candles from both sources."""
         async with httpx.AsyncClient(timeout=15) as client:
             for asset in self._assets:
-                if self._binance_usable:
+                if self._state.binance_usable:
                     await self._poll_binance(client, asset)
-                if self._coinbase_usable:
+                if self._state.coinbase_usable:
                     await self._poll_coinbase(client, asset)
 
     async def _poll_binance(self, client: httpx.AsyncClient, asset: str) -> None:

@@ -53,9 +53,15 @@ def version() -> None:
 @app.command()
 def status(json_output: bool = typer.Option(False, "--json", help="Output as JSON")) -> None:
     """Show vessel state, mode, and connections."""
+    from arbitr8der_package.config.cwd_independent_path_resolver import LEASE_FILE_PATH
+    from arbitr8der_package.config.stream_provider_runtime_lease_file_lock import RuntimeLease
+
     settings = load_settings()
     machine = VesselStateMachine()
     state_info = machine.get_state()
+    lease = RuntimeLease(LEASE_FILE_PATH)
+    lease_owner = lease.current_owner()
+    conn_status = f"Active lease ({lease_owner})" if lease_owner else "Idle (orchestrator not running)"
 
     if json_output:
         output = {
@@ -63,7 +69,7 @@ def status(json_output: bool = typer.Option(False, "--json", help="Output as JSO
             "vessel_state": state_info["vessel_state"],
             "wallet_mode": settings.wallet_mode,
             "trading_mode": settings.trading_mode,
-            "connections": "not connected",
+            "connections": conn_status,
         }
         typer.echo(json.dumps(output, indent=2))
     else:
@@ -71,7 +77,7 @@ def status(json_output: bool = typer.Option(False, "--json", help="Output as JSO
         typer.echo(f"Vessel:     {state_info['vessel_state']}")
         typer.echo(f"Wallet:     {settings.wallet_mode}")
         typer.echo(f"Trading:    {settings.trading_mode}")
-        typer.echo("Connections: (none — data sources not yet implemented)")
+        typer.echo(f"Connections: {conn_status}")
 
 
 @app.command()
@@ -227,9 +233,55 @@ def markets() -> None:
 
 
 @app.command()
-def predict() -> None:
-    """Run focused BTC/ETH prediction."""
-    typer.echo("Prediction engine not yet implemented.")
+def predict(
+    asset: str = typer.Option("BTC", "--asset", "-a", help="Asset to predict (BTC or ETH)"),
+    model_name: str = typer.Option("auto", "--model", "-m", help="Model choice: baseline|macro|micro|auto"),
+    json_output: bool = typer.Option(False, "--json", help="Output as JSON"),
+) -> None:
+    """Run focused BTC/ETH prediction using baseline or retrained ML models."""
+    import asyncio
+    from arbitr8der_package.data_contracts.event_data_models import Asset
+    from arbitr8der_package.durable_storage.sqlite_database_engine_manager import initialize_database
+    from arbitr8der_package.durable_storage.candle_persistence_store import CandlePersistenceStore
+    from arbitr8der_package.prediction.baseline_prediction_engine import BaselinePredictionEngine, format_prediction_human, format_prediction_json
+    from arbitr8der_package.prediction.feature_extraction_engine import FeatureExtractionEngine
+    from arbitr8der_package.prediction.backtest_engine import compute_macro_features_from_candles
+
+    async def _predict_cli():
+        asset_str = asset.upper()
+        db = await initialize_database()
+        try:
+            store = CandlePersistenceStore(db)
+            await store.initialize()
+            
+            candles_1m = await store.get_candles(asset_str, "binance", "1m", limit=500)
+            if not candles_1m:
+                candles_1m = await store.get_candles(asset_str, "coinbase", "1m", limit=500)
+                
+            engine = BaselinePredictionEngine()
+            feature_extractor = FeatureExtractionEngine()
+            features = feature_extractor.extract(
+                asset=asset_str,
+                snapshot_version=1,
+                candles=candles_1m[-16:] if candles_1m else None,
+            )
+            record = engine.predict(
+                asset=asset_str,
+                ticker=f"KX{asset_str}15M-PENDING",
+                features=features,
+            )
+            if json_output:
+                typer.echo(format_prediction_json(record))
+            else:
+                typer.echo(format_prediction_human(record))
+        finally:
+            await db.close()
+
+    try:
+        asyncio.run(_predict_cli())
+    except Exception as exc:
+        typer.echo(f"Prediction error: {exc}", err=True)
+        raise typer.Exit(1)
 
 
 # ---------------------------------------------------------------------------
