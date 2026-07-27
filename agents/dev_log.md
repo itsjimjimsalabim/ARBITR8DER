@@ -780,3 +780,30 @@ Open paper positions and filled paper orders persisted indefinitely, even past t
 
 
 
+
+## Phase 9: Patient Limit Order Execution & Immediate Retraining Pipeline (2026-07-27)
+
+### Problem
+1. When predicting whether a contract would move up or down, the trading engine always executed orders at the current market midpoint (YES) or `100 - midpoint` (NO). However, prices drift over time, and buying immediately does not capture maximum edge. We needed a patient limit execution strategy that places limit orders at a discount and executes them asynchronously when the market moves in our favor.
+2. In the auto-scoring engine, periodic retraining was delayed by a 15-minute warmup (10 iterations of 15 seconds), which prevented models from adapting immediately on session startup.
+3. Timezone discrepancies in the settlement watcher unit tests caused the parser (which operates in America/New_York) to misalign with UTC test candles, causing test failures.
+4. An exposed PAT in a dangling commit `ac2e110` blocked pushes.
+
+### Solution
+1. **Patient Limit Execution**: Reprogrammed `AutoTradingEngine` and `PaperVenueAdapter` to support patient limit order submissions at a discount (`midpoint - limit_discount_cents` for YES, `100 - midpoint - discount` for NO). Added `update_pending_orders` to check incoming midpoints and fill limit orders asynchronously when favorable market movements occur.
+2. **Immediate Retraining**: Adjusted `IngestionOrchestrator._run_scoring_engine()` to initialize `cycles_since_retrain = 10` on startup, triggering immediate model retraining on session start.
+3. **Timezone-Robust Unit Tests**: Updated `test_settlement_and_importance.py` to dynamically resolve ticker timestamps using `_parse_window_time` for candle insertion, resolving all timezone and DST misalignment failures.
+4. **Git PAT Excision**: Expired reflogs and pruned dangling commits using `git gc --prune=now --aggressive` to completely remove `ac2e110` from the repository history.
+
+### Files Modified
+- `trading_studio/arbitr8der_package/execution/auto_trading_engine.py`
+- `trading_studio/arbitr8der_package/execution/paper_venue_adapter.py`
+- `trading_studio/arbitr8der_package/prediction/auto_scoring_engine.py`
+- `trading_studio/arbitr8der_package/prediction/settlement_watcher.py`
+- `trading_studio/arbitr8der_package/data_sources/ingestion_orchestrator.py`
+- `trading_studio/tests/test_settlement_and_importance.py`
+- `trading_studio/tests/test_paper_trading_readiness.py`
+- `agents/todo.md`
+- `agents/dev_log.md` (this entry)
+
+
