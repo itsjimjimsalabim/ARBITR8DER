@@ -233,8 +233,13 @@ class PaperVenueAdapter:
                 balance_cents = data["balance"]
                 balance_usd = balance_cents / 100.0
                 self._wallet.balance = balance_usd
-                self._save_wallet()
-                logger.info("Synced paper wallet balance to live Kalshi balance: $%.2f", balance_usd)
+                self._wallet.starting_balance = balance_usd
+                self._conn.execute(
+                    "UPDATE wallet SET balance=?, starting_balance=? WHERE id=1",
+                    (balance_usd, balance_usd)
+                )
+                self._conn.commit()
+                logger.info("Synced paper wallet balance and starting balance to live Kalshi balance: $%.2f", balance_usd)
                 return balance_usd
         except Exception as e:
             logger.warning("Failed to sync live Kalshi balance: %s", e)

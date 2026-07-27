@@ -218,6 +218,10 @@ class TradingREPL:
         self._running = True
         print("Data ingestion running. Type 'help' for commands.\n")
 
+        # Settle any expired paper positions from previous runs on startup
+        if self._venue is not None:
+            self._sync_settle_expired_positions()
+
         self._repl_loop()
 
     def _repl_loop(self) -> None:

@@ -44,17 +44,30 @@ async def run_trading_session(duration_seconds: int = 45) -> None:
         print("Error: Could not acquire stream lease.")
         return
 
-    # Sync live portfolio balance on session start
+    # Sync live portfolio balance on session start and settle expired positions
     paper_venue = orchestrator.paper_venue
     discovery = orchestrator.discovery_client
+    candle_store = orchestrator.candle_store
     real_kalshi_balance_usd = None
-    if paper_venue and discovery:
+    if paper_venue and discovery and candle_store:
         print("Syncing live Kalshi portfolio balance...")
         real_kalshi_balance_usd = await paper_venue.sync_live_balance(discovery)
         if real_kalshi_balance_usd is not None:
             print(f"Live Portfolio Balance Synced: ${real_kalshi_balance_usd:,.2f}")
         else:
             print("Failed to sync live portfolio balance, falling back to cached paper wallet balance.")
+
+        print("Checking and settling any expired paper positions from previous sessions...")
+        try:
+            settled = await paper_venue.settle_expired_positions(candle_store, discovery)
+            if settled:
+                print(f"Settled {len(settled)} expired positions on startup:")
+                for s in settled:
+                    print(f"  {s.ticker} ({s.side}): outcome={s.outcome}, PnL=${s.pnl:+.2f}")
+            else:
+                print("No expired positions to settle on startup.")
+        except Exception as e:
+            print(f"Warning: Failed to settle expired positions on startup: {e}")
 
     # Enable auto-trader
     if orchestrator.auto_trader:
