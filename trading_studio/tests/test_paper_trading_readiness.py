@@ -73,7 +73,7 @@ async def test_auto_trade_lifecycle_commands(tmp_path):
         market_ticker_getter=lambda a: None,
         paper_venue=paper_venue,
         risk_controller=risk_controller,
-        vessel_state_getter=lambda: "full_stop"
+        vessel_state_getter=lambda: "full_stop",
     )
 
     assert engine.enabled is False
@@ -102,11 +102,7 @@ async def test_auto_trade_skip_paths(tmp_path):
     risk_controller = RiskController()
 
     # State tracking
-    mock_snapshot = SimpleNamespace(
-        snapshot_version=100,
-        created_ts=datetime.now(UTC),
-        kalshi_midpoint_cents=None
-    )
+    mock_snapshot = SimpleNamespace(snapshot_version=100, created_ts=datetime.now(UTC), kalshi_midpoint_cents=None)
 
     def snapshot_getter(asset):
         if asset == "BTC":
@@ -121,7 +117,7 @@ async def test_auto_trade_skip_paths(tmp_path):
         market_ticker_getter=lambda a: "KXBTC",
         paper_venue=paper_venue,
         risk_controller=risk_controller,
-        vessel_state_getter=lambda: "full_forward"
+        vessel_state_getter=lambda: "full_forward",
     )
 
     def no_op_compute(candles, window_ts):
@@ -147,7 +143,7 @@ async def test_auto_trade_skip_paths(tmp_path):
 
     class FakeModel:
         def predict(self, features):
-            return SimpleNamespace(yes_probability=0.55, confidence=0.8) # 55% prob vs 55c midpoint = 0 edge
+            return SimpleNamespace(yes_probability=0.55, confidence=0.8)  # 55% prob vs 55c midpoint = 0 edge
 
     scoring_engine.get_macro_model.return_value = FakeModel()
 
@@ -157,7 +153,7 @@ async def test_auto_trade_skip_paths(tmp_path):
     # Path 4: One trade per window (force a successful trade, then re-evaluate)
     class FakeModelHighEdge:
         def predict(self, features):
-            return SimpleNamespace(yes_probability=0.85, confidence=0.8) # 85% prob vs 55c midpoint = 30% edge
+            return SimpleNamespace(yes_probability=0.85, confidence=0.8)  # 85% prob vs 55c midpoint = 30% edge
 
     scoring_engine.get_macro_model.return_value = FakeModelHighEdge()
 
@@ -169,3 +165,100 @@ async def test_auto_trade_skip_paths(tmp_path):
     assert engine.recent_decisions[-1].skip_reason == "window_already_traded"
 
     paper_venue.close()
+
+
+@pytest.mark.asyncio
+async def test_auto_settlement(tmp_path):
+    """Test automated paper position settlement on expiration."""
+    # 1. Initialize adapter
+    adapter = PaperVenueAdapter(db_path=tmp_path / "paper_wallet.db", initial_balance=100.0)
+
+    # 2. Place an order on an expired ticker
+    # Target ticker has open time: 2026-07-26 12:00:00 UTC (timestamp: 1785067200)
+    # Using format: KXBTC15M-26JUL26T1200
+    ticker = "KXBTC15M-26JUL26T1200"
+    order = adapter.submit_order(
+        asset="BTC",
+        side="yes",
+        contracts=10,
+        ticker=ticker,
+        midpoint_cents=40.0,
+    )
+    assert order.status == "filled"
+    assert len(adapter.get_open_positions()) == 1
+
+    # 3. Setup mock candle store with outcomes DB
+    mock_db = AsyncMock()
+    mock_cursor = AsyncMock()
+    # Mock return value of outcomes query: direction = "UP" (YES wins)
+    mock_cursor.fetchone.return_value = ("UP",)
+    mock_db.execute.return_value = mock_cursor
+
+    class FakeCandleStore:
+        def __init__(self):
+            self._db = mock_db
+
+    candle_store = FakeCandleStore()
+
+    # 4. Settle expired positions
+    # Ticker has window open 1785067200, expires at 1785067200 + 900.
+    # We mock time.time to be past expiration.
+    from unittest.mock import patch
+
+    with patch("time.time", return_value=1785067200 + 1000):
+        settled_orders = await adapter.settle_expired_positions(candle_store=candle_store)
+
+    assert len(settled_orders) == 1
+    assert settled_orders[0].status == "settled"
+    assert settled_orders[0].outcome == 1  # YES won because direction is "UP"
+    # Payout is 100c ($1.00) per contract. We bought 10 contracts @ 40c ($4.00 total cost).
+    # PnL should be $6.00. Balance should be initial $100.00 - $4.00 cost + $10.00 payout = $106.00.
+    assert settled_orders[0].pnl == 6.0
+    assert adapter.get_wallet().balance == 106.0
+    assert len(adapter.get_open_positions()) == 0
+
+    adapter.close()
+
+
+@pytest.mark.asyncio
+async def test_auto_settlement_rest_fallback(tmp_path):
+    """Test automated paper position settlement falling back to Kalshi REST detail."""
+    adapter = PaperVenueAdapter(db_path=tmp_path / "paper_wallet.db", initial_balance=100.0)
+
+    ticker = "KXBTC15M-26JUL26T1200"
+    order = adapter.submit_order(
+        asset="BTC",
+        side="no",  # We buy NO contracts @ 30c
+        contracts=10,
+        ticker=ticker,
+        midpoint_cents=70.0,  # YES midpoint is 70c, so NO costs 30c
+    )
+    assert order.status == "filled"
+
+    # Mock discovery client returning settled market with result "yes" (YES wins, so NO loses)
+    mock_discovery = AsyncMock()
+    mock_detail = MagicMock()
+    mock_detail.status = "settled"
+    mock_detail.reference_price = 60000.0
+    mock_detail.raw = {"result": "yes"}
+    mock_discovery.get_market_detail.return_value = mock_detail
+
+
+
+    from unittest.mock import patch
+
+    with patch("time.time", return_value=1785067200 + 1000):
+        settled_orders = await adapter.settle_expired_positions(
+            candle_store=None,
+            discovery_client=mock_discovery,
+        )
+
+    assert len(settled_orders) == 1
+    assert settled_orders[0].status == "settled"
+    assert settled_orders[0].outcome == 1  # YES won
+    # NO lost. We spent 10 contracts * 30c = $3.00. Balance should be $100.00 - $3.00 = $97.00.
+    assert settled_orders[0].pnl == -3.0
+    assert adapter.get_wallet().balance == 97.0
+    assert len(adapter.get_open_positions()) == 0
+
+    adapter.close()

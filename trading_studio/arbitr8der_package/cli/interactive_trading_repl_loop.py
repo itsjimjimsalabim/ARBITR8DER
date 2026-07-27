@@ -856,8 +856,25 @@ Commands:
     # Phase 7: Trading Commands
     # ------------------------------------------------------------------
 
+    def _sync_settle_expired_positions(self) -> None:
+        """Settle any expired paper positions synchronously."""
+        if self._orchestrator and self._loop:
+            candle_store = self._orchestrator.candle_store
+            discovery = self._orchestrator._kalshi_rest
+            future = asyncio.run_coroutine_threadsafe(
+                self._venue.settle_expired_positions(candle_store, discovery),
+                self._loop
+            )
+            try:
+                settled = future.result(timeout=5.0)
+                if settled:
+                    print(f"Auto-settled {len(settled)} expired position(s).")
+            except Exception as e:
+                logger.warning("Failed to auto-settle expired positions: %s", e)
+
     def _cmd_positions(self, _args: str) -> None:
-        """Show open paper positions."""
+        """Show open paper positions with unrealized PnL."""
+        self._sync_settle_expired_positions()
         positions = self._venue.get_open_positions()
         wallet = self._venue.get_wallet()
 
@@ -867,16 +884,55 @@ Commands:
             return
 
         print(f"Open positions ({len(positions)}):")
-        print(f"{'TICKER':30s} {'SIDE':5s} {'CONTRACTS':>10s} {'AVG ENTRY':>10s} {'COST':>10s}")
-        print("-" * 70)
+        print(
+            f"{'TICKER':30s} {'SIDE':5s} {'CONTRACTS':>10s} {'AVG ENTRY':>10s} {'MID':>10s} {'COST':>10s} {'VALUE':>10s} {'UNREAL PNL':>12s}"
+        )
+        print("-" * 104)
 
         total_cost = 0.0
-        for p in positions:
-            print(f"{p.ticker:30s} {p.side:5s} {p.contracts:>10d} {p.avg_entry_cents:>9.1f}c {p.total_cost_usd:>10.2f}")
-            total_cost += p.total_cost_usd
+        total_value = 0.0
+        total_pnl = 0.0
 
-        print("-" * 70)
-        print(f"{'Total exposure:':30s} {'':5s} {'':>10s} {'':>10s} {total_cost:>10.2f}")
+        for p in positions:
+            cost = p.total_cost_usd
+            total_cost += cost
+
+            # Calculate current value and unrealized PnL using latest snapshot midpoint
+            mid_cents = None
+            if self._orchestrator:
+                snapshot = self._orchestrator.latest_snapshot(p.asset)
+                if snapshot and snapshot.kalshi_midpoint_cents is not None:
+                    raw_val = snapshot.kalshi_midpoint_cents
+                    if isinstance(raw_val, (int, float)) and not isinstance(raw_val, bool):
+                        mid_cents = raw_val
+
+            if mid_cents is not None:
+                if p.side.lower() == "yes":
+                    value = p.contracts * mid_cents / 100.0
+                else:
+                    value = p.contracts * (100.0 - mid_cents) / 100.0
+                pnl = value - cost
+                total_value += value
+                total_pnl += pnl
+
+                mid_str = f"{mid_cents:.1f}c"
+                val_str = f"${value:.2f}"
+                pnl_str = f"${pnl:+.2f}"
+            else:
+                mid_str = "N/A"
+                val_str = "N/A"
+                pnl_str = "N/A"
+
+            print(
+                f"{p.ticker:30s} {p.side:5s} {p.contracts:>10d} {p.avg_entry_cents:>9.1f}c {mid_str:>10s} {cost:>10.2f} {val_str:>10s} {pnl_str:>12s}"
+            )
+
+        print("-" * 104)
+        val_summary = f"${total_value:.2f}" if total_value > 0 else "N/A"
+        pnl_summary = f"${total_pnl:+.2f}" if total_value > 0 else "N/A"
+        print(
+            f"{'Total exposure:':30s} {'':5s} {'':>10s} {'':>10s} {'':>10s} {total_cost:>10.2f} {val_summary:>10s} {pnl_summary:>12s}"
+        )
         print(f"Wallet: ${wallet.balance:.2f} (PnL: ${wallet.total_pnl:+.2f})")
 
     def _cmd_buy(self, args: str) -> None:
@@ -1148,6 +1204,7 @@ Commands:
 
     def _cmd_wallet(self, _args: str) -> None:
         """Show wallet balance and PnL."""
+        self._sync_settle_expired_positions()
         wallet = self._venue.get_wallet()
 
         print("=== PAPER Wallet ===")
@@ -1162,6 +1219,7 @@ Commands:
 
     def _cmd_risk(self, _args: str) -> None:
         """Show risk status and limits."""
+        self._sync_settle_expired_positions()
         status = self._risk.status()
 
         print("=== Risk Status ===")

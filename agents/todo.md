@@ -250,13 +250,13 @@ From domain knowledge and backtesting experience:
 - [ ] Connect Binance WS from WSL (currently geo-blocked; REST fallback works)
 - [x] Auto-trading: place paper orders when edge exceeds threshold
 
-### Phase 9: Live Exchange Physics Realism & Paper Wallet Settlement System (2026-07-26) ← UPCOMING
-- [ ] **Quarter-Hour Auto-Settlement Physics Engine**:
+### Phase 9: Live Exchange Physics Realism & Paper Wallet Settlement System (2026-07-26) ← CURRENT
+- [x] **Quarter-Hour Auto-Settlement Physics Engine**:
   - Auto-settle all open paper positions at every 15-minute market resolution boundary (XX:00, XX:15, XX:30, XX:45).
   - Query official Kalshi settlement REST endpoint (`/markets/{ticker}`) or `SettlementWatcher` for the resolution outcome (`yes` or `no`).
   - Calculate contract payouts: 100c ($1.00 per contract) for winning side, 0c for losing side.
   - Credit cash balance with settlement proceeds and record realized PnL in `PaperVenueAdapter` (`paper_wallet.db`).
-- [ ] **Paper Wallet Physics Realism**:
+- [x] **Paper Wallet Physics Realism**:
   - Align paper wallet mechanics 1:1 with live Kalshi execution (locking position cost on order fill, updating unrealized PnL during open market, auto-closing positions at expiration).
   - Prevent orphaned open positions from persisting past contract expiry across REPL / runner sessions.
 - [ ] **Research & Intelligence Gathering**:

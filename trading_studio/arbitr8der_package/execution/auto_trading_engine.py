@@ -94,6 +94,7 @@ class AutoTradingEngine:
         market_ticker_getter: Callable[[str], str | None],
         paper_venue: PaperVenueAdapter,
         risk_controller: RiskController,
+        discovery_client: Any | None = None,
         vessel_state_getter: Callable[[], str] | None = None,
         edge_threshold_pct: float = 2.0,
         contracts_per_trade: int = 2,
@@ -109,6 +110,7 @@ class AutoTradingEngine:
         self._market_ticker_getter = market_ticker_getter
         self._paper_venue = paper_venue
         self._risk = risk_controller
+        self._discovery_client = discovery_client
         self._vessel_state_getter = vessel_state_getter or (lambda: "full_stop")
         self._edge_threshold_pct = edge_threshold_pct
         self._contracts_per_trade = contracts_per_trade
@@ -309,6 +311,17 @@ class AutoTradingEngine:
     async def _evaluate_all_assets(self) -> None:
         """Evaluate auto-trade opportunity for each asset."""
         start_time = time.perf_counter()
+
+        # Auto-settle any expired paper positions before running new trades
+        try:
+            settled = await self._paper_venue.settle_expired_positions(
+                self._candle_store, self._discovery_client
+            )
+            if settled:
+                logger.info("Auto-trading engine settled %d expired position(s)", len(settled))
+        except Exception as e:
+            logger.error("Auto-trading engine failed to auto-settle expired positions: %s", e)
+
         from arbitr8der_package.prediction.backtest_engine import (
             aggregate_1m_to_15m_candles,
             compute_macro_features_from_candles,

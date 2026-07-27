@@ -14,12 +14,11 @@ Order lifecycle:
 
 from __future__ import annotations
 
-import json
 import sqlite3
 import time
 import uuid
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from dataclasses import asdict, dataclass
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -239,7 +238,7 @@ class PaperVenueAdapter:
         prediction_id: str | None = None,
     ) -> PaperOrder:
         """Submit a paper order. Fills immediately at midpoint (market) or at limit."""
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         order_id = f"paper_{uuid.uuid4().hex[:12]}"
 
         # Determine fill price
@@ -250,7 +249,7 @@ class PaperVenueAdapter:
                 if side == "yes" and midpoint_cents <= limit_cents:
                     fill_price = midpoint_cents  # Fill at market, not limit
                 elif side == "no" and midpoint_cents >= (100 - limit_cents):
-                    fill_price = midpoint_cents  # Fill at market, not limit
+                    fill_price = 100.0 - midpoint_cents  # Fill at market, not limit
                 else:
                     # Limit not reached — stay pending
                     order = PaperOrder(
@@ -271,8 +270,9 @@ class PaperVenueAdapter:
             else:
                 fill_price = float(limit_cents)
         else:
-            # Market order — fill at midpoint
-            fill_price = midpoint_cents if midpoint_cents else 50.0
+            # Market order — fill at midpoint (adjusted for NO contracts)
+            raw_mid = midpoint_cents if midpoint_cents is not None else 50.0
+            fill_price = (100.0 - raw_mid) if side == "no" else raw_mid
 
         # Calculate cost
         fill_cost = contracts * fill_price / 100.0
@@ -382,7 +382,7 @@ class PaperVenueAdapter:
         self._save_wallet()
 
         # Update order
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
         order.settled_at = now
         order.status = "settled"
         order.outcome = outcome
@@ -423,7 +423,7 @@ class PaperVenueAdapter:
             (order.ticker, order.side),
         ).fetchone()
 
-        now = datetime.now(timezone.utc).isoformat()
+        now = datetime.now(UTC).isoformat()
 
         if row:
             # Average into existing position
@@ -575,6 +575,148 @@ class PaperVenueAdapter:
             "pending_orders": len(pending),
             "positions": [p.to_dict() for p in positions],
         }
+
+    async def settle_expired_positions(
+        self,
+        candle_store: Any | None = None,
+        discovery_client: Any | None = None,
+    ) -> list[PaperOrder]:
+        """Auto-settle all open paper positions that have expired.
+
+        Checks the outcomes table or Kalshi REST API for the resolution outcome.
+        Credits cash balance with settlement proceeds and records PnL.
+        """
+        positions = self.get_open_positions()
+        if not positions:
+            return []
+
+        settled_orders = []
+        now_ts = time.time()
+
+        for position in positions:
+            window_open = self._parse_window_time(position.ticker)
+            if window_open is None:
+                continue
+
+            # Kalshi 15m markets close 15 minutes after window open
+            expiration_time = window_open + 900.0
+            if now_ts < expiration_time:
+                # Not expired yet
+                continue
+
+            # Query outcome
+            outcome_val = None
+
+            # 1. Try local candle outcomes table
+            if candle_store is not None:
+                try:
+                    cursor = await candle_store._db.execute(
+                        "SELECT direction FROM outcomes WHERE ticker = ?",
+                        (position.ticker,),
+                    )
+                    row = await cursor.fetchone()
+                    if row:
+                        outcome_val = 1 if row[0].upper() == "UP" else 0
+                        logger.debug("Found outcome for %s in outcomes DB: %d", position.ticker, outcome_val)
+                except Exception as e:
+                    logger.warning("Failed to query outcomes DB for %s: %s", position.ticker, e)
+
+            # 2. Try Kalshi REST API if not resolved locally
+            if outcome_val is None and discovery_client is not None:
+                try:
+                    detail = await discovery_client.get_market_detail(position.ticker)
+                    if detail and detail.status.lower() in ("settled", "closed"):
+                        result = detail.raw.get("result")
+                        if result == "yes":
+                            outcome_val = 1
+                        elif result == "no":
+                            outcome_val = 0
+
+                        # Cache it in outcomes table if we determined it from Kalshi
+                        if outcome_val is not None and candle_store is not None:
+                            try:
+                                direction = "UP" if outcome_val == 1 else "DOWN"
+                                strike_price = detail.reference_price or 0.0
+                                # Record the outcome locally
+                                await candle_store.record_outcome(
+                                    asset=position.asset,
+                                    ticker=position.ticker,
+                                    window_open=window_open,
+                                    window_close=expiration_time,
+                                    open_price=strike_price,
+                                    close_price=strike_price,
+                                    direction=direction,
+                                    magnitude_pct=0.0,
+                                )
+                            except Exception as cache_err:
+                                logger.debug("Failed to cache retrieved outcome for %s: %s", position.ticker, cache_err)
+                except Exception as e:
+                    logger.warning("Failed to query market detail from Kalshi REST for %s: %s", position.ticker, e)
+
+            # 3. If outcome found, settle all filled orders on this ticker
+            if outcome_val is not None:
+                cursor = self._conn.execute(
+                    "SELECT order_id FROM orders WHERE ticker = ? AND status = 'filled'",
+                    (position.ticker,),
+                )
+                rows = cursor.fetchall()
+                for r in rows:
+                    order_id = r["order_id"]
+                    settled_order = self.settle_order(order_id, outcome_val)
+                    if settled_order:
+                        settled_orders.append(settled_order)
+
+        return settled_orders
+
+    def _parse_window_time(self, ticker: str) -> float | None:
+        """Parse the 15m window open time from a Kalshi ticker.
+
+        Ticker format: KXBTC15M-26JUL25T1430 or KXBTC15M-26JUL25-14:30
+        Returns Unix timestamp or None.
+        """
+        import re
+
+        # Try various patterns
+        patterns = [
+            r"KX(BTC|ETH)15M-(\d{2})([A-Z]{3})(\d{2})T(\d{2})(\d{2})",  # 26JUL25T1430
+            r"KX(BTC|ETH)15M-(\d{2})([A-Z]{3})(\d{2})-(\d{2}):(\d{2})",  # 26JUL25-14:30
+            r"KX(BTC|ETH)15M-(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})",      # 20250726T1430
+        ]
+
+        for pattern in patterns:
+            m = re.search(pattern, ticker, re.IGNORECASE)
+            if m:
+                groups = m.groups()
+                try:
+                    if len(groups) == 6 and groups[2].isalpha():
+                        # DD-MON-YYTHHMM format
+                        day = int(groups[1])
+                        month_map = {
+                            "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4,
+                            "MAY": 5, "JUN": 6, "JUL": 7, "AUG": 8,
+                            "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12,
+                        }
+                        month = month_map.get(groups[2].upper(), 0)
+                        year = 2000 + int(groups[3])
+                        hour = int(groups[4])
+                        minute = int(groups[5])
+
+                        dt = datetime(year, month, day, hour, minute, tzinfo=UTC)
+                        return dt.timestamp()
+                    elif len(groups) == 6:
+                        # YYYYMMDDTHHMM format
+                        year = int(groups[0])
+                        month = int(groups[1])
+                        day = int(groups[2])
+                        hour = int(groups[3])
+                        minute = int(groups[4])
+
+                        dt = datetime(year, month, day, hour, minute, tzinfo=UTC)
+                        return dt.timestamp()
+                except (ValueError, KeyError):
+                    continue
+
+        return None
 
     def close(self) -> None:
         """Close the database connection."""

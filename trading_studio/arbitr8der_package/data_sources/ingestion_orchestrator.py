@@ -21,17 +21,15 @@ from __future__ import annotations
 import asyncio
 import time
 import uuid
-from datetime import datetime, timezone
-from pathlib import Path
+from datetime import UTC, datetime
 from typing import Any
 
 import aiosqlite
 
 from arbitr8der_package.config.cwd_independent_path_resolver import LEASE_FILE_PATH, RUNTIME_DIR
-from arbitr8der_package.config.structured_logging_configuration_module import get_logger
 from arbitr8der_package.config.stream_provider_runtime_lease_file_lock import RuntimeLease
-from arbitr8der_package.config.typed_configuration_settings_module import TradingStudioSettings, load_settings
-from arbitr8der_package.durable_storage.candle_persistence_store import CandlePersistenceStore
+from arbitr8der_package.config.structured_logging_configuration_module import get_logger
+from arbitr8der_package.config.typed_configuration_settings_module import load_settings
 from arbitr8der_package.data_contracts.event_data_models import (
     Asset,
     CoinGeckoMacroEvent,
@@ -43,18 +41,31 @@ from arbitr8der_package.data_contracts.event_data_models import (
 )
 from arbitr8der_package.data_contracts.hot_snapshot_merger import SnapshotMerger
 from arbitr8der_package.data_sources.binance_spot_price_stream import BinancePriceObservation, BinanceSpotPriceStream
-from arbitr8der_package.data_sources.coinbase_spot_price_stream import CoinbasePriceObservation, CoinbaseSpotPriceStream
-from arbitr8der_package.data_sources.coingecko_macro_data_poller import CoinGeckoMacroDataPoller, CoinGeckoMacroObservation
-from arbitr8der_package.data_sources.kalshi_orderbook_websocket_client import KalshiOrderBookState, KalshiOrderBookWebSocketClient
-from arbitr8der_package.data_sources.kalshi_rest_market_discovery_client import KalshiMarketDetail, KalshiRestMarketDiscoveryClient
-from arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller import PolymarketSentimentObservation, PolymarketSentimentPoller
 from arbitr8der_package.data_sources.candle_collection_battery import CandleCollectionBattery
+from arbitr8der_package.data_sources.coinbase_spot_price_stream import CoinbasePriceObservation, CoinbaseSpotPriceStream
+from arbitr8der_package.data_sources.coingecko_macro_data_poller import (
+    CoinGeckoMacroDataPoller,
+    CoinGeckoMacroObservation,
+)
+from arbitr8der_package.data_sources.kalshi_orderbook_websocket_client import (
+    KalshiOrderBookState,
+    KalshiOrderBookWebSocketClient,
+)
+from arbitr8der_package.data_sources.kalshi_rest_market_discovery_client import (
+    KalshiMarketDetail,
+    KalshiRestMarketDiscoveryClient,
+)
+from arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller import (
+    PolymarketSentimentObservation,
+    PolymarketSentimentPoller,
+)
 from arbitr8der_package.data_sources.source_health_monitor import SourceHealthMonitor
+from arbitr8der_package.durable_storage.candle_persistence_store import CandlePersistenceStore
+from arbitr8der_package.execution.auto_trading_engine import AutoTradingEngine
+from arbitr8der_package.execution.paper_venue_adapter import PaperVenueAdapter
 from arbitr8der_package.prediction.auto_scoring_engine import AutoScoringEngine
 from arbitr8der_package.prediction.model_run_record_store import ModelRunRecordStore
 from arbitr8der_package.prediction.settlement_watcher import SettlementWatcher
-from arbitr8der_package.execution.auto_trading_engine import AutoTradingEngine
-from arbitr8der_package.execution.paper_venue_adapter import PaperVenueAdapter
 from arbitr8der_package.risk.risk_controls_module import RiskController
 
 logger = get_logger(__name__)
@@ -102,7 +113,7 @@ class IngestionOrchestrator:
         self._coingecko = CoinGeckoMacroDataPoller()
 
         # Core state
-        self._merger = SnapshotMerger(now_fn=lambda: datetime.now(timezone.utc))
+        self._merger = SnapshotMerger(now_fn=lambda: datetime.now(UTC))
         self._health = SourceHealthMonitor(now_fn=time.time)
         self._latest_snapshots: dict[Asset, Any] = {}
         self._active_markets: list[KalshiMarketDetail] = []
@@ -299,6 +310,7 @@ class IngestionOrchestrator:
             market_ticker_getter=self.market_ticker_for_asset,
             paper_venue=self._paper_venue,
             risk_controller=self._risk_controller,
+            discovery_client=self._kalshi_rest,
         )
         self._tasks.append(
             asyncio.create_task(self._auto_trader.start(), name="auto-trader")
@@ -396,10 +408,10 @@ class IngestionOrchestrator:
     async def _on_binance_trade(self, obs: BinancePriceObservation) -> None:
         """Binance trade observation callback."""
         asset = Asset.BTC if obs.symbol.upper().startswith("BTC") else Asset.ETH
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         event = PriceObservationEvent(
             provider_event_id=f"binance-{uuid.uuid4().hex[:8]}",
-            provider_ts=datetime.fromtimestamp(obs.trade_ts, tz=timezone.utc) if obs.trade_ts else now,
+            provider_ts=datetime.fromtimestamp(obs.trade_ts, tz=UTC) if obs.trade_ts else now,
             receive_ts=now,
             source_status=SourceHealthStatus.HEALTHY,
             source=ProviderSource.BINANCE,
@@ -415,7 +427,7 @@ class IngestionOrchestrator:
     async def _on_coinbase_ticker(self, obs: CoinbasePriceObservation) -> None:
         """Coinbase ticker observation callback."""
         asset = Asset.BTC if "BTC" in obs.product_id.upper() else Asset.ETH
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         try:
             ts = datetime.fromisoformat(obs.timestamp.replace("Z", "+00:00")) if obs.timestamp else now
         except Exception:
@@ -438,7 +450,7 @@ class IngestionOrchestrator:
     async def _on_kalshi_update(self, ticker: str, state: KalshiOrderBookState) -> None:
         """Kalshi order book update callback."""
         asset = Asset.BTC if "BTC" in ticker.upper() else Asset.ETH
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         event = KalshiOrderBookEvent(
             provider_event_id=f"kalshi-ws-{uuid.uuid4().hex[:8]}",
             provider_ts=now,
@@ -461,7 +473,7 @@ class IngestionOrchestrator:
     async def _on_polymarket_sentiment(self, obs: PolymarketSentimentObservation) -> None:
         """Polymarket sentiment observation callback."""
         asset = Asset.BTC if "btc" in obs.market_slug.lower() or "bitcoin" in obs.question.lower() else Asset.ETH
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         event = PolymarketSentimentEvent(
             provider_event_id=f"polymarket-{uuid.uuid4().hex[:8]}",
             provider_ts=now,
@@ -479,7 +491,7 @@ class IngestionOrchestrator:
     async def _on_coingecko_update(self, obs: CoinGeckoMacroObservation) -> None:
         """CoinGecko macro observation callback."""
         asset = Asset.BTC if obs.asset.upper() == "BTC" else Asset.ETH
-        now = datetime.now(timezone.utc)
+        now = datetime.now(UTC)
         event = CoinGeckoMacroEvent(
             provider_event_id=f"coingecko-{uuid.uuid4().hex[:8]}",
             provider_ts=now,

@@ -757,3 +757,26 @@ Modified `_cmd_autotrade` in `interactive_trading_repl_loop.py` to:
    - `ruff check scripts/` and `ruff format --check scripts/` both pass with 0 errors.
 
 
+## Phase 9: Live Exchange Physics Realism & Auto-Settlement Engine (2026-07-26)
+
+### Problem
+Open paper positions and filled paper orders persisted indefinitely, even past the 15-minute market contract expiration. There was no background mechanism to automatically resolve expired positions/orders and credit/debit the paper wallet balance with the $1.00 or $0.00 contract payouts, nor was the REPL capable of displaying live unrealized PnL or executing auto-settlements. NO orders also had a bug where they were filled at YES prices (raw midpoint).
+
+### Solution
+1. **Auto-Settlement Physics Engine**: Implemented `settle_expired_positions` in `PaperVenueAdapter`. It checks all open paper positions, determines if their 15-minute expiration time has passed, queries the outcomes database table or the Kalshi REST API `/markets/{ticker}` for the resolution result (`yes`/`no`), records outcomes locally, and calls `settle_order` (credits cash balance with $1.00 payout for winners, $0.00 for losers).
+2. **Auto-Trading Loop Integration**: Wired the auto-settlement checking sequence to run at the start of each auto-trading evaluation tick (`_evaluate_all_assets`), ensuring the risk controller has an up-to-date wallet balance before assessing new opportunities.
+3. **REPL Auto-Settlement & PnL Realism**: Updated the `positions`, `wallet`, and `risk` REPL commands to trigger auto-settlement upon execution. Upgraded the `positions` view to display live unrealized PnL based on the latest market midpoint snapshot (contracts * (midpoint - avg_entry) / 100).
+4. **NO Contract Price Correction**: Fixed the fill price bug for NO side orders in `PaperVenueAdapter.submit_order` so that NO fills are priced at `100 - yes_midpoint` instead of the raw midpoint.
+5. **Testing & Lints**: Wrote integration tests for database and REST-fallback auto-settlement modes. Formatting and lint checks pass cleanly.
+
+### Files Modified
+- `trading_studio/arbitr8der_package/execution/paper_venue_adapter.py`: Added `settle_expired_positions` and corrected NO fill price logic.
+- `trading_studio/arbitr8der_package/execution/auto_trading_engine.py`: Integrated `settle_expired_positions` into `_evaluate_all_assets` and stored `discovery_client`.
+- `trading_studio/arbitr8der_package/data_sources/ingestion_orchestrator.py`: Propagated `self._kalshi_rest` to `AutoTradingEngine`.
+- `trading_studio/arbitr8der_package/cli/interactive_trading_repl_loop.py`: Integrated `_sync_settle_expired_positions`, type-safe midpoint extraction, and unrealized PnL formatting.
+- `trading_studio/tests/test_paper_trading_readiness.py`: Added `test_auto_settlement` and `test_auto_settlement_rest_fallback` unit tests.
+- `agents/todo.md`: Checked off completed items.
+- `agents/dev_log.md`: This entry.
+
+
+
