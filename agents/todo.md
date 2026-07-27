@@ -251,35 +251,35 @@ From domain knowledge and backtesting experience:
 - [ ] Connect Binance WS from WSL (currently geo-blocked; REST fallback works)
 - [x] Auto-trading: place paper orders when edge exceeds threshold
 
-### Phase 9: Live Exchange Physics Realism & Paper Wallet Settlement System (2026-07-26) ← CURRENT
-- [x] **Quarter-Hour Auto-Settlement Physics Engine**:
-  - Auto-settle all open paper positions at every 15-minute market resolution boundary (XX:00, XX:15, XX:30, XX:45).
-  - Query official Kalshi settlement REST endpoint (`/markets/{ticker}`) or `SettlementWatcher` for the resolution outcome (`yes` or `no`).
-  - Calculate contract payouts: 100c ($1.00 per contract) for winning side, 0c for losing side.
-  - Credit cash balance with settlement proceeds and record realized PnL in `PaperVenueAdapter` (`paper_wallet.db`).
-- [x] **Paper Wallet Physics Realism**:
-  - Align paper wallet mechanics 1:1 with live Kalshi execution (locking position cost on order fill, updating unrealized PnL during open market, auto-closing positions at expiration).
-  - Prevent orphaned open positions from persisting past contract expiry across REPL / runner sessions.
-- [ ] **Research & Intelligence Gathering**:
-  - **Kalshi Trading Physics**: Research 15-minute binary market settlement rules (CFTC compliance, underlying index strike settlement formula, settlement verification lag).
-  - **Short-Term BTC/ETH Prediction Models**: Research micro-momentum indicators (1m-15m timeframe), realized volatility metrics, order flow imbalance, and Bayesian frequency lookups for 15-minute horizons.
-  - **Community & Market Insights**: Research Kalshi 15-minute BTC/ETH market dynamics across Reddit (r/Kalshi, r/AlgorithmicTrading), trading forums, and market maker quote behavior.
-- [ ] **Live Kalshi Portfolio Balance Auto-Sync on Session Start**:
-  - **Theory of Operation**: Paper trading physics must match live portfolio equity constraints (e.g. ~$17 real cash). At the start of every 15-minute paper session, query Kalshi REST API `/portfolio/balance` via `KalshiRestMarketDiscoveryClient.get_balance()`.
-  - **Auto-Initialization**: Automatically override `PaperVenueAdapter` starting/current balance with the real live portfolio cash balance (falling back cleanly to `paper_wallet.db` if API key is unconfigured or offline).
-  - **Position & Risk Sizing Realism**: Ensure contract quantity rules (minimum 2 contracts @ ~50c = $1.00 cost) and risk caps are evaluated against true live equity at the beginning of each 15-minute market run.
-  - **Reprogramming Plan**:
-    1. Update `PaperVenueAdapter` to support async `sync_live_balance(kalshi_client)` or auto-sync on init.
-    2. Wire `run_ai_trading_session.py` to auto-fetch live balance from Kalshi REST and invoke `sync_live_balance()` before enabling `AutoTradingEngine`.
-    3. Update `TradeJournal` session headers to log `real_kalshi_balance_usd` alongside paper balance.
-- [ ] **Model Retraining & Brier Scorecard Feedback Loop**:
-  - Log settled outcomes into `prediction.db` scorecards to continuously evaluate model calibration (Brier score & LogLoss tracking).
-  - Trigger walk-forward auto-retraining on new candle/settlement batches to continuously adapt model parameters.
-- [ ] **CLI REPL Modularization & Terminal UI Streamlining**:
-  - **Theory of Operation**: The trading studio is built for AI agent operability, speed, and clean structured data—not human visual terminal eye-candy. Elaborate ASCII banners and complex colorized tables add non-essential LOC (~1,649 lines) and token bloat.
-  - **Modularization Plan**:
-    1. Split `interactive_trading_repl_loop.py` into smaller focused modules: `repl_command_parser.py` (argument parsing), `repl_view_renderers.py` (data output formatting), and `repl_trading_handlers.py` (order & wallet actions).
-    2. Streamline terminal UI formatting, favoring fast, compact, machine-readable JSON and plain-text outputs tailored for AI context efficiency.
+- [x] **Phase 9: Live Exchange Physics Realism & Paper Wallet Settlement System (2026-07-26) ← CURRENT**:
+  - [x] **Quarter-Hour Auto-Settlement Physics Engine**:
+    - Auto-settle all open paper positions at every 15-minute market resolution boundary (XX:00, XX:15, XX:30, XX:45).
+    - Query official Kalshi settlement REST endpoint (`/markets/{ticker}`) or `SettlementWatcher` for the resolution outcome (`yes` or `no`).
+    - Calculate contract payouts: 100c ($1.00 per contract) for winning side, 0c for losing side.
+    - Credit cash balance with settlement proceeds and record realized PnL in `PaperVenueAdapter` (`paper_wallet.db`).
+  - [x] **Paper Wallet Physics Realism**:
+    - Align paper wallet mechanics 1:1 with live Kalshi execution (locking position cost on order fill, updating unrealized PnL during open market, auto-closing positions at expiration).
+    - Prevent orphaned open positions from persisting past contract expiry across REPL / runner sessions.
+  - [x] **Research & Intelligence Gathering**:
+    - **Kalshi Trading Physics**: Research 15-minute binary market settlement rules (CFTC compliance, underlying index strike settlement formula, settlement verification lag).
+    - **Short-Term BTC/ETH Prediction Models**: Research micro-momentum indicators (1m-15m timeframe), realized volatility metrics, order flow imbalance, and Bayesian frequency lookups for 15-minute horizons.
+    - **Community & Market Insights**: Research Kalshi 15-minute BTC/ETH market dynamics across Reddit (r/Kalshi, r/AlgorithmicTrading), trading forums, and market maker quote behavior.
+  - [x] **Live Kalshi Portfolio Balance Auto-Sync on Session Start**:
+    - **Theory of Operation**: Paper trading physics must match live portfolio equity constraints (e.g. ~$17 real cash). At the start of every 15-minute paper session, query Kalshi REST API `/portfolio/balance` via `KalshiRestMarketDiscoveryClient.get_balance()`.
+    - **Auto-Initialization**: Automatically override `PaperVenueAdapter` starting/current balance with the real live portfolio cash balance (falling back cleanly to `paper_wallet.db` if API key is unconfigured or offline).
+    - **Position & Risk Sizing Realism**: Ensure contract quantity rules (minimum 2 contracts @ ~50c = $1.00 cost) and risk caps are evaluated against true live equity at the beginning of each 15-minute market run.
+    - **Reprogramming Plan**:
+      1. Update `PaperVenueAdapter` to support async `sync_live_balance(kalshi_client)` or auto-sync on init.
+      2. Wire `run_ai_trading_session.py` to auto-fetch live balance from Kalshi REST and invoke `sync_live_balance()` before enabling `AutoTradingEngine`.
+      3. Update `TradeJournal` session headers to log `real_kalshi_balance_usd` alongside paper balance.
+  - [x] **Model Retraining & Brier Scorecard Feedback Loop**:
+    - Log settled outcomes into `prediction.db` scorecards to continuously evaluate model calibration (Brier score & LogLoss tracking).
+    - Trigger walk-forward auto-retraining on new candle/settlement batches to continuously adapt model parameters.
+  - [x] **CLI REPL Modularization & Terminal UI Streamlining**:
+    - **Theory of Operation**: The trading studio is built for AI agent operability, speed, and clean structured data—not human visual terminal eye-candy. Elaborate ASCII banners and complex colorized tables add non-essential LOC (~1,649 lines) and token bloat.
+    - **Modularization Plan**:
+      1. Split `interactive_trading_repl_loop.py` into smaller focused modules: `repl_command_parser.py` (argument parsing), `repl_view_renderers.py` (data output formatting), and `repl_trading_handlers.py` (order & wallet actions).
+      2. Streamline terminal UI formatting, favoring fast, compact, machine-readable JSON and plain-text outputs tailored for AI context efficiency.
 
 ### Medium-term (Phase 10+)
 - [ ] Multi-model ensemble weighting based on recent accuracy

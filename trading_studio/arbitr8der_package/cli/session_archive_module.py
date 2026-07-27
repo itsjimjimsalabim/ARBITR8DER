@@ -15,8 +15,8 @@ replayed, analyzed, or used to train better prediction models.
 from __future__ import annotations
 
 import json
-from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
+from dataclasses import dataclass, field
+from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
@@ -30,7 +30,7 @@ class SessionArchive:
     """Accumulates session data and writes it to disk on close."""
 
     session_id: str = ""
-    started_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    started_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     ended_at: str | None = None
 
     # Event log (chronological)
@@ -45,7 +45,7 @@ class SessionArchive:
 
     def __post_init__(self) -> None:
         if not self.session_id:
-            self.session_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+            self.session_id = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         self._archive_dir: Path | None = None
 
     def _ensure_dir(self) -> Path:
@@ -56,7 +56,7 @@ class SessionArchive:
 
     def _log_event(self, event_type: str, data: dict[str, Any]) -> None:
         self.events.append({
-            "ts": datetime.now(timezone.utc).isoformat(),
+            "ts": datetime.now(UTC).isoformat(),
             "type": event_type,
             **data,
         })
@@ -105,7 +105,7 @@ class SessionArchive:
     def record_health(self, report: str) -> None:
         """Record a health report string."""
         self.health_reports.append({
-            "ts": datetime.now(timezone.utc).isoformat(),
+            "ts": datetime.now(UTC).isoformat(),
             "report": report,
         })
         self._log_event("health", {})
@@ -113,7 +113,7 @@ class SessionArchive:
     def record_vessel_transition(self, from_state: str, to_state: str, reason: str) -> None:
         """Record a vessel state transition."""
         transition = {
-            "ts": datetime.now(timezone.utc).isoformat(),
+            "ts": datetime.now(UTC).isoformat(),
             "from": from_state,
             "to": to_state,
             "reason": reason,
@@ -131,7 +131,7 @@ class SessionArchive:
 
     def close(self) -> Path:
         """Write the complete archive to disk and return the file path."""
-        self.ended_at = datetime.now(timezone.utc).isoformat()
+        self.ended_at = datetime.now(UTC).isoformat()
         archive_dir = self._ensure_dir()
         archive_file = archive_dir / f"session_{self.session_id}.jsonl"
 

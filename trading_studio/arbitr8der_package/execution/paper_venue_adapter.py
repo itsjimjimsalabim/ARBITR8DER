@@ -220,6 +220,26 @@ class PaperVenueAdapter:
         )
         self._conn.commit()
 
+    async def sync_live_balance(self, discovery_client: Any) -> float | None:
+        """Fetch account balance from Kalshi REST and override the paper wallet balance.
+
+        Returns the synced balance in USD or None if sync failed.
+        """
+        if discovery_client is None:
+            return None
+        try:
+            data = await discovery_client.get_balance()
+            if data and "balance" in data:
+                balance_cents = data["balance"]
+                balance_usd = balance_cents / 100.0
+                self._wallet.balance = balance_usd
+                self._save_wallet()
+                logger.info("Synced paper wallet balance to live Kalshi balance: $%.2f", balance_usd)
+                return balance_usd
+        except Exception as e:
+            logger.warning("Failed to sync live Kalshi balance: %s", e)
+        return None
+
     # ------------------------------------------------------------------
     # Order lifecycle
     # ------------------------------------------------------------------

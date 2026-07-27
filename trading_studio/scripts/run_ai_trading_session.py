@@ -44,6 +44,18 @@ async def run_trading_session(duration_seconds: int = 45) -> None:
         print("Error: Could not acquire stream lease.")
         return
 
+    # Sync live portfolio balance on session start
+    paper_venue = orchestrator.paper_venue
+    discovery = orchestrator.discovery_client
+    real_kalshi_balance_usd = None
+    if paper_venue and discovery:
+        print("Syncing live Kalshi portfolio balance...")
+        real_kalshi_balance_usd = await paper_venue.sync_live_balance(discovery)
+        if real_kalshi_balance_usd is not None:
+            print(f"Live Portfolio Balance Synced: ${real_kalshi_balance_usd:,.2f}")
+        else:
+            print("Failed to sync live portfolio balance, falling back to cached paper wallet balance.")
+
     # Enable auto-trader
     if orchestrator.auto_trader:
         orchestrator.auto_trader.set_vessel_state_getter(lambda: machine.current_state.value.lower())
@@ -51,7 +63,12 @@ async def run_trading_session(duration_seconds: int = 45) -> None:
         print("Auto-Trading Engine: ENABLED")
 
     journal = TradeJournal()
+    paper_balance_usd = paper_venue.get_wallet().balance if paper_venue else 0.0
     print(f"Session ID: {journal.session_id}")
+    if real_kalshi_balance_usd is not None:
+        print(f"Real Kalshi Balance: ${real_kalshi_balance_usd:.2f} | Paper Wallet Balance: ${paper_balance_usd:.2f}")
+    else:
+        print(f"Real Kalshi Balance: Offline/Unconfigured | Paper Wallet Balance: ${paper_balance_usd:.2f}")
 
     try:
         # Wait 10 seconds for initial WebSocket/REST snapshots to populate

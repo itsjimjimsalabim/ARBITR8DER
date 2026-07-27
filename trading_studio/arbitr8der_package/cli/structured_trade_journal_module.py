@@ -14,8 +14,8 @@ from __future__ import annotations
 import json
 import uuid
 from dataclasses import asdict, dataclass, field
-from datetime import datetime, timezone
-from enum import Enum
+from datetime import UTC, datetime
+from enum import StrEnum
 from pathlib import Path
 from typing import Any
 
@@ -24,7 +24,7 @@ from arbitr8der_package.config.structured_logging_configuration_module import ge
 logger = get_logger(__name__)
 
 
-class EntryStatus(str, Enum):
+class EntryStatus(StrEnum):
     """Lifecycle status of a journal entry."""
     HYPOTHESIS = "hypothesis"      # Observation logged, prediction pending
     PREDICTED = "predicted"        # Prediction recorded
@@ -37,8 +37,8 @@ class EntryStatus(str, Enum):
 class JournalEntry:
     """A single structured journal entry linking the full reasoning chain."""
     entry_id: str = field(default_factory=lambda: uuid.uuid4().hex[:12])
-    created_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
-    updated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    created_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
+    updated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
 
     # Context
     asset: str = ""
@@ -82,9 +82,9 @@ class JournalEntry:
 
     def add_note(self, text: str) -> None:
         """Append a timestamped note."""
-        ts = datetime.now(timezone.utc).strftime("%Y-%m-%d %H:%M:%S UTC")
+        ts = datetime.now(UTC).strftime("%Y-%m-%d %H:%M:%S UTC")
         self.notes.append(f"[{ts}] {text}")
-        self.updated_at = datetime.now(timezone.utc).isoformat()
+        self.updated_at = datetime.now(UTC).isoformat()
 
     def link_prediction(
         self,
@@ -103,21 +103,21 @@ class JournalEntry:
         self.ticker = ticker
         self.model_version = model_version
         self.status = EntryStatus.PREDICTED.value
-        self.updated_at = datetime.now(timezone.utc).isoformat()
+        self.updated_at = datetime.now(UTC).isoformat()
 
     def resolve(self, actual_outcome: int, score_brier: float | None = None, score_log_loss: float | None = None) -> None:
         """Record the market outcome and scores."""
         self.actual_outcome = actual_outcome
-        self.outcome_timestamp = datetime.now(timezone.utc).isoformat()
+        self.outcome_timestamp = datetime.now(UTC).isoformat()
         self.score_brier = score_brier
         self.score_log_loss = score_log_loss
         self.status = EntryStatus.RESOLVED.value
-        self.updated_at = datetime.now(timezone.utc).isoformat()
+        self.updated_at = datetime.now(UTC).isoformat()
 
     def review(self) -> None:
         """Mark as operator-reviewed."""
         self.status = EntryStatus.REVIEWED.value
-        self.updated_at = datetime.now(timezone.utc).isoformat()
+        self.updated_at = datetime.now(UTC).isoformat()
 
 
 class TradeJournal:
@@ -134,7 +134,7 @@ class TradeJournal:
         self._journal_dir.mkdir(parents=True, exist_ok=True)
 
         if session_id is None:
-            session_id = datetime.now(timezone.utc).strftime("%Y%m%d_%H%M%S")
+            session_id = datetime.now(UTC).strftime("%Y%m%d_%H%M%S")
         self._session_id = session_id
         self._journal_file = self._journal_dir / f"journal_{session_id}.jsonl"
         self._entries: list[JournalEntry] = []
@@ -219,7 +219,7 @@ class TradeJournal:
         if entry is None:
             return None
         entry.next_experiment = text
-        entry.updated_at = datetime.now(timezone.utc).isoformat()
+        entry.updated_at = datetime.now(UTC).isoformat()
         self._persist_entry(entry)
         return entry
 

@@ -13,14 +13,13 @@ from __future__ import annotations
 
 import json
 from dataclasses import dataclass, field
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 from typing import Any
 
 from arbitr8der_package.config.structured_logging_configuration_module import get_logger
 from arbitr8der_package.prediction.prediction_scorer import (
     PredictionScorer,
     ScoringReport,
-    format_report_human,
 )
 
 logger = get_logger(__name__)
@@ -29,7 +28,7 @@ logger = get_logger(__name__)
 @dataclass
 class Scorecard:
     """Aggregated operator scorecard."""
-    generated_at: str = field(default_factory=lambda: datetime.now(timezone.utc).isoformat())
+    generated_at: str = field(default_factory=lambda: datetime.now(UTC).isoformat())
     session_id: str = ""
 
     # Scoring metrics (from PredictionScorer)

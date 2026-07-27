@@ -210,6 +210,11 @@ class IngestionOrchestrator:
         return self._paper_venue
 
     @property
+    def discovery_client(self) -> Any:
+        """Kalshi REST market discovery client."""
+        return self._kalshi_rest
+
+    @property
     def risk_controller(self) -> RiskController | None:
         """Shared risk controller used by paper and auto-trading."""
         return self._risk_controller

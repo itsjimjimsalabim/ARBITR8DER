@@ -14,8 +14,7 @@ Usage:
 """
 
 import json
-import time
-from datetime import datetime, timezone
+from datetime import UTC, datetime
 
 import typer
 
@@ -91,19 +90,15 @@ def snapshot(json_output: bool = typer.Option(False, "--json", help="Output as J
     from arbitr8der_package.data_contracts.event_data_models import (
         Asset,
         CoinGeckoMacroEvent,
-        KalshiOrderBookEvent,
-        PolymarketSentimentEvent,
         PriceObservationEvent,
-        ProviderSource,
         SourceHealthStatus,
     )
     from arbitr8der_package.data_contracts.hot_snapshot_merger import SnapshotMerger
     from arbitr8der_package.data_sources.binance_spot_price_stream import BinanceSpotPriceStream
     from arbitr8der_package.data_sources.coinbase_spot_price_stream import CoinbaseSpotPriceStream
     from arbitr8der_package.data_sources.coingecko_macro_data_poller import CoinGeckoMacroDataPoller
-    from arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller import PolymarketSentimentPoller
 
-    now = datetime.now(timezone.utc)
+    now = datetime.now(UTC)
     merger = SnapshotMerger(now_fn=lambda: now)
 
     # Feed cached Binance observations
@@ -112,7 +107,7 @@ def snapshot(json_output: bool = typer.Option(False, "--json", help="Output as J
         asset = Asset.BTC if sym.upper().startswith("BTC") else Asset.ETH
         event = PriceObservationEvent(
             provider_event_id=f"binance-cache-{sym}",
-            provider_ts=datetime.fromtimestamp(obs.trade_ts, tz=timezone.utc) if obs.trade_ts else now,
+            provider_ts=datetime.fromtimestamp(obs.trade_ts, tz=UTC) if obs.trade_ts else now,
             receive_ts=now,
             source_status=SourceHealthStatus.HEALTHY,
             asset=asset,
@@ -188,7 +183,7 @@ def health() -> None:
     """
     from arbitr8der_package.data_sources.source_health_monitor import SourceHealthMonitor
 
-    monitor = SourceHealthMonitor()
+    SourceHealthMonitor()
     # Report that no sources are active (CLI-only, not running orchestrator)
     typer.echo("Health report (CLI mode — orchestrator not running)")
     typer.echo("  No active data sources. Start the orchestrator for live health data.")
@@ -240,12 +235,15 @@ def predict(
 ) -> None:
     """Run focused BTC/ETH prediction using baseline or retrained ML models."""
     import asyncio
-    from arbitr8der_package.data_contracts.event_data_models import Asset
-    from arbitr8der_package.durable_storage.sqlite_database_engine_manager import initialize_database
+
     from arbitr8der_package.durable_storage.candle_persistence_store import CandlePersistenceStore
-    from arbitr8der_package.prediction.baseline_prediction_engine import BaselinePredictionEngine, format_prediction_human, format_prediction_json
+    from arbitr8der_package.durable_storage.sqlite_database_engine_manager import initialize_database
+    from arbitr8der_package.prediction.baseline_prediction_engine import (
+        BaselinePredictionEngine,
+        format_prediction_human,
+        format_prediction_json,
+    )
     from arbitr8der_package.prediction.feature_extraction_engine import FeatureExtractionEngine
-    from arbitr8der_package.prediction.backtest_engine import compute_macro_features_from_candles
 
     async def _predict_cli():
         asset_str = asset.upper()
@@ -253,11 +251,11 @@ def predict(
         try:
             store = CandlePersistenceStore(db)
             await store.initialize()
-            
+
             candles_1m = await store.get_candles(asset_str, "binance", "1m", limit=500)
             if not candles_1m:
                 candles_1m = await store.get_candles(asset_str, "coinbase", "1m", limit=500)
-                
+
             engine = BaselinePredictionEngine()
             feature_extractor = FeatureExtractionEngine()
             features = feature_extractor.extract(

@@ -22,6 +22,19 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
+from arbitr8der_package.cli.repl_trading_handlers import (
+    handle_buy_command,
+    handle_cancel_command,
+    handle_sell_command,
+)
+from arbitr8der_package.cli.repl_view_renderers import (
+    format_pending_orders_human,
+    format_positions_human,
+    format_risk_status_human,
+    format_snapshot_human,
+    format_snapshot_json,
+    format_wallet_human,
+)
 from arbitr8der_package.cli.scorecard_module import (
     ScorecardGenerator,
     format_scorecard_human,
@@ -38,60 +51,24 @@ from arbitr8der_package.cli.structured_trade_journal_module import (
     format_entry_json,
 )
 from arbitr8der_package.config.structured_logging_configuration_module import get_logger
-from arbitr8der_package.data_contracts.event_data_models import Asset, SourceHealthStatus
 from arbitr8der_package.data_sources.ingestion_orchestrator import IngestionOrchestrator
 from arbitr8der_package.execution.paper_venue_adapter import PaperVenueAdapter
 from arbitr8der_package.prediction.prediction_scorer import PredictionScorer
 from arbitr8der_package.reconciliation.order_reconciliation_module import OrderReconciler
-from arbitr8der_package.risk.risk_controls_module import OrderIntent, RiskController
+from arbitr8der_package.risk.risk_controls_module import RiskController
 from arbitr8der_package.vessel.vessel_state_machine import (
     IllegalTransitionError,
     VesselState,
     VesselStateMachine,
 )
 
+_format_snapshot_human = format_snapshot_human
+_format_snapshot_json = format_snapshot_json
 logger = get_logger(__name__)
 
 
-def _format_snapshot_human(snap: Any) -> str:
-    """Format a HotSnapshot as human-readable text."""
-    lines: list[str] = []
-    lines.append(f"=== {snap.asset.value} Snapshot v{snap.snapshot_version} ===")
-    lines.append(f"  Created:      {snap.created_ts.isoformat()}")
-
-    if snap.spot_avg_usd is not None:
-        lines.append(f"  Spot avg:     ${snap.spot_avg_usd:,.2f}")
-    else:
-        lines.append("  Spot avg:     (no data)")
-
-    if snap.spot_disagreement_pct is not None:
-        lines.append(f"  Disagreement: {snap.spot_disagreement_pct:.6f}%")
-    else:
-        lines.append("  Disagreement: (no data)")
-
-    if snap.kalshi_midpoint_cents is not None:
-        lines.append(f"  Kalshi mid:   {snap.kalshi_midpoint_cents}c")
-    else:
-        lines.append("  Kalshi mid:   (no data)")
-
-    # Source health
-    if snap.source_health:
-        lines.append("  Sources:")
-        for src, status in snap.source_health.items():
-            marker = "ok" if status == SourceHealthStatus.HEALTHY else status.value
-            lines.append(f"    {src:25s} {marker}")
-
-    if snap.stale_sources:
-        lines.append(f"  Stale:  {', '.join(snap.stale_sources)}")
-    if snap.missing_sources:
-        lines.append(f"  Missing: {', '.join(snap.missing_sources)}")
-
-    return "\n".join(lines)
 
 
-def _format_snapshot_json(snap: Any) -> str:
-    """Format a HotSnapshot as JSON."""
-    return json.dumps(snap.model_dump(mode="json"), indent=2)
 
 
 def _async_worker(loop: asyncio.AbstractEventLoop, orchestrator: IngestionOrchestrator, ready: threading.Event) -> None:
@@ -476,11 +453,10 @@ Commands:
                 micro_model = None
 
             # Use ML model if available
-            if macro_model is not None or micro_model is not None:
-                if candle_store is None:
-                    print(f"  {asset_str}: candle store not available for feature computation, falling back to baseline")
-                    macro_model = None
-                    micro_model = None
+            if (macro_model is not None or micro_model is not None) and candle_store is None:
+                print(f"  {asset_str}: candle store not available for feature computation, falling back to baseline")
+                macro_model = None
+                micro_model = None
 
             if macro_model is not None or micro_model is not None:
                 # Fetch 1m candles, aggregate to 15m, compute macro features
@@ -878,365 +854,55 @@ Commands:
         positions = self._venue.get_open_positions()
         wallet = self._venue.get_wallet()
 
-        if not positions:
-            print("No open positions.")
-            print(f"Wallet: ${wallet.balance:.2f} (PnL: ${wallet.total_pnl:+.2f})")
-            return
-
-        print(f"Open positions ({len(positions)}):")
-        print(
-            f"{'TICKER':30s} {'SIDE':5s} {'CONTRACTS':>10s} {'AVG ENTRY':>10s} {'MID':>10s} {'COST':>10s} {'VALUE':>10s} {'UNREAL PNL':>12s}"
-        )
-        print("-" * 104)
-
-        total_cost = 0.0
-        total_value = 0.0
-        total_pnl = 0.0
-
-        for p in positions:
-            cost = p.total_cost_usd
-            total_cost += cost
-
-            # Calculate current value and unrealized PnL using latest snapshot midpoint
-            mid_cents = None
+        def latest_snapshot_func(asset):
             if self._orchestrator:
-                snapshot = self._orchestrator.latest_snapshot(p.asset)
-                if snapshot and snapshot.kalshi_midpoint_cents is not None:
-                    raw_val = snapshot.kalshi_midpoint_cents
-                    if isinstance(raw_val, (int, float)) and not isinstance(raw_val, bool):
-                        mid_cents = raw_val
+                return self._orchestrator.latest_snapshot(asset)
+            return None
 
-            if mid_cents is not None:
-                if p.side.lower() == "yes":
-                    value = p.contracts * mid_cents / 100.0
-                else:
-                    value = p.contracts * (100.0 - mid_cents) / 100.0
-                pnl = value - cost
-                total_value += value
-                total_pnl += pnl
-
-                mid_str = f"{mid_cents:.1f}c"
-                val_str = f"${value:.2f}"
-                pnl_str = f"${pnl:+.2f}"
-            else:
-                mid_str = "N/A"
-                val_str = "N/A"
-                pnl_str = "N/A"
-
-            print(
-                f"{p.ticker:30s} {p.side:5s} {p.contracts:>10d} {p.avg_entry_cents:>9.1f}c {mid_str:>10s} {cost:>10.2f} {val_str:>10s} {pnl_str:>12s}"
-            )
-
-        print("-" * 104)
-        val_summary = f"${total_value:.2f}" if total_value > 0 else "N/A"
-        pnl_summary = f"${total_pnl:+.2f}" if total_value > 0 else "N/A"
-        print(
-            f"{'Total exposure:':30s} {'':5s} {'':>10s} {'':>10s} {'':>10s} {total_cost:>10.2f} {val_summary:>10s} {pnl_summary:>12s}"
-        )
-        print(f"Wallet: ${wallet.balance:.2f} (PnL: ${wallet.total_pnl:+.2f})")
+        format_positions_human(positions, wallet, latest_snapshot_func)
 
     def _cmd_buy(self, args: str) -> None:
-        """Place a paper buy order.
-
-        Usage:
-          buy BTC yes 5          — market buy 5 BTC YES contracts
-          buy ETH no 3 45        — limit buy 3 ETH NO contracts at 45c
-        """
-        parts = args.split()
-        if len(parts) < 3:
-            print("Usage: buy ASSET SIDE N [LIMIT_CENTS]")
-            print("  ASSET: BTC or ETH")
-            print("  SIDE: yes or no")
-            print("  N: number of contracts (min 2)")
-            print("  LIMIT_CENTS: optional limit price in cents")
-            return
-
-        asset = parts[0].upper()
-        side = parts[1].lower()
-        try:
-            contracts = int(parts[2])
-        except ValueError:
-            print("Error: contracts must be a number")
-            return
-
-        limit_cents = None
-        if len(parts) >= 4 and parts[3].upper() == "LIMIT":
-            # Check if there's a 5th part for the limit price
-            if len(parts) >= 5:
-                try:
-                    limit_cents = int(parts[4])
-                except ValueError:
-                    print("Error: limit cents must be a number")
-                    return
-            else:
-                print("Usage: buy ASSET SIDE N LIMIT CENTS")
-                return
-        elif len(parts) >= 4:
-            try:
-                limit_cents = int(parts[3])
-            except ValueError:
-                print("Error: limit cents must be a number")
-                return
-
-        if asset not in ("BTC", "ETH"):
-            print("Error: asset must be BTC or ETH")
-            return
-        if side not in ("yes", "no"):
-            print("Error: side must be yes or no")
-            return
-
-        # Get current snapshot for midpoint and version
-        snapshots = self._orchestrator.latest_snapshots()
-        snap = snapshots.get(Asset(asset))
-        midpoint_cents = None
-        snapshot_version = None
-
-        if snap:
-            midpoint_cents = snap.kalshi_midpoint_cents
-            snapshot_version = snap.snapshot_version
-            self._last_snapshot_version[asset] = snapshot_version
-
-        # Get ticker from market discovery
-        ticker = f"KX{asset}15M-PENDING"
-        markets = self._orchestrator.active_markets()
-        for m in markets:
-            if asset in m.get("ticker", "").upper():
-                ticker = m["ticker"]
-                break
-
-        # Create order intent
-        intent = OrderIntent(
-            asset=asset,
-            side=side,
-            contracts=contracts,
-            ticker=ticker,
-            limit_cents=limit_cents,
-            snapshot_version=snapshot_version,
+        """Place a paper buy order."""
+        handle_buy_command(
+            args,
+            self._orchestrator,
+            self._risk,
+            self._venue,
+            self._reconciler,
+            self._machine.current_state.value,
+            self._last_snapshot_version
         )
-
-        # Record intent
-        self._reconciler.record_intent(
-            order_id=f"intent_{asset}_{side}_{contracts}",
-            asset=asset,
-            side=side,
-            contracts=contracts,
-            ticker=ticker,
-            limit_cents=limit_cents,
-            snapshot_version=snapshot_version,
-            midpoint_cents=midpoint_cents,
-        )
-
-        # Risk check
-        book_age = None
-        if snap:
-            # Approximate book age from snapshot timestamp
-            from datetime import datetime
-            age = (datetime.now(UTC) - snap.created_ts).total_seconds()
-            book_age = age
-
-        verdict = self._risk.check(
-            intent,
-            vessel_state=self._machine.current_state.value,
-            current_book_age_seconds=book_age,
-        )
-
-        self._reconciler.record_risk_check(
-            order_id=intent.ticker,
-            passed=verdict.passed,
-            block_reason=verdict.block_reason.value if verdict.block_reason else None,
-            block_detail=verdict.block_detail,
-            warnings=verdict.warnings,
-        )
-
-        if not verdict.passed:
-            print(f"ORDER BLOCKED: {verdict.block_detail}")
-            if verdict.warnings:
-                for w in verdict.warnings:
-                    print(f"  Warning: {w}")
-            return
-
-        # Submit to paper venue
-        order = self._venue.submit_order(
-            asset=asset,
-            side=side,
-            contracts=contracts,
-            ticker=ticker,
-            limit_cents=limit_cents,
-            midpoint_cents=midpoint_cents,
-            snapshot_version=snapshot_version,
-        )
-
-        if order.status == "filled":
-            self._risk.record_fill(asset, order.fill_cost_usd or 0.0)
-            self._reconciler.record_fill(
-                order_id=order.order_id,
-                fill_price_cents=order.fill_price_cents or 0.0,
-                fill_cost_usd=order.fill_cost_usd or 0.0,
-                midpoint_at_fill=midpoint_cents,
-            )
-            print(f"FILLED: {side.upper()} {contracts} {asset} at {order.fill_price_cents:.1f}c (${order.fill_cost_usd:.2f})")
-            print(f"Ticker: {ticker}  Order: {order.order_id}")
-
-            if verdict.warnings:
-                for w in verdict.warnings:
-                    print(f"  Warning: {w}")
-        elif order.status == "pending":
-            print(f"PENDING: {side.upper()} {contracts} {asset} at {limit_cents}c (limit order)")
-            print(f"Ticker: {ticker}  Order: {order.order_id}")
-        else:
-            print(f"ORDER CANCELLED: {order.order_id}")
 
     def _cmd_sell(self, args: str) -> None:
-        """Close a paper position.
-
-        Usage:
-          sell BTC KXBTC15M-260723T1230
-        """
-        parts = args.split()
-        if len(parts) < 2:
-            print("Usage: sell ASSET TICKER")
-            print("  Close the position for a specific ticker.")
-            return
-
-        asset = parts[0].upper()
-        ticker = parts[1]
-
-        # Find the position
-        positions = self._venue.get_open_positions()
-        position = None
-        for p in positions:
-            if p.ticker == ticker and p.asset == asset:
-                position = p
-                break
-
-        if position is None:
-            print(f"No open position found for {asset} {ticker}")
-            return
-
-        # Find the filled order for this position
-        filled_orders = self._venue.get_filled_orders()
-        order = None
-        for o in filled_orders:
-            if o.ticker == ticker and o.side == position.side:
-                order = o
-                break
-
-        if order is None:
-            print(f"No filled order found for {ticker}")
-            return
-
-        # For paper trading, we settle at a simulated outcome
-        # In real trading, this would check the market resolution
-        # For now, we simulate based on the midpoint vs entry
-        snap = self._orchestrator.latest_snapshots().get(Asset(asset))
-        if snap and snap.kalshi_midpoint_cents is not None:
-            # Simulate outcome based on current midpoint vs entry
-            current_mid = snap.kalshi_midpoint_cents
-            if position.side == "yes":
-                outcome = 1 if current_mid > 50 else 0
-            else:
-                outcome = 0 if current_mid > 50 else 1
-        else:
-            # Default to win for demo purposes
-            outcome = 1
-
-        # Settle the order
-        settled = self._venue.settle_order(order.order_id, outcome)
-        if settled:
-            pnl = settled.pnl or 0.0
-            self._risk.record_settlement(asset, pnl, position.total_cost_usd)
-            self._reconciler.record_settlement(
-                order_id=order.order_id,
-                outcome=outcome,
-                pnl=pnl,
-                settlement_price_cents=100.0 if outcome == 1 else 0.0,
-            )
-            outcome_str = "YES" if outcome == 1 else "NO"
-            print(f"SETTLED: {ticker} {position.side.upper()} -> {outcome_str}")
-            print(f"PnL: ${pnl:+.2f}")
-        else:
-            print(f"Failed to settle {ticker}")
+        """Close a paper position."""
+        handle_sell_command(
+            args,
+            self._orchestrator,
+            self._risk,
+            self._venue,
+            self._reconciler
+        )
 
     def _cmd_pending(self, _args: str) -> None:
         """Show pending limit orders."""
         pending = self._venue.get_pending_orders()
-
-        if not pending:
-            print("No pending orders.")
-            return
-
-        print(f"Pending orders ({len(pending)}):")
-        print(f"{'ORDER ID':20s} {'ASSET':6s} {'SIDE':5s} {'CONTRACTS':>10s} {'LIMIT':>8s} {'TICKER':30s}")
-        print("-" * 85)
-
-        for o in pending:
-            limit = f"{o.limit_cents}c" if o.limit_cents else "mkt"
-            print(f"{o.order_id:20s} {o.asset:6s} {o.side:5s} {o.contracts:>10d} {limit:>8s} {o.ticker:30s}")
+        format_pending_orders_human(pending)
 
     def _cmd_cancel(self, args: str) -> None:
-        """Cancel a pending limit order.
-
-        Usage:
-          cancel KXBTC15M-260723T1230
-        """
-        ticker = args.strip()
-        if not ticker:
-            print("Usage: cancel TICKER")
-            return
-
-        # Find pending order for this ticker
-        pending = self._venue.get_pending_orders()
-        order = None
-        for o in pending:
-            if o.ticker == ticker:
-                order = o
-                break
-
-        if order is None:
-            print(f"No pending order found for {ticker}")
-            return
-
-        cancelled = self._venue.cancel_order(order.order_id)
-        if cancelled:
-            print(f"Cancelled: {cancelled.order_id} ({cancelled.side.upper()} {cancelled.contracts} {cancelled.asset})")
-        else:
-            print(f"Failed to cancel {ticker}")
+        """Cancel a pending limit order."""
+        handle_cancel_command(args, self._venue)
 
     def _cmd_wallet(self, _args: str) -> None:
         """Show wallet balance and PnL."""
         self._sync_settle_expired_positions()
         wallet = self._venue.get_wallet()
-
-        print("=== PAPER Wallet ===")
-        print(f"  Balance:       ${wallet.balance:.2f}")
-        print(f"  Starting:      ${wallet.starting_balance:.2f}")
-        print(f"  Total PnL:     ${wallet.total_pnl:+.2f}")
-        print(f"  Total trades:  {wallet.total_trades}")
-
-        if wallet.total_trades > 0:
-            win_rate = wallet.winning_trades / wallet.total_trades * 100
-            print(f"  Win rate:      {win_rate:.1f}% ({wallet.winning_trades}W / {wallet.losing_trades}L)")
+        format_wallet_human(wallet)
 
     def _cmd_risk(self, _args: str) -> None:
         """Show risk status and limits."""
         self._sync_settle_expired_positions()
         status = self._risk.status()
-
-        print("=== Risk Status ===")
-        print(f"  Wallet mode:       {status['wallet_mode']}")
-        print(f"  Balance:           ${status['balance']:.2f}")
-        print(f"  Session PnL:       ${status['session_pnl']:+.2f}")
-        print(f"  Daily PnL:         ${status['daily_pnl']:+.2f}")
-        print(f"  Session loss cap:  ${status['session_loss_cap']:.2f}")
-        print(f"  Daily loss cap:    ${status['daily_loss_cap']:.2f}")
-        print(f"  Emergency stop:    {'ACTIVE' if status['emergency_stop'] else 'off'}")
-        print(f"  Cooldown:          {status['cooldown_seconds']}s")
-
-        if status['open_positions']:
-            print("  Open positions:")
-            for asset, count in status['open_positions'].items():
-                exposure = status['exposure'].get(asset, 0.0)
-                print(f"    {asset}: {count} positions (${exposure:.2f} exposure)")
+        format_risk_status_human(status)
 
     def _cmd_vessel(self, args: str) -> None:
         """Manage vessel state."""
