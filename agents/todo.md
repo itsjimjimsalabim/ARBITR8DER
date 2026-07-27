@@ -274,6 +274,11 @@ From domain knowledge and backtesting experience:
 - [ ] **Model Retraining & Brier Scorecard Feedback Loop**:
   - Log settled outcomes into `prediction.db` scorecards to continuously evaluate model calibration (Brier score & LogLoss tracking).
   - Trigger walk-forward auto-retraining on new candle/settlement batches to continuously adapt model parameters.
+- [ ] **CLI REPL Modularization & Terminal UI Streamlining**:
+  - **Theory of Operation**: The trading studio is built for AI agent operability, speed, and clean structured data—not human visual terminal eye-candy. Elaborate ASCII banners and complex colorized tables add non-essential LOC (~1,649 lines) and token bloat.
+  - **Modularization Plan**:
+    1. Split `interactive_trading_repl_loop.py` into smaller focused modules: `repl_command_parser.py` (argument parsing), `repl_view_renderers.py` (data output formatting), and `repl_trading_handlers.py` (order & wallet actions).
+    2. Streamline terminal UI formatting, favoring fast, compact, machine-readable JSON and plain-text outputs tailored for AI context efficiency.
 
 ### Medium-term (Phase 10+)
 - [ ] Multi-model ensemble weighting based on recent accuracy
