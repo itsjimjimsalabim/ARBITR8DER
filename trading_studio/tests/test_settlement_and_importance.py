@@ -249,14 +249,15 @@ class TestSettlementWatcher:
         watcher = SettlementWatcher(client, store)
 
         ticker = "KXBTC15M-26JUL25T1300"
-        ticker_open = watcher._parse_window_time(ticker)
-        assert ticker_open is not None
+        # _parse_window_time returns the window CLOSE (expiration) time
+        ticker_close = watcher._parse_window_time(ticker)
+        assert ticker_close is not None
 
         candle = {
             "asset": "BTC",
             "source": "binance",
             "interval": "1m",
-            "open_time": ticker_open + 895,  # near window close
+            "open_time": ticker_close - 5,  # 5 seconds before window close
             "open": 68100.0,
             "high": 68200.0,
             "low": 68050.0,
@@ -286,14 +287,15 @@ class TestSettlementWatcher:
         watcher = SettlementWatcher(client, store)
 
         ticker = "KXBTC15M-26JUL25T1315"
-        ticker_open = watcher._parse_window_time(ticker)
-        assert ticker_open is not None
+        # _parse_window_time returns the window CLOSE (expiration) time
+        ticker_close = watcher._parse_window_time(ticker)
+        assert ticker_close is not None
 
         candle = {
             "asset": "BTC",
             "source": "binance",
             "interval": "1m",
-            "open_time": ticker_open + 895,
+            "open_time": ticker_close - 5,  # 5 seconds before window close
             "open": 67900.0,
             "high": 67950.0,
             "low": 67850.0,
@@ -348,14 +350,15 @@ class TestSettlementWatcher:
         watcher = SettlementWatcher(client, store)
 
         ticker = "KXBTC15M-26JUL25T1400"
-        ticker_open = watcher._parse_window_time(ticker)
-        assert ticker_open is not None
+        # _parse_window_time returns the window CLOSE (expiration) time
+        ticker_close = watcher._parse_window_time(ticker)
+        assert ticker_close is not None
 
         candle = {
             "asset": "BTC",
             "source": "binance",
             "interval": "1m",
-            "open_time": ticker_open + 895,
+            "open_time": ticker_close - 5,  # 5 seconds before window close
             "open": 68100.0,
             "high": 68200.0,
             "low": 68050.0,

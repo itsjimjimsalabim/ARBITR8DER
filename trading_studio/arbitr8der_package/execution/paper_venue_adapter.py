@@ -678,9 +678,8 @@ class PaperVenueAdapter:
         # Cancel any pending orders that have expired
         pending = self.get_pending_orders()
         for order in pending:
-            window_open = self._parse_window_time(order.ticker)
-            if window_open is not None:
-                expiration_time = window_open + 900.0
+            expiration_time = self._parse_window_time(order.ticker)
+            if expiration_time is not None:
                 if now_ts >= expiration_time:
                     order.status = "cancelled"
                     order.settled_at = datetime.now(UTC).isoformat()
@@ -694,12 +693,11 @@ class PaperVenueAdapter:
         settled_orders = []
 
         for position in positions:
-            window_open = self._parse_window_time(position.ticker)
-            if window_open is None:
+            expiration_time = self._parse_window_time(position.ticker)
+            if expiration_time is None:
                 continue
+            window_open = expiration_time - 900.0
 
-            # Kalshi 15m markets close 15 minutes after window open
-            expiration_time = window_open + 900.0
             if now_ts < expiration_time:
                 # Not expired yet
                 continue
@@ -775,7 +773,7 @@ class PaperVenueAdapter:
         Returns Unix timestamp or None.
         """
         import re
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         # 1. Try YYMONDDHHMM format (e.g. 26JUL270945)
         # Matches: YY (2 digits), MON (3 chars), DD (2 digits), optional T/-, HH (2 digits), MM (2 digits)
@@ -809,7 +807,7 @@ class PaperVenueAdapter:
                     from datetime import timedelta
                     dt = datetime(year, month, day, hour, minute)
                     dt_utc = dt - timedelta(hours=offset)
-                    return dt_utc.replace(tzinfo=timezone.utc).timestamp()
+                    return dt_utc.replace(tzinfo=UTC).timestamp()
             except (ValueError, KeyError):
                 pass
 
@@ -839,7 +837,7 @@ class PaperVenueAdapter:
                     from datetime import timedelta
                     dt = datetime(year, month, day, hour, minute)
                     dt_utc = dt - timedelta(hours=offset)
-                    return dt_utc.replace(tzinfo=timezone.utc).timestamp()
+                    return dt_utc.replace(tzinfo=UTC).timestamp()
             except (ValueError, KeyError):
                 pass
 

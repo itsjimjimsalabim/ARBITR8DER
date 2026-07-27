@@ -13,7 +13,8 @@ from __future__ import annotations
 
 import asyncio
 import time
-from dataclasses import dataclass, field
+from dataclasses import dataclass
+from datetime import UTC
 
 import httpx
 
@@ -156,7 +157,6 @@ class SettlementWatcher:
 
     async def _fetch_settled_markets(self) -> list[dict]:
         """Fetch recently settled/closed Kalshi markets via REST API."""
-        import os
         settings = self._kalshi._settings if hasattr(self._kalshi, '_settings') else None
 
         api_url = "https://api.elections.kalshi.com/trade-api/v2"
@@ -187,7 +187,7 @@ class SettlementWatcher:
                             # Filter to recently settled (within lookback window)
                             close_time_str = m.get("close_time") or m.get("expiration_time")
                             if close_time_str:
-                                from datetime import datetime, timezone
+                                from datetime import datetime
                                 try:
                                     close_dt = datetime.fromisoformat(close_time_str.replace("Z", "+00:00"))
                                     close_ts = close_dt.timestamp()
@@ -215,7 +215,7 @@ class SettlementWatcher:
                         for m in markets:
                             close_time_str = m.get("close_time") or m.get("expiration_time")
                             if close_time_str:
-                                from datetime import datetime, timezone
+                                from datetime import datetime
                                 try:
                                     close_dt = datetime.fromisoformat(close_time_str.replace("Z", "+00:00"))
                                     close_ts = close_dt.timestamp()
@@ -244,18 +244,18 @@ class SettlementWatcher:
 
         # Parse window time from ticker
         # Format: KXBTC15M-26JUL25T1430 or KXBTC15M-26JUL25-14:30
-        window_open = self._parse_window_time(ticker)
-        if window_open is None:
+        window_close = self._parse_window_time(ticker)
+        if window_close is None:
             logger.debug("Could not parse window time from ticker: %s", ticker)
             return None
 
-        window_close = window_open + 900.0
+        window_open = window_close - 900.0
 
         # Look up the actual close price from our candle store
         close_price = await self._get_close_price_at_time(asset, window_close)
         if close_price is None:
-            # Try to get it from the window open + a few seconds
-            close_price = await self._get_close_price_at_time(asset, window_open + 890)
+            # Try to get it from the window close - a few seconds
+            close_price = await self._get_close_price_at_time(asset, window_close - 10.0)
         if close_price is None:
             logger.debug("No candle data for %s at window %s", asset, ticker)
             return None
@@ -327,7 +327,7 @@ class SettlementWatcher:
         Returns Unix timestamp or None.
         """
         import re
-        from datetime import datetime, timezone
+        from datetime import datetime
 
         # 1. Try YYMONDDHHMM format (e.g. 26JUL270945)
         # Matches: YY (2 digits), MON (3 chars), DD (2 digits), optional T/-, HH (2 digits), MM (2 digits)
@@ -361,7 +361,7 @@ class SettlementWatcher:
                     from datetime import timedelta
                     dt = datetime(year, month, day, hour, minute)
                     dt_utc = dt - timedelta(hours=offset)
-                    return dt_utc.replace(tzinfo=timezone.utc).timestamp()
+                    return dt_utc.replace(tzinfo=UTC).timestamp()
             except (ValueError, KeyError):
                 pass
 
@@ -391,7 +391,7 @@ class SettlementWatcher:
                     from datetime import timedelta
                     dt = datetime(year, month, day, hour, minute)
                     dt_utc = dt - timedelta(hours=offset)
-                    return dt_utc.replace(tzinfo=timezone.utc).timestamp()
+                    return dt_utc.replace(tzinfo=UTC).timestamp()
             except (ValueError, KeyError):
                 pass
 
