@@ -174,7 +174,7 @@ async def test_auto_settlement(tmp_path):
     adapter = PaperVenueAdapter(db_path=tmp_path / "paper_wallet.db", initial_balance=100.0)
 
     # 2. Place an order on an expired ticker
-    # Target ticker has open time: 2026-07-26 12:00:00 UTC (timestamp: 1785067200)
+    # Target ticker has open time: 2026-07-26 12:00:00 Eastern Time (timestamp: 1785081600)
     # Using format: KXBTC15M-26JUL26T1200
     ticker = "KXBTC15M-26JUL26T1200"
     order = adapter.submit_order(
@@ -201,11 +201,11 @@ async def test_auto_settlement(tmp_path):
     candle_store = FakeCandleStore()
 
     # 4. Settle expired positions
-    # Ticker has window open 1785067200, expires at 1785067200 + 900.
+    # Ticker has window open 1785081600, expires at 1785081600 + 900.
     # We mock time.time to be past expiration.
     from unittest.mock import patch
 
-    with patch("time.time", return_value=1785067200 + 1000):
+    with patch("time.time", return_value=1785081600 + 1000):
         settled_orders = await adapter.settle_expired_positions(candle_store=candle_store)
 
     assert len(settled_orders) == 1
@@ -247,7 +247,7 @@ async def test_auto_settlement_rest_fallback(tmp_path):
 
     from unittest.mock import patch
 
-    with patch("time.time", return_value=1785067200 + 1000):
+    with patch("time.time", return_value=1785081600 + 1000):
         settled_orders = await adapter.settle_expired_positions(
             candle_store=None,
             discovery_client=mock_discovery,

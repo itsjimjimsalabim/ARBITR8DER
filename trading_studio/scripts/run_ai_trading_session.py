@@ -165,4 +165,4 @@ async def run_trading_session(duration_seconds: int = 45) -> None:
 
 
 if __name__ == "__main__":
-    asyncio.run(run_trading_session(870))
+    asyncio.run(run_trading_session(900))

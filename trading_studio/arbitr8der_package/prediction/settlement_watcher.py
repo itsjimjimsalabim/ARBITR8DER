@@ -323,51 +323,72 @@ class SettlementWatcher:
     def _parse_window_time(self, ticker: str) -> float | None:
         """Parse the 15m window open time from a Kalshi ticker.
 
-        Ticker format: KXBTC15M-26JUL25T1430 or KXBTC15M-26JUL25-14:30
+        Ticker format: KXBTC15M-26JUL270945-45 or KXBTC15M-26JUL27T0945
         Returns Unix timestamp or None.
         """
         import re
         from datetime import datetime, timezone
 
-        # Try various patterns
-        patterns = [
-            r"KX(BTC|ETH)15M-(\d{2})([A-Z]{3})(\d{2})T(\d{2})(\d{2})",  # 26JUL25T1430
-            r"KX(BTC|ETH)15M-(\d{2})([A-Z]{3})(\d{2})-(\d{2}):(\d{2})",  # 26JUL25-14:30
-            r"KX(BTC|ETH)15M-(\d{4})(\d{2})(\d{2})T(\d{2})(\d{2})",      # 20250726T1430
-        ]
+        # 1. Try YYMONDDHHMM format (e.g. 26JUL270945)
+        # Matches: YY (2 digits), MON (3 chars), DD (2 digits), optional T/-, HH (2 digits), MM (2 digits)
+        m = re.search(r"KX(?:BTC|ETH)15M-(\d{2})([A-Z]{3})(\d{2})[T-_]?(\d{2})(\d{2})", ticker, re.IGNORECASE)
+        if m:
+            groups = m.groups()
+            try:
+                month_map = {
+                    "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4,
+                    "MAY": 5, "JUN": 6, "JUL": 7, "AUG": 8,
+                    "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12,
+                }
+                month = month_map.get(groups[1].upper(), 0)
+                year = 2000 + int(groups[0])
+                day = int(groups[2])
+                hour = int(groups[3])
+                minute = int(groups[4])
 
-        for pattern in patterns:
-            m = re.search(pattern, ticker, re.IGNORECASE)
-            if m:
-                groups = m.groups()
                 try:
-                    if len(groups) == 6 and groups[2].isalpha():
-                        # DD-MON-YYTHHMM format
-                        day = int(groups[1])
-                        month_map = {
-                            "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4,
-                            "MAY": 5, "JUN": 6, "JUL": 7, "AUG": 8,
-                            "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12,
-                        }
-                        month = month_map.get(groups[2].upper(), 0)
-                        year = 2000 + int(groups[3])
-                        hour = int(groups[4])
-                        minute = int(groups[5])
+                    from zoneinfo import ZoneInfo
+                    dt = datetime(year, month, day, hour, minute, tzinfo=ZoneInfo("America/New_York"))
+                    return dt.timestamp()
+                except Exception:
+                    is_dst = 3 < month < 11
+                    offset = -4 if is_dst else -5
+                    from datetime import timedelta
+                    dt = datetime(year, month, day, hour, minute)
+                    dt_utc = dt - timedelta(hours=offset)
+                    return dt_utc.replace(tzinfo=timezone.utc).timestamp()
+            except (ValueError, KeyError):
+                pass
 
-                        dt = datetime(year, month, day, hour, minute, tzinfo=timezone.utc)
-                        return dt.timestamp()
-                    elif len(groups) == 6:
-                        # YYYYMMDDTHHMM format
-                        year = int(groups[0])
-                        month = int(groups[1])
-                        day = int(groups[2])
-                        hour = int(groups[3])
-                        minute = int(groups[4])
+        # 2. Try DDMONYY format (fallback for old format/tests)
+        m = re.search(r"KX(?:BTC|ETH)15M-(\d{2})([A-Z]{3})(\d{2})[T-_]?(\d{2})[:_]?(\d{2})", ticker, re.IGNORECASE)
+        if m:
+            groups = m.groups()
+            try:
+                month_map = {
+                    "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4,
+                    "MAY": 5, "JUN": 6, "JUL": 7, "AUG": 8,
+                    "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12,
+                }
+                month = month_map.get(groups[1].upper(), 0)
+                day = int(groups[0])
+                year = 2000 + int(groups[2])
+                hour = int(groups[3])
+                minute = int(groups[4])
 
-                        dt = datetime(year, month, day, hour, minute, tzinfo=timezone.utc)
-                        return dt.timestamp()
-                except (ValueError, KeyError):
-                    continue
+                try:
+                    from zoneinfo import ZoneInfo
+                    dt = datetime(year, month, day, hour, minute, tzinfo=ZoneInfo("America/New_York"))
+                    return dt.timestamp()
+                except Exception:
+                    is_dst = 3 < month < 11
+                    offset = -4 if is_dst else -5
+                    from datetime import timedelta
+                    dt = datetime(year, month, day, hour, minute)
+                    dt_utc = dt - timedelta(hours=offset)
+                    return dt_utc.replace(tzinfo=timezone.utc).timestamp()
+            except (ValueError, KeyError):
+                pass
 
         return None
 

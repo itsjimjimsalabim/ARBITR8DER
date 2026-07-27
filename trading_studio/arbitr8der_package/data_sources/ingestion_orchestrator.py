@@ -635,6 +635,14 @@ class IngestionOrchestrator:
         while self._running:
             try:
                 if self._scoring_engine is not None:
+                    # Determine new outcomes from candles
+                    for asset in ("BTC", "ETH"):
+                        try:
+                            await self._scoring_engine.determine_outcomes_from_candles(asset)
+                        except Exception as e:
+                            logger.warning("Failed to determine outcomes from candles for %s: %s", asset, e)
+
+                    # Score pending predictions
                     scored = await self._scoring_engine.score_pending_model_runs()
                     if scored > 0:
                         logger.info("Scoring engine resolved %d model runs", scored)
