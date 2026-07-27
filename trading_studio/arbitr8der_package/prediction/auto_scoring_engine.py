@@ -575,8 +575,8 @@ class AutoScoringEngine:
 
     async def _score_loop(self) -> None:
         """Periodically score pending predictions and retrain models."""
-        cycles_since_retrain = 0
         retrain_every_n_cycles = 30  # retrain every ~15 min (30 * 30s)
+        cycles_since_retrain = retrain_every_n_cycles
 
         while self._running.is_set():
             try:

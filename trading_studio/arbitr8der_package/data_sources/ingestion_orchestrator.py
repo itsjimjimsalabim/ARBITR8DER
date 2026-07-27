@@ -638,7 +638,7 @@ class IngestionOrchestrator:
 
     async def _run_scoring_engine(self) -> None:
         """Run the auto-scoring engine periodically to resolve model runs."""
-        cycles_since_retrain = 0
+        cycles_since_retrain = 10
         while self._running:
             try:
                 if self._scoring_engine is not None:

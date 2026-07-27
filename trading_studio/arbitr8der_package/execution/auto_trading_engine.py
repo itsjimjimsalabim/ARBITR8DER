@@ -102,6 +102,8 @@ class AutoTradingEngine:
         model_choice: str = "auto",
         max_trades_per_session: int = 50,
         max_session_loss_usd: float = 10.0,
+        patient_execution: bool = False,
+        limit_discount_cents: int = 3,
     ):
         self._candle_store = candle_store
         self._scoring_engine = scoring_engine
@@ -118,6 +120,23 @@ class AutoTradingEngine:
         self._model_choice = model_choice
         self._max_trades_per_session = max_trades_per_session
         self._max_session_loss_usd = max_session_loss_usd
+        import os
+        env_patient = os.getenv("AR8_PATIENT_EXECUTION", "").lower()
+        if env_patient in ("true", "1", "yes"):
+            self._patient_execution = True
+        elif env_patient in ("false", "0", "no"):
+            self._patient_execution = False
+        else:
+            self._patient_execution = patient_execution
+
+        env_discount = os.getenv("AR8_LIMIT_DISCOUNT_CENTS")
+        if env_discount is not None:
+            try:
+                self._limit_discount_cents = int(env_discount)
+            except ValueError:
+                self._limit_discount_cents = limit_discount_cents
+        else:
+            self._limit_discount_cents = limit_discount_cents
 
         self._enabled = False
         self._running = asyncio.Event()
@@ -321,6 +340,28 @@ class AutoTradingEngine:
                 logger.info("Auto-trading engine settled %d expired position(s)", len(settled))
         except Exception as e:
             logger.error("Auto-trading engine failed to auto-settle expired positions: %s", e)
+
+        # Check and update any pending limit orders before running new evaluations
+        ticker_midpoints = {}
+        for asset in ("BTC", "ETH"):
+            ticker = self._market_ticker_getter(asset)
+            if ticker:
+                snap = self._snapshot_getter(asset)
+                if snap and snap.kalshi_midpoint_cents is not None:
+                    ticker_midpoints[ticker] = float(snap.kalshi_midpoint_cents)
+
+        if ticker_midpoints:
+            try:
+                filled = self._paper_venue.update_pending_orders(ticker_midpoints)
+                if filled:
+                    logger.info("Auto-trading engine filled %d pending limit order(s)", len(filled))
+                    for order in filled:
+                        self._risk.record_fill(order.asset, order.fill_cost_usd or 0.0)
+                        self._trade_count += 1
+                        self._session_trade_count += 1
+                        self._skip_count = max(0, self._skip_count - 1)
+            except Exception as e:
+                logger.error("Auto-trading engine failed to check/fill pending limit orders: %s", e)
 
         from arbitr8der_package.prediction.backtest_engine import (
             aggregate_1m_to_15m_candles,
@@ -616,12 +657,21 @@ class AutoTradingEngine:
             )
             return
 
+        # Determine limit price if patient execution is enabled
+        limit_cents = None
+        if self._patient_execution:
+            if side == "yes":
+                limit_cents = max(1, int(midpoint - self._limit_discount_cents))
+            else:
+                limit_cents = max(1, int(100 - midpoint - self._limit_discount_cents))
+
         # Submit order
         order = self._paper_venue.submit_order(
             asset=asset,
             side=side,
             contracts=self._contracts_per_trade,
             ticker=market_ticker,
+            limit_cents=limit_cents,
             midpoint_cents=midpoint,
             snapshot_version=snapshot.snapshot_version,
             model_version=model_name,

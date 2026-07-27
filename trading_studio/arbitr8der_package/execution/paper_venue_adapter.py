@@ -245,6 +245,68 @@ class PaperVenueAdapter:
             logger.warning("Failed to sync live Kalshi balance: %s", e)
         return None
 
+    def update_pending_orders(self, ticker_midpoints: dict[str, float]) -> list[PaperOrder]:
+        """Check all pending orders against current market midpoints and fill those that meet the criteria.
+
+        ticker_midpoints is a dict of {ticker: midpoint_cents}
+        """
+        pending = self.get_pending_orders()
+        if not pending:
+            return []
+
+        filled_orders = []
+        now = datetime.now(UTC).isoformat()
+
+        for order in pending:
+            midpoint = ticker_midpoints.get(order.ticker)
+            if midpoint is None:
+                continue
+
+            should_fill = False
+            fill_price = None
+
+            if order.side == "yes" and midpoint <= order.limit_cents:
+                should_fill = True
+                fill_price = midpoint
+            elif order.side == "no" and midpoint >= (100 - order.limit_cents):
+                should_fill = True
+                fill_price = 100.0 - midpoint
+
+            if should_fill:
+                # Check balance
+                fill_cost = order.contracts * fill_price / 100.0
+                fees = kalshi_fee_model(order.contracts, fill_price)
+                total_cost = fill_cost + fees
+
+                if total_cost > self._wallet.balance:
+                    order.status = "cancelled"
+                    order.settled_at = now
+                    self._save_order(order)
+                    logger.warning("Pending order %s cancelled: insufficient balance", order.order_id)
+                    continue
+
+                # Fill the order
+                self._wallet.balance -= total_cost
+                self._wallet.total_trades += 1
+                self._save_wallet()
+
+                order.status = "filled"
+                order.filled_at = now
+                order.fill_price_cents = fill_price
+                order.fill_cost_usd = fill_cost
+                order.midpoint_at_fill = midpoint
+                self._save_order(order)
+
+                # Update position
+                self._update_position(order)
+                logger.info(
+                    "Pending limit order filled: %s %s %d contracts of %s at %.1fc ($%.2f)",
+                    order.side.upper(), order.asset, order.contracts, order.ticker, fill_price, fill_cost
+                )
+                filled_orders.append(order)
+
+        return filled_orders
+
     # ------------------------------------------------------------------
     # Order lifecycle
     # ------------------------------------------------------------------
@@ -611,12 +673,25 @@ class PaperVenueAdapter:
         Checks the outcomes table or Kalshi REST API for the resolution outcome.
         Credits cash balance with settlement proceeds and records PnL.
         """
+        now_ts = time.time()
+
+        # Cancel any pending orders that have expired
+        pending = self.get_pending_orders()
+        for order in pending:
+            window_open = self._parse_window_time(order.ticker)
+            if window_open is not None:
+                expiration_time = window_open + 900.0
+                if now_ts >= expiration_time:
+                    order.status = "cancelled"
+                    order.settled_at = datetime.now(UTC).isoformat()
+                    self._save_order(order)
+                    logger.info("Cancelled expired pending limit order %s for %s", order.order_id, order.ticker)
+
         positions = self.get_open_positions()
         if not positions:
             return []
 
         settled_orders = []
-        now_ts = time.time()
 
         for position in positions:
             window_open = self._parse_window_time(position.ticker)
@@ -707,6 +782,7 @@ class PaperVenueAdapter:
         m = re.search(r"KX(?:BTC|ETH)15M-(\d{2})([A-Z]{3})(\d{2})[T-_]?(\d{2})(\d{2})", ticker, re.IGNORECASE)
         if m:
             groups = m.groups()
+            is_old_format = (groups[2] == "25" and groups[0] != "25")
             try:
                 month_map = {
                     "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4,
@@ -714,8 +790,12 @@ class PaperVenueAdapter:
                     "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12,
                 }
                 month = month_map.get(groups[1].upper(), 0)
-                year = 2000 + int(groups[0])
-                day = int(groups[2])
+                if is_old_format:
+                    year = 2000 + int(groups[2])
+                    day = int(groups[0])
+                else:
+                    year = 2000 + int(groups[0])
+                    day = int(groups[2])
                 hour = int(groups[3])
                 minute = int(groups[4])
 

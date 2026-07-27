@@ -262,3 +262,91 @@ async def test_auto_settlement_rest_fallback(tmp_path):
     assert len(adapter.get_open_positions()) == 0
 
     adapter.close()
+
+
+@pytest.mark.asyncio
+async def test_patient_limit_order_execution(tmp_path):
+    """Test patient limit order submission and asynchronous filling."""
+    # 1. Initialize adapter and engine with patient execution enabled
+    adapter = PaperVenueAdapter(db_path=tmp_path / "paper_wallet.db", initial_balance=100.0)
+
+    scoring_engine = MagicMock()
+    model_run_store = AsyncMock()
+    risk_controller = MagicMock()
+    risk_verdict = MagicMock()
+    risk_verdict.passed = True
+    risk_controller.check.return_value = risk_verdict
+
+    # Mock snapshots and ticker getters
+    mock_snapshot_getter = MagicMock()
+    # YES midpoint is 50c
+    from datetime import datetime, timezone
+    snap = SimpleNamespace(
+        snapshot_version=10,
+        kalshi_midpoint_cents=50.0,
+        spot_avg_usd=60000.0,
+        spot_disagreement_pct=0.01,
+        created_ts=datetime.now(timezone.utc),
+    )
+    mock_snapshot_getter.return_value = snap
+
+    mock_market_ticker_getter = MagicMock()
+    mock_market_ticker_getter.return_value = "KXBTC15M-TEST"
+
+    # Instantiate engine with patient_execution=True and 3c discount
+    engine = AutoTradingEngine(
+        candle_store=AsyncMock(),
+        scoring_engine=scoring_engine,
+        model_run_store=model_run_store,
+        snapshot_getter=mock_snapshot_getter,
+        market_ticker_getter=mock_market_ticker_getter,
+        paper_venue=adapter,
+        risk_controller=risk_controller,
+        discovery_client=AsyncMock(),
+        vessel_state_getter=lambda: "full_forward",
+        patient_execution=True,
+        limit_discount_cents=3,
+        edge_threshold_pct=2.0,
+    )
+
+    # Mock high edge model prediction
+    class FakeHighEdgeModel:
+        def predict(self, features):
+            return SimpleNamespace(yes_probability=0.75, confidence=0.8) # 75% YES prob vs 50c mid = 25% edge
+
+    scoring_engine.get_macro_model.return_value = FakeHighEdgeModel()
+
+    # Aggregator and feature extraction mocks
+    no_op_compute = lambda candles, window_ts: {}
+    dummy_agg = lambda candles: [{"close": 100}] * 5
+
+    # 2. Evaluate asset - should submit a limit order at a discount
+    # YES midpoint is 50c, discount is 3c. Limit price should be 50 - 3 = 47c.
+    # Current midpoint (50c) is higher than limit (47c), so order stays pending.
+    await engine._evaluate_asset("BTC", no_op_compute, dummy_agg)
+
+    pending = adapter.get_pending_orders()
+    assert len(pending) == 1
+    assert pending[0].limit_cents == 47
+    assert pending[0].status == "pending"
+    assert engine._skip_count == 1
+    assert engine._trade_count == 0
+
+    # 3. Simulate new market data arriving: midpoint drops to 45c (<= 47c limit)
+    # Call _evaluate_all_assets which runs update_pending_orders
+    # Midpoint 45c is better than or equal to 47c limit, so it should fill!
+    snap.kalshi_midpoint_cents = 45.0
+
+    await engine._evaluate_all_assets()
+
+    pending_after = adapter.get_pending_orders()
+    assert len(pending_after) == 0
+
+    filled = adapter.get_filled_orders()
+    assert len(filled) == 1
+    assert filled[0].status == "filled"
+    assert filled[0].fill_price_cents == 45.0  # Fills at the better market price (midpoint)
+    assert engine._trade_count == 1
+    assert engine._skip_count == 0  # skip_count decremented!
+
+    adapter.close()

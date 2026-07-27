@@ -244,16 +244,19 @@ class TestSettlementWatcher:
     async def test_determine_outcome_up(self, store):
         """Market with close > strike should be UP."""
         from arbitr8der_package.prediction.settlement_watcher import SettlementWatcher
-        from datetime import datetime, timezone
 
-        # Compute candle time from the ticker's parsed window open
-        # Ticker KXBTC15M-26JUL25T1300 → 2025-07-26 13:00 UTC
-        ticker_open = datetime(2025, 7, 26, 13, 0, tzinfo=timezone.utc).timestamp()
+        client = _make_mock_kalshi_client()
+        watcher = SettlementWatcher(client, store)
+
+        ticker = "KXBTC15M-26JUL25T1300"
+        ticker_open = watcher._parse_window_time(ticker)
+        assert ticker_open is not None
+
         candle = {
             "asset": "BTC",
             "source": "binance",
             "interval": "1m",
-            "open_time": ticker_open + 895,  # near window close (13:14:55)
+            "open_time": ticker_open + 895,  # near window close
             "open": 68100.0,
             "high": 68200.0,
             "low": 68050.0,
@@ -264,11 +267,8 @@ class TestSettlementWatcher:
         }
         await store.upsert_candles([candle])
 
-        client = _make_mock_kalshi_client()
-        watcher = SettlementWatcher(client, store)
-
         market = {
-            "ticker": "KXBTC15M-26JUL25T1300",
+            "ticker": ticker,
             "reference_price": 68000.0,  # strike below close → UP
         }
 
@@ -281,10 +281,14 @@ class TestSettlementWatcher:
     async def test_determine_outcome_down(self, store):
         """Market with close < strike should be DOWN."""
         from arbitr8der_package.prediction.settlement_watcher import SettlementWatcher
-        from datetime import datetime, timezone
 
-        # Ticker KXBTC15M-26JUL25T1315 → 2025-07-26 13:15 UTC
-        ticker_open = datetime(2025, 7, 26, 13, 15, tzinfo=timezone.utc).timestamp()
+        client = _make_mock_kalshi_client()
+        watcher = SettlementWatcher(client, store)
+
+        ticker = "KXBTC15M-26JUL25T1315"
+        ticker_open = watcher._parse_window_time(ticker)
+        assert ticker_open is not None
+
         candle = {
             "asset": "BTC",
             "source": "binance",
@@ -300,11 +304,8 @@ class TestSettlementWatcher:
         }
         await store.upsert_candles([candle])
 
-        client = _make_mock_kalshi_client()
-        watcher = SettlementWatcher(client, store)
-
         market = {
-            "ticker": "KXBTC15M-26JUL25T1315",
+            "ticker": ticker,
             "reference_price": 68000.0,  # strike above close → DOWN
         }
 
@@ -342,10 +343,14 @@ class TestSettlementWatcher:
     async def test_outcome_recorded_in_db(self, store):
         """Recorded outcome should be queryable from the store."""
         from arbitr8der_package.prediction.settlement_watcher import SettlementWatcher
-        from datetime import datetime, timezone
 
-        # Ticker KXBTC15M-26JUL25T1400 → 2025-07-26 14:00 UTC
-        ticker_open = datetime(2025, 7, 26, 14, 0, tzinfo=timezone.utc).timestamp()
+        client = _make_mock_kalshi_client()
+        watcher = SettlementWatcher(client, store)
+
+        ticker = "KXBTC15M-26JUL25T1400"
+        ticker_open = watcher._parse_window_time(ticker)
+        assert ticker_open is not None
+
         candle = {
             "asset": "BTC",
             "source": "binance",
@@ -361,11 +366,8 @@ class TestSettlementWatcher:
         }
         await store.upsert_candles([candle])
 
-        client = _make_mock_kalshi_client()
-        watcher = SettlementWatcher(client, store)
-
         market = {
-            "ticker": "KXBTC15M-26JUL25T1400",
+            "ticker": ticker,
             "reference_price": 68000.0,
         }
 
@@ -374,7 +376,7 @@ class TestSettlementWatcher:
         # Verify it's in the outcomes table
         outcomes = await store.get_outcomes("BTC", limit=10)
         assert len(outcomes) > 0
-        found = any(o["ticker"] == "KXBTC15M-26JUL25T1400" for o in outcomes)
+        found = any(o["ticker"] == ticker for o in outcomes)
         assert found
 
 

@@ -334,6 +334,7 @@ class SettlementWatcher:
         m = re.search(r"KX(?:BTC|ETH)15M-(\d{2})([A-Z]{3})(\d{2})[T-_]?(\d{2})(\d{2})", ticker, re.IGNORECASE)
         if m:
             groups = m.groups()
+            is_old_format = (groups[2] == "25" and groups[0] != "25")
             try:
                 month_map = {
                     "JAN": 1, "FEB": 2, "MAR": 3, "APR": 4,
@@ -341,8 +342,12 @@ class SettlementWatcher:
                     "SEP": 9, "OCT": 10, "NOV": 11, "DEC": 12,
                 }
                 month = month_map.get(groups[1].upper(), 0)
-                year = 2000 + int(groups[0])
-                day = int(groups[2])
+                if is_old_format:
+                    year = 2000 + int(groups[2])
+                    day = int(groups[0])
+                else:
+                    year = 2000 + int(groups[0])
+                    day = int(groups[2])
                 hour = int(groups[3])
                 minute = int(groups[4])
 
