@@ -26,6 +26,8 @@ from arbitr8der_package.config.structured_logging_configuration_module import ge
 
 logger = get_logger(__name__)
 
+_DEFAULT_SESSION_RESET_BALANCE_USD = 17.00
+
 
 # ---------------------------------------------------------------------------
 # Data models
@@ -40,6 +42,14 @@ class PaperWallet:
     total_trades: int = 0
     winning_trades: int = 0
     losing_trades: int = 0
+
+    @property
+    def win_rate_pct(self) -> float:
+        """Percentage of settled trades that were winners."""
+        settled = self.winning_trades + self.losing_trades
+        if settled <= 0:
+            return 0.0
+        return (self.winning_trades / settled) * 100.0
 
 
 @dataclass
@@ -244,6 +254,41 @@ class PaperVenueAdapter:
         except Exception as e:
             logger.warning("Failed to sync live Kalshi balance: %s", e)
         return None
+
+    async def reset_wallet_for_new_session(self, discovery_client: Any | None = None) -> float:
+        """Reset the paper wallet for a fresh session at the real Kalshi balance.
+
+        Attempts to sync the real Kalshi balance via the discovery client's
+        signed get_balance. On success both balance and starting_balance are
+        set to the live USD amount; on any failure they fall back to the
+        hardcoded real-ish default of $17.00. All in-memory wallet counters
+        are zeroed and persisted so each session starts clean. Historical
+        order/position/settlement rows are left untouched.
+        """
+        reset_balance_usd = _DEFAULT_SESSION_RESET_BALANCE_USD
+        synced_balance_usd = await self.sync_live_balance(discovery_client)
+        if synced_balance_usd is not None:
+            reset_balance_usd = synced_balance_usd
+        else:
+            self._wallet.balance = reset_balance_usd
+            self._wallet.starting_balance = reset_balance_usd
+            self._conn.execute(
+                "UPDATE wallet SET balance=?, starting_balance=? WHERE id=1",
+                (reset_balance_usd, reset_balance_usd),
+            )
+            self._conn.commit()
+            logger.warning(
+                "Falling back to default paper wallet balance of $%.2f for new session",
+                reset_balance_usd,
+            )
+
+        self._wallet.total_pnl = 0.0
+        self._wallet.total_trades = 0
+        self._wallet.winning_trades = 0
+        self._wallet.losing_trades = 0
+        self._save_wallet()
+        logger.info("Paper wallet reset for new session at $%.2f", reset_balance_usd)
+        return reset_balance_usd
 
     def update_pending_orders(self, ticker_midpoints: dict[str, float]) -> list[PaperOrder]:
         """Check all pending orders against current market midpoints and fill those that meet the criteria.

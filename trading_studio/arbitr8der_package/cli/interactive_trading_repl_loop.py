@@ -15,6 +15,7 @@ Phase 7 additions:
 from __future__ import annotations
 
 import asyncio
+import contextlib
 import json
 import threading
 import time
@@ -80,9 +81,18 @@ def _async_worker(loop: asyncio.AbstractEventLoop, orchestrator: IngestionOrches
         if not started:
             logger.error("Orchestrator failed to start")
             return
-        # Keep running until stop
-        while orchestrator.running:
-            await asyncio.sleep(0.5)
+        # Keep the loop alive while the orchestrator runs, then let any
+        # lingering background tasks drain so shutdown is clean.
+        while True:
+            await asyncio.sleep(0.25)
+            if not orchestrator.running:
+                pending = [
+                    task
+                    for task in asyncio.all_tasks()
+                    if task is not asyncio.current_task() and not task.done()
+                ]
+                if not pending:
+                    break
 
     loop.run_until_complete(_run())
 
@@ -106,6 +116,10 @@ def _run_script(script_path: str, json_output: bool = False) -> None:
     repl._worker_thread.start()
     ready.wait(timeout=10.0)
     repl._running = True
+
+    # Same as run(): wire the Binance spot stream so predict has live candles.
+    from arbitr8der_package.data_sources.binance_spot_price_stream import BinanceSpotPriceStream
+    repl._binance = BinanceSpotPriceStream()
 
     print(f"Executing script: {script_path} ({len(lines)} lines)")
 
@@ -221,6 +235,21 @@ class TradingREPL:
         # Settle any expired paper positions from previous runs on startup
         if self._venue is not None:
             self._sync_settle_expired_positions()
+
+        # Reset the paper venue wallet for this session and sync the risk gate
+        # balance so both agree on the real Kalshi balance (or the fallback).
+        if self._venue is not None and self._risk is not None and self._loop is not None:
+            try:
+                future = asyncio.run_coroutine_threadsafe(
+                    self._venue.reset_wallet_for_new_session(self._orchestrator.discovery_client),
+                    self._loop,
+                )
+                reset_balance_usd = future.result(timeout=10.0)
+                self._risk.set_balance(reset_balance_usd)
+                print(f"Paper wallet reset for new session: ${reset_balance_usd:.2f}")
+            except Exception as exc:
+                logger.warning("Failed to reset paper wallet for new session: %s", exc)
+                self._risk.set_balance(self._venue.get_wallet().balance)
 
         self._repl_loop()
 
@@ -838,19 +867,28 @@ Commands:
 
     def _sync_settle_expired_positions(self) -> None:
         """Settle any expired paper positions synchronously."""
-        if self._orchestrator and self._loop:
-            candle_store = self._orchestrator.candle_store
-            discovery = self._orchestrator._kalshi_rest
-            future = asyncio.run_coroutine_threadsafe(
+        loop = self._loop
+        if (
+            loop is None
+            or not loop.is_running()
+            or self._orchestrator is None
+            or not self._orchestrator.running
+            or self._venue is None
+        ):
+            return
+        candle_store = self._orchestrator.candle_store
+        discovery = self._orchestrator._kalshi_rest
+        try:
+            settle_future = asyncio.run_coroutine_threadsafe(
                 self._venue.settle_expired_positions(candle_store, discovery),
-                self._loop
+                loop,
             )
-            try:
-                settled = future.result(timeout=5.0)
-                if settled:
-                    print(f"Auto-settled {len(settled)} expired position(s).")
-            except Exception as e:
-                logger.warning("Failed to auto-settle expired positions: %s", e)
+            settled = settle_future.result(timeout=10.0)
+            if settled:
+                print(f"Auto-settled {len(settled)} expired position(s).")
+        except Exception as exc:
+            if str(exc):
+                logger.warning("Failed to auto-settle expired positions: %s", exc)
 
     def _cmd_positions(self, _args: str) -> None:
         """Show open paper positions with unrealized PnL."""
@@ -1287,9 +1325,21 @@ Commands:
         if self._orchestrator.running:
             print("Stopping data ingestion...")
             if self._loop:
-                asyncio.run_coroutine_threadsafe(self._orchestrator.stop(), self._loop)
+                stop_future = asyncio.run_coroutine_threadsafe(
+                    self._orchestrator.stop(), self._loop
+                )
+                try:
+                    stop_future.result(timeout=60.0)
+                except Exception as exc:
+                    detail = str(exc) or "timed out waiting for orchestrator stop"
+                    logger.warning("Orchestrator stop error: %s", detail)
+                # Give lingering websocket tasks a moment to settle before close().
+                with contextlib.suppress(Exception):
+                    asyncio.run_coroutine_threadsafe(
+                        asyncio.sleep(0.5), self._loop
+                    ).result(timeout=2.0)
             if self._worker_thread:
-                self._worker_thread.join(timeout=5.0)
+                self._worker_thread.join(timeout=10.0)
 
         if self._loop:
             self._loop.call_soon_threadsafe(self._loop.stop)

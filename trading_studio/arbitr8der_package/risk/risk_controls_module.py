@@ -252,6 +252,11 @@ class RiskController:
         self._exposure_by_asset[asset] = max(0.0, self._exposure_by_asset.get(asset, 0.0) - exposure)
         logger.info("Risk: settlement for %s, pnl=$%.2f, balance=$%.2f", asset, pnl, self._balance)
 
+    def set_balance(self, balance_usd: float) -> None:
+        """Synchronize the risk gate balance with the venue wallet balance."""
+        self._balance = float(balance_usd)
+        logger.info("Risk: balance synced to venue wallet: $%.2f", self._balance)
+
     def emergency_stop(self) -> None:
         """Activate emergency stop — blocks all new orders."""
         self._emergency_stop_active = True

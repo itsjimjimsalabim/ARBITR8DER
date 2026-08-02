@@ -308,6 +308,17 @@ class IngestionOrchestrator:
         # Phase 8l — auto-trading engine (disabled by default)
         self._paper_venue = PaperVenueAdapter()
         self._risk_controller = RiskController(wallet_mode="paper")
+
+        # Phase 9 — reset the paper venue wallet to the real Kalshi balance
+        # for this session and sync the risk controller so both agree.
+        try:
+            session_start_balance_usd = await self._paper_venue.reset_wallet_for_new_session(self._kalshi_rest)
+            if self._risk_controller is not None:
+                self._risk_controller.set_balance(session_start_balance_usd)
+            logger.info("Paper wallet reset for new session: $%.2f", session_start_balance_usd)
+        except Exception as exc:
+            logger.warning("Failed to reset paper wallet for new session: %s", exc)
+
         self._auto_trader = AutoTradingEngine(
             candle_store=self._candle_store,
             scoring_engine=self._scoring_engine,

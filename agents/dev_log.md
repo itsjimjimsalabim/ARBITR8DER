@@ -807,3 +807,35 @@ Open paper positions and filled paper orders persisted indefinitely, even past t
 - `agents/dev_log.md` (this entry)
 
 
+## Phase 9r: Real-Balance Session Reset, Signed REST Auth, and First Live Paper Session (2026-08-02)
+
+### Problem
+1. Paper trading started from a hardcoded $1,000 (seeded into `paper_wallet.db`), not the real Kalshi balance (~$17), so theoretical session PnL could not be repeated Live.
+2. The Kalshi REST discovery client signed authenticated endpoints with a `Bearer` token only, producing HTTP 401; the WS client already signed correctly with RSA-PSS (salt = SHA256 digest size), but REST did not. `sync_live_balance` existed but was never called (dead code).
+3. REPL script mode never initialized the Binance spot stream, so `predict` in scripts failed with `no_spot_price`.
+4. `TradingREPL._shutdown()` scheduled `orchestrator.stop()` without awaiting, so the stream lease was never released and blocked the next session for up to 5 minutes.
+5. `autotrade on` crashed on `'PaperWallet' object has no attribute 'win_rate_pct'` (reconciliation bug).
+
+### Solution
+1. **Real-balance session reset**: `PaperVenueAdapter.reset_wallet_for_new_session()` syncs the live Kalshi balance via signed `get_balance`, falls back to $17.00 on failure, zeroes in-memory wallet counters, persists, and leaves historical order/settlement rows untouched. Wired into `IngestionOrchestrator.start()` and `TradingREPL.run()`; `RiskController.set_balance()` keeps the risk gate in sync.
+2. **Signed REST auth**: `KalshiRestMarketDiscoveryClient.signed_auth_headers_for_api_path()` signs `timestamp_ms + "GET" + path` with RSA-PSS (salt = SHA256 digest size) using the headers `KALSHI-ACCESS-KEY` / `KALSHI-ACCESS-TIMESTAMP` / `KALSHI-ACCESS-SIGNATURE` (not `Kalshi-Api-*`, which 401s). `get_balance` now returns the real balance ($17.53).
+3. **Script-mode Binance stream**: `_run_script()` wires `repl._binance = BinanceSpotPriceStream()` like `run()` does.
+4. **Awaited shutdown**: `_shutdown()` now awaits `orchestrator.stop()` (60s timeout) before closing the loop, so the lease is always released; added a short task drain before `loop.close()`.
+5. **win_rate_pct**: Added a computed `win_rate_pct` property to `PaperWallet`.
+6. **Test hygiene**: All 9 tests in `test_connection_battery.py` marked `@pytest.mark.network` so the offline suite (`-m "not network"`) passes without live APIs.
+
+### First Live Paper Session (16 min, window 03:00-03:15 PDT, market KX*15M-26AUG020615-15)
+- Wallet reset to **$17.52** (real Kalshi balance). Session PnL: **-$0.04** (2 trades, 1W/1L).
+- Auto-trades (2 contracts each, min size): BTC NO 2 @ 82c (+$0.36, model predicted down, ended down); ETH YES 2 @ 20c (-$0.40, model predicted up, ended down).
+- Note: `autotrade on` preflight requires a fresh candle in the last 300s; Binance WS is geo-blocked (HTTP 451) in this environment and auto-falls back to REST polling.
+- Rollover note: the orchestrator's 60s `_run_kalshi_discovery` loop already rolls the WS to the new market after each 15-min close; the book may be briefly empty at the boundary (a few `no_kalshi_midpoint` skips expected).
+- Lease released cleanly; session archived to `session_20260802_095924.jsonl`.
+
+### Files Modified
+- `trading_studio/arbitr8der_package/execution/paper_venue_adapter.py` (+`reset_wallet_for_new_session`, `PaperWallet.win_rate_pct`)
+- `trading_studio/arbitr8der_package/data_sources/kalshi_rest_market_discovery_client.py` (+`signed_auth_headers_for_api_path`, `_load_private_key`)
+- `trading_studio/arbitr8der_package/data_sources/ingestion_orchestrator.py` (session reset in `start()`)
+- `trading_studio/arbitr8der_package/risk/risk_controls_module.py` (+`set_balance`)
+- `trading_studio/arbitr8der_package/cli/interactive_trading_repl_loop.py` (script-mode Binance stream, awaited shutdown, guarded settle, wallet reset in `run()`)
+- `trading_studio/tests/test_connection_battery.py` (network markers)
+- `agents/dev_log.md` (this entry)

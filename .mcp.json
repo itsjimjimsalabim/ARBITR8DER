@@ -6,6 +6,12 @@
       "headers": {
         "Authorization": "Bearer ${GITHUB_PERSONAL_ACCESS_TOKEN}"
       }
+    },
+    "codebase-memory": {
+      "type": "stdio",
+      "command": "/home/itsjimjimsalabim/.local/bin/codebase-memory-mcp",
+      "args": ["mcp"],
+      "env": {}
     }
   }
 }

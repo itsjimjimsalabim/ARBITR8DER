@@ -32,6 +32,7 @@ BATTERY_DURATION = 30  # seconds to collect data per source
 ORCHESTRATOR_DURATION = 45  # seconds for full orchestrator run
 
 
+@pytest.mark.network
 @pytest.mark.asyncio
 async def test_binance_ws_connection():
     """Binance WebSocket connects and delivers BTC/ETH trade observations.
@@ -95,6 +96,7 @@ async def test_binance_ws_connection():
     assert any("ETH" in r.symbol for r in received), "No ETH trades received"
 
 
+@pytest.mark.network
 @pytest.mark.asyncio
 async def test_binance_candle_backfill():
     """Binance REST candle backfill returns historical 1m OHLCV data."""
@@ -124,6 +126,7 @@ async def test_binance_candle_backfill():
 # Source 2: Coinbase WebSocket + REST candle backfill
 # ---------------------------------------------------------------------------
 
+@pytest.mark.network
 @pytest.mark.asyncio
 async def test_coinbase_ws_connection():
     """Coinbase WebSocket connects and delivers BTC/ETH ticker observations."""
@@ -173,6 +176,7 @@ async def test_coinbase_ws_connection():
     assert any("ETH" in r.product_id for r in received), "No ETH tickers received"
 
 
+@pytest.mark.network
 @pytest.mark.asyncio
 async def test_coinbase_candle_backfill():
     """Coinbase REST candle backfill returns historical OHLCV data."""
@@ -199,6 +203,7 @@ async def test_coinbase_candle_backfill():
 # Source 3: Polymarket sentiment poller
 # ---------------------------------------------------------------------------
 
+@pytest.mark.network
 @pytest.mark.asyncio
 async def test_polymarket_sentiment_poll():
     """Polymarket REST poller finds BTC price-level markets and returns sentiment."""
@@ -247,6 +252,7 @@ async def test_polymarket_sentiment_poll():
 # Source 4: CoinGecko macro context poller
 # ---------------------------------------------------------------------------
 
+@pytest.mark.network
 @pytest.mark.asyncio
 async def test_coingecko_macro_poll():
     """CoinGecko REST poller returns BTC/ETH price, market cap, and change data."""
@@ -301,6 +307,7 @@ async def test_coingecko_macro_poll():
 # Source 5: Kalshi REST market discovery + WebSocket order book
 # ---------------------------------------------------------------------------
 
+@pytest.mark.network
 @pytest.mark.asyncio
 async def test_kalshi_rest_discovery():
     """Kalshi REST client discovers active BTC/ETH 15-minute markets."""
@@ -323,6 +330,7 @@ async def test_kalshi_rest_discovery():
     assert any("ETH" in m.ticker for m in markets), "No ETH markets found"
 
 
+@pytest.mark.network
 @pytest.mark.asyncio
 async def test_kalshi_ws_orderbook():
     """Kalshi WebSocket delivers order book updates for active markets.
@@ -405,6 +413,7 @@ async def test_kalshi_ws_orderbook():
 # Full orchestrator: all 5 sources simultaneously
 # ---------------------------------------------------------------------------
 
+@pytest.mark.network
 @pytest.mark.asyncio
 async def test_orchestrator_all_sources():
     """Full orchestrator starts all 5 sources and produces a HotSnapshot."""

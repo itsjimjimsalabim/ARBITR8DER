@@ -4,20 +4,28 @@ Read-only: discovers active BTC/ETH 15-minute tickers, fetches market details
 (status, close time, strike, bid/ask, depth, fee metadata). No order submission.
 
 Rate limits: Kalshi REST is ~10 req/sec authenticated, lower unauthenticated.
-Auth: Bearer token from environment. Markets endpoint is public; portfolio endpoints require auth.
+Auth: RSA-PSS signed headers (KALSHI-ACCESS-KEY, KALSHI-ACCESS-TIMESTAMP,
+KALSHI-ACCESS-SIGNATURE) for authenticated endpoints like /portfolio/balance;
+public market discovery endpoints work unsigned.
 Failure modes: network timeout, rate limit 429, auth expiry 401, market not found 404.
 """
 
 from __future__ import annotations
 
 import asyncio
+import base64
 import time
+from pathlib import Path
 from typing import Any
+from urllib.parse import urlparse
 
 import httpx
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 
-from arbitr8der_package.config.typed_configuration_settings_module import load_settings
+from arbitr8der_package.config.cwd_independent_path_resolver import resolve_streams_path
 from arbitr8der_package.config.structured_logging_configuration_module import get_logger
+from arbitr8der_package.config.typed_configuration_settings_module import load_settings
 
 logger = get_logger(__name__)
 
@@ -104,6 +112,12 @@ class KalshiRestMarketDiscoveryClient:
         self._headers: dict[str, str] = {}
         if self._api_key:
             self._headers["Authorization"] = f"Bearer {self._api_key}"
+        configured_key_path = settings.kalshi_private_key_path
+        try:
+            resolved_key_path = resolve_streams_path(configured_key_path)
+        except Exception:
+            resolved_key_path = Path(configured_key_path)
+        self._private_key = self._load_private_key(str(resolved_key_path))
 
     async def discover_active_markets(self, client: httpx.AsyncClient | None = None) -> list[KalshiMarketDetail]:
         """Fetch all active BTC/ETH 15-minute markets from Kalshi.
@@ -158,11 +172,58 @@ class KalshiRestMarketDiscoveryClient:
         """Return cached market detail without network call."""
         return self._markets_cache.get(ticker)
 
+    @staticmethod
+    def _load_private_key(path: str) -> Any:
+        """Load RSA private key from PEM file for request signing."""
+        key_path = Path(path)
+        if not key_path.exists():
+            logger.warning("Kalshi private key not found at %s — signed auth will fail", path)
+            return None
+        try:
+            pem_data = key_path.read_bytes()
+            return serialization.load_pem_private_key(pem_data, password=None)
+        except Exception as exc:
+            logger.error("Failed to load Kalshi private key: %s", exc)
+            return None
+
+    def signed_auth_headers_for_api_path(self, api_path: str) -> dict[str, str]:
+        """Generate RSA-PSS signed headers for an authenticated REST endpoint.
+
+        Signs: timestamp_ms + "GET" + api_path. Salt length is SHA256 digest
+        size (32 bytes), mirroring the Kalshi WebSocket client signing pattern.
+        """
+        if not self._private_key or not self._api_key:
+            logger.warning("Cannot sign Kalshi request: API key or private key missing")
+            return {}
+
+        timestamp_ms = str(int(time.time() * 1000))
+        message = (timestamp_ms + "GET" + api_path).encode("utf-8")
+
+        try:
+            signature = self._private_key.sign(
+                message,
+                padding.PSS(
+                    mgf=padding.MGF1(hashes.SHA256()),
+                    salt_length=hashes.SHA256().digest_size,
+                ),
+                hashes.SHA256(),
+            )
+            signature_b64 = base64.b64encode(signature).decode("utf-8")
+            return {
+                "KALSHI-ACCESS-KEY": self._api_key,
+                "KALSHI-ACCESS-TIMESTAMP": timestamp_ms,
+                "KALSHI-ACCESS-SIGNATURE": signature_b64,
+                "Content-Type": "application/json",
+            }
+        except Exception as exc:
+            logger.error("Failed to sign Kalshi request: %s", exc)
+            return {}
+
     async def get_balance(self, client: httpx.AsyncClient | None = None) -> dict[str, Any] | None:
         """Fetch account balance from Kalshi.
 
         Returns dict with 'balance' (cents), 'position_limit', etc.
-        Requires authenticated API key.
+        Requires authenticated API key signed with RSA-PSS headers.
         """
         if not self._api_key:
             logger.warning("Cannot fetch balance: no API key configured")
@@ -174,7 +235,12 @@ class KalshiRestMarketDiscoveryClient:
 
         try:
             url = f"{self._base_url}/portfolio/balance"
-            response = await client.get(url, headers=self._headers)
+            api_path = urlparse(url).path
+            signed_headers = self.signed_auth_headers_for_api_path(api_path)
+            if not signed_headers:
+                logger.warning("Cannot fetch balance: signed auth headers unavailable")
+                return None
+            response = await client.get(url, headers=signed_headers)
 
             if response.status_code == 200:
                 data = response.json()
