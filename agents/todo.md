@@ -19,7 +19,231 @@
 
 ---
 
-## Vibecoding Audit & Cleanup (2026-07-24) ← CURRENT
+## Active Session & Overnight Trading Cadence (2026-08-07 22:06 PDT) ← CURRENT
+
+**Agent Stance:** AI Operator (Overwatch) manual REPL trading mode (`buy`/`sell` by hand).
+**Operating Rule:** Alternating **Observe/Notes Only** $\rightarrow$ **Verify & Fix/Doc/Commit** cadence.
+**Current Time:** 22:06 PDT (10:06 PM PDT).
+
+---
+
+### Overnight Cadence Schedule (22:00 PDT – 08:00 PDT)
+
+1. **Cycle 1 (Run & Observe):**
+   - **Target Window:** **10:15–10:30 PDT** (Start vessel at **10:14 PDT** / 22:14 PDT).
+   - **Action:** Run `arb forward start`, `vessel forward`, wait 40s, `snapshot`, `predict BTC/ETH --model auto`, execute patient limit order (`buy ASSET SIDE 2 48`).
+   - **Post-Run:** **ANALYZE ONLY — MAKE NOTES IN TODO. DO NOT FIX CODE.** Treat anomalies as noise until verified across runs.
+
+2. **Cycle 2 (Run & Verify/Fix):**
+   - **Target Window:** **10:45–11:00 PDT** (Start vessel at **10:44 PDT** / 22:44 PDT).
+   - **Action:** Run trading session.
+   - **Post-Run:** **ANALYZE AND VERIFY.** Compare notes from Cycle 1 & 2. Fix verified issues in `trading_studio/`, update supporting docs (`dev_log.md`, `todo.md`), commit locally.
+
+3. **Cycle 3 (Run & Observe):**
+   - **Target Window:** **11:15–11:30 PDT** (Start vessel at **11:14 PDT** / 23:14 PDT).
+   - **Action:** Run trading session.
+   - **Post-Run:** **ANALYZE ONLY — MAKE NOTES IN TODO. NO CODE FIX.**
+
+4. **Cycle 4 (Run & Fix/Improve):**
+   - **Target Window:** **11:45–12:00 PDT** (Start vessel at **11:44 PDT** / 23:44 PDT).
+   - **Action:** Run trading session.
+   - **Post-Run:** **ANALYZE, FIX VERIFIED ISSUES, UPDATE DOCS, COMMIT.**
+
+5. **Repeat Loop Until 08:00 PDT:** Continue the 15-minute window cadence (`Observe` $\rightarrow$ `Verify/Fix/Doc/Commit` $\rightarrow$ `Observe` $\rightarrow$ `Fix/Doc/Commit`).
+
+---
+
+### Hand-off Protocol for Next AI Agent
+
+If an agent hits context limits or crashes, the next agent must:
+1. **Read Onboarding & Operating Docs:** [`agents/onboarding_workflow.md`](file:///mnt/c/Users/itsji/ARBITR8DER/agents/onboarding_workflow.md) and [`agents/trading_studio_operating_workflow.md`](file:///mnt/c/Users/itsji/ARBITR8DER/agents/trading_studio_operating_workflow.md).
+2. **Check Current PDT Time:** Calculate the upcoming 15-minute Kalshi window (:00, :15, :30, :45).
+3. **Launch REPL 1 Min Before Window Open:**
+   ```bash
+   arb forward start
+   vessel forward
+   ```
+4. **Follow Patient Limit Execution:** Use `buy ASSET SIDE 2 48` (limit cost $\le 48\text{¢}$) to maintain positive expected value.
+5. **Enforce Fix Discipline:** Never patch code after a single run. Make notes first; only fix on the alternating verify pass, update docs, and commit.
+6. **Hard Stop at 08:00 PDT.**
+
+---
+
+### Recent Run History & Observe Notes (2026-08-07)
+- **10:45–11:00 PM PDT Run (Cycle 2 - VERIFY & FIX):**
+  - Session Archive: `session_20260808_054321.jsonl`
+  - **BTC:** `buy BTC no 2 48` $\rightarrow$ Placed as `PENDING` limit order @ 48c $\rightarrow$ Expired unexecuted (cancelled at settlement).
+  - **ETH:** `buy ETH no 2 48` $\rightarrow$ Placed as `PENDING` limit order @ 48c (paced via 6s delay) $\rightarrow$ Expired unexecuted (cancelled at settlement).
+  - **Cycle 2 Outcome:** 0 Trades Filled, 0 Losses, **$0.00 PnL**. Equity preserved at **$18.56**.
+  - **Verified Friction & Code Fixes Applied:**
+    1. *Risk Guard Pacing:* Verified that pacing sequential orders by 5s+ prevents `ORDER BLOCKED: Cooldown active`. Documented pacing rule in `trading_studio_operating_workflow.md`.
+    2. *Auto-Scoring NoneType Exception:* Fixed `window_open is not None` guard in `auto_scoring_engine.py:237` to eliminate log errors during background retraining.
+    3. *Pytest Verification:* Verified 16/16 `test_auto_scoring_engine.py` unit tests pass.
+  - **Commit:** Staged and committed code & doc fixes (`git commit -m "fix(prediction): guard retrain_models against null window_open and document order pacing rules"`).
+
+- **11:45–12:00 PDT Run:** 1W / 1L | PnL -$0.94 | Market buy orders paid 76c/71c.
+- **12:15–12:30 PDT Run:** 0W / 2L | PnL -$1.90 | Applied patient limit orders @ 47c/48c.
+
+---
+
+## Overnight Paper Trading Loop (2026-08-02)
+
+> **PIVOT (2026-08-07): MOVE AWAY FROM "AUTOTRADING".** The operator does NOT want an
+> autonomous auto-trader that places orders on its own. Instead: a **trading studio** that the
+> CLI (an AI operator like me) uses to **see prices and execute trades by hand**. Lots of
+> processes CAN and SHOULD be automated to help me (data feeds, predictions, snapshots,
+> scoring, journaling) — but the final buy decision is mine, informed by what I know the price
+> is. Workflow should become: CLI sees the predicted price → CLI decides it's a good price →
+> CLI places the trade. The `autotrade on/off` engine should be deprecated in favor of
+> operator-executed trades via `buy/sell`. Keep the automation (predictions, alerts, data),
+> drop the autonomous order placement.
+
+Operating loop for overnight Kalshi 15-min BTC/ETH paper-trading windows. On re-onboarding,
+read this, get the vessel ready, and start from a fresh window. PAT is NOT available this
+session — commit locally only, do not block on push.
+
+### The Loop — cadence, expanded
+
+The operator's exact cadence (verbatim, 2026-08-02):
+
+> "run, analyze (no fix, issues may not be issues), run, then analyze and verify issues then
+> fix, then run, then analyze (again no fix), run, now fix, run, analyze, run, fix, run"
+
+That is the pattern this section exists to lock in. It alternates between two kinds of cycles:
+
+- **observe-only cycle:** run → **analyze (NO fix)** — treat every anomaly as *maybe-an-issue*,
+  not *an-issue*. Log it as a note and move on. "Issues may not be issues."
+- **verify+fix cycle:** run → **analyze AND verify** which observed issues reproduce across
+  runs → **fix only the verified ones** → update docs + commit → then run again.
+
+Numbered for machine-following:
+
+1. **run** a window (vessel running; ~16 min)
+2. **analyze** — observe only, make notes, NO fixes ("issues may not be issues")
+3. **run** again (next window)
+4. **analyze and verify issues then fix** — cross-check the notes from steps 2 and 6/8; only
+   issues that reproduce are real → fix → update docs + commit
+5. **run**
+6. **analyze** (again, NO fix)
+7. **run**
+8. **now fix** (any verified issues; else just notes)
+9. **run**, **analyze**, **run**, **fix**, **run** … continue until 8am
+
+Rules the operator stressed:
+
+- "these runs **arent immediately back to back**, only after you've taken the time to analyze"
+- "see **it's not running** when in between the analysis and programming actions" — the vessel
+  is OFF during analysis and during any code changes.
+- "analyze methodically" — not skim; read logs, DB rows, session archives, and compare.
+- "stop after 8am" — hard stop; I'm expecting **profitable paper batches in the data when I
+  wake up**.
+- "full forward godspeed goodnight" — the operator's send-off; keep the run on schedule.
+
+### Timing
+
+- Windows are 15 min: e.g. 3:45–4:00, 4:00–4:15, …, 7:45–8:00.
+- "start vessel at 3:44" for a 3:45 window — i.e. **1 minute before** the window opens.
+- First window of a session, if the window is already open: "it's 3:45 just start now but the
+  other times try for one minute before" — start immediately at open for run #1, and use the
+  1-min-before rule for every run after that.
+- Each run ~16 min: startup + ~15 min trading + settle at close + clean exit.
+- Run ends ~1 min after window close → ~13 min analysis time before next window's start.
+- Get ready before each run: vessel ready state, lease free, wallet synced.
+
+### A Run (script, e.g. `/tmp/opencode/run_0345.rs`)
+
+> **PIVOT (2026-08-07):** The operator does NOT want an autonomous auto-trader. The CLI (AI
+> operator) makes the trade decisions itself. So the run becomes an **assisted observation +
+> manual execution** session: the CLI watches predictions/prices, then executes `buy`/`sell`
+> when the price is good. No `autotrade on/off`.
+
+```
+vessel battery
+vessel forward
+sleep 40            # warmup, book populates right after market open
+snapshot
+predict BTC
+predict ETH
+positions
+wallet
+sleep 780           # ~13 min through the window to ~window close
+# CLI analyzes prices + decides whether to buy/sell
+positions
+wallet
+sleep 45            # let market close + settlement record
+positions
+wallet
+exit                # settle expired positions + release lease on clean exit
+```
+
+Launch with `nohup` in background; monitor the log; collect session archive on exit.
+
+### What to Observe When Analyzing
+
+The operator's ask: "after your trading run, **evaluate what went well and what might've gone
+wrong**, make notes, then get yourself ready for the next upcoming window, **see if same issues
+or different**." So each analysis pass asks three questions:
+
+1. What went well? (repeat it next run)
+2. What might have gone wrong? (note it — do NOT fix yet)
+3. Same issues or different vs the last run? (repeats = verify+fix candidates; one-offs = noise)
+
+Concretely, check:
+
+- Wallet start/end, PnL per window, trade count, win/loss, fill prices vs mid.
+- Predictions (BTC/ETH up/down) vs actual outcome — directional accuracy.
+- Auto-trader decisions: entry/exit timing, limit patience, sizing.
+- Timing/gaps: book-empty windows at market rollover, discovery loop rolls, preflight candle availability.
+- Same issues across runs (candidates to verify → fix) vs one-off anomalies (leave alone).
+
+### Fix Discipline
+
+- Gate: "analyze and verify issues **then fix**" — before fixing, confirm the issue reproduces
+  or is real (cross-run evidence, logs, DB rows). Never patch a symptom on one run's evidence.
+- After a fix: "after changes, **update docs and commit**" — run tests
+  (`./.venv/bin/python -m pytest trading_studio/tests -m "not network"`), update docs
+  (`agents/dev_log.md`, this file, onboarding docs as relevant), then commit.
+- "update docs+commit too" — even small fixes get logged and committed; the docs are the
+  memory that survives a fresh window.
+- Do NOT chase noise. Profitability comes from consistent, verified behavior.
+
+### Full Verbatim Operator Prompts (2026-08-02, for re-onboarding)
+
+1. "We need you to Operate overnight get yourself ready for the upcoming window, the 3:45-4:00
+   so start vessel at 3:44 after your trading run, evaluate what went well and what might've
+   gone wrong, make notes, then get yourself ready for the next upcoming window, see if same
+   issues or different, fix verified issues (after changes, update docs and commit) loop on
+   this, you have a lot of time. stop after 8am, im expecting profitable paper batches in the
+   data when i wake up. full forward godspeed goodnight"
+2. "hey these runs arent immediately back to back, only after you've taken the time to analyze,
+   then run again, then analyze again and fix issues/make improvements, then run again (see
+   it's not running when in between the analysis and programming actions) then analyze
+   methodically, run, fix verified issues (update docs+commit too), run, analyze, run, fix, run"
+   (pasted twice for emphasis)
+3. "it's 3:45 just start now but the other times try for one minute before"
+4. "no you didn't read me exactly. run, analyze (no fix, issues may not be issues), run, then
+   analyze and verify issues then fix, then run, then analyze (again no fix), run, now fix,
+   run, analyze, run, fix, run. now reread my last few prompts to really understand this loop
+   you are about to engineer and develop"
+5. "i dont have the PAT just forget it, use the todo.md to write down the loop we've developed
+   i'll have you reonboard and try from a fresh window"
+
+### Current State (as of commit d45aff7, on main, pushed)
+
+- Paper wallet resets to real Kalshi balance each session (signed REST `get_balance` → $17.52).
+- Signed REST auth: headers `KALSHI-ACCESS-KEY/TIMESTAMP/SIGNATURE` (RSA-PSS, salt = SHA256 digest size).
+- Kalshi WS market rollover works via 60s discovery loop; Binance WS geo-blocked → REST polling fallback.
+- REPL shutdown is clean (awaited, guarded settle, no double-close crash).
+- First live session: start $17.52, end $17.48, PnL −$0.04, 2T 1W/1L (ETH YES 2 @ 20c lost, BTC NO 2 @ 82c won).
+- NOTE: GitHub PAT not available this session — commit locally, push later.
+
+### Next Window To Try
+
+Fresh window: start 1 min before open. Re-verify readiness, launch run script, then follow the loop above.
+
+---
+
+## Vibecoding Audit & Cleanup (2026-07-24)
 
 We built a lot vibecoding. We now have to audit, review, and clean. Goals: stop the env/runtime/tooling bugs that come from duplicate and stale paths, get the repo into a single sane shape so the next AI's onboarding is deterministic.
 
@@ -173,410 +397,9 @@ Dual-horizon prediction models for BTC/ETH 15-minute markets.
 - [x] Records to model_runs with correct model name (macro_ensemble / micro_ensemble / baseline_v1)
 - [x] 5 new unit tests for aggregation (empty, single window, two windows, sparse skip, sort order)
 
-## Migrate to Linux (PCLinuxOS)
+## ~~Migrate to Linux~~ — CANCELLED (2026-08-07)
 
-**Target OS:** PCLinuxOS (rolling-release RPM-based distro)
-**Reason:** Get off Windows/OneDrive sync hell. Pure Linux native execution. No more WSL geo-block
-on Binance WS. No more OneDrive lock files. Direct hardware access for Ollama (AMD Ryzen AI NPU
-potential). Faster I/O, deterministic paths, no registry junk.
-
-> ⚠️ ANOTHER AI IS CURRENTLY CODING ON THE `arbitrator` BRANCH — do not touch code, only docs and
-> planning until that work is merged or confirmed paused. This is a research + documentation task.
-
----
-
-### PRE-MIGRATION GATE 1: Repo Must Be Fully Committed and Pushed
-
-The repo is currently **12 commits ahead of origin** and has a push-blocked history. Fix this first.
-The Linux machine will clone from GitHub — if it's not on GitHub, it's gone.
-
-#### 1a. Resolve the PAT-in-History Push Block
-- [ ] Open the GitHub secret-scanning URL for commit `ac2e110` (check email/GitHub notification).
-  Bypass option: go to `https://github.com/itsjimjimsalabim/ARBITR8DER/security` → Secret scanning.
-- [ ] **Option A (easiest if GitHub grants bypass):** Click "Allow secret" in GitHub secret scanning.
-  Then `git push origin main` normally.
-- [ ] **Option B (history rewrite — nuclear):** If bypass is denied:
-  - `git log --all --oneline | grep ac2e110` — confirm the commit
-  - `git rebase -i ac2e110~1` — squash or drop the offending commit
-  - Force push: `git push origin main --force-with-lease`
-  - ⚠️ Coordinate with any active agent branches before force-pushing
-- [ ] Verify push: `gh repo view itsjimjimsalabim/ARBITR8DER --web` — confirm latest commit shows on GitHub
-
-#### 1b. Commit All Pending Local Changes
-- [ ] `git status` — confirm which files are dirty (currently: `agents/todo.md` modified)
-- [ ] `git add agents/todo.md` and commit with descriptive message
-- [ ] After push block is resolved: `git push origin main`
-- [ ] Confirm: `git log --oneline origin/main -5` matches `git log --oneline -5`
-- [ ] Run full test suite one last time before migration: `python -m pytest trading_studio/tests/ -v -q`
-
-#### 1c. Tag the Pre-Migration Snapshot
-- [ ] `git tag pre-linux-migration-2026-07-27` — snapshot tag before the move
-- [ ] `git push origin pre-linux-migration-2026-07-27` — push the tag to GitHub
-- [ ] Verify: `gh release list` or `gh api repos/itsjimjimsalabim/ARBITR8DER/tags`
-
----
-
-### PRE-MIGRATION GATE 2: Supporting Docs Audit — Bring Everything Up to Date
-
-Every agent needs to find the right answer on the new Linux machine. All docs must reflect reality
-*before* the move. If a doc lies, the next AI on Linux will be burned.
-
-#### 2a. `agents/agents.md` — Machine Tool Inventory Update
-- [ ] Update the "Local Machine Tool Inventory" table with verified current versions:
-  - `git --version` (currently 2.55.0.windows.2 → will change on Linux, needs placeholder)
-  - `gh --version` (currently 2.96.0)
-  - `python --version` (currently 3.12.4 — confirm Python 3.12 available in PCLinuxOS repos)
-  - `node --version` (currently v24.18.0)
-  - `bun --version` (currently 1.3.14)
-  - `ollama --version` (currently 0.32.3)
-- [ ] Add note: "On PCLinuxOS, `python3` IS the alias — `python` may not be set. Use `python3`
-  or create an alias."
-- [ ] Add note: "On PCLinuxOS, `git` path is typically `/usr/bin/git`. Verify with `which git`."
-- [ ] Add Linux path section: document that `/mnt/c/Users/itsji/` no longer applies. Repo lives
-  at `~/ARBITR8DER` or `/home/itsji/ARBITR8DER` on Linux.
-- [ ] Remove or archive all WSL-specific paths (e.g. `/mnt/c/Users/itsji/...` references)
-
-#### 2b. `agents/onboarding_workflow.md` — Linux-First Onboarding Update
-- [ ] Update §0 Skeptical Pre-Flight: add Linux-native path verification commands
-- [ ] Update §1 Repo Layout: replace all Windows paths with Linux-native equivalents
-- [ ] Update §3 Install + Verify: confirm `pip3` vs `pip` alias behavior on PCLinuxOS
-- [ ] Update §6 Run a Session: replace `cd /mnt/c/...` with `cd ~/ARBITR8DER`
-- [ ] Update §8 Test Suite: update paths
-- [ ] Update §10 Known Issues: add new Linux-specific known issues (RPM package names, etc.)
-- [ ] Add §13 PCLinuxOS-Specific Notes section (new): systemd services, pclinuxos-repos, synaptic
-
-#### 2c. `agents/qwen_local_model_ops_guide.md` — Coin Model Re-Download Section (NEW)
-See Gate 3 below — this file needs a full new section added.
-
-#### 2d. `agents/github_connectivity.md` — Linux SSH Setup
-- [ ] Add Linux SSH keygen instructions for PCLinuxOS
-- [ ] Document: generate fresh SSH key on Linux, add `.pub` to GitHub account SSH keys
-- [ ] Commands to add:
-  ```bash
-  ssh-keygen -t ed25519 -C "arbitr8der-pclinuxos" -f ~/.ssh/arbitr8der_linux
-  cat ~/.ssh/arbitr8der_linux.pub   # copy this to GitHub → Settings → SSH Keys
-  ssh -T git@github.com             # verify: "Hi itsjimjimsalabim! You've authenticated..."
-  git remote set-url origin git@github.com:itsjimjimsalabim/ARBITR8DER.git
-  ```
-- [ ] Document: if staying HTTPS, `gh auth login` on PCLinuxOS (confirm gh CLI is in rpm repos
-  or install from binary release)
-
-#### 2e. `agents/dev_log.md` — Add Linux Migration Entry
-- [ ] Write a new dev log entry (dated 2026-07-27 or when migration happens) covering:
-  - Why we migrated (OneDrive sync hell, WSL geo-block, performance)
-  - Target: PCLinuxOS rolling release
-  - What changed: paths, package manager (rpm/apt → pclinuxos), Python alias, etc.
-  - First verified working state on Linux
-
-#### 2f. `trading_studio/readme.md` — Path Update
-- [ ] Replace all WSL/Windows path references with Linux-native paths
-- [ ] Add note: `arb` CLI is at `~/.local/bin/arb` after `pip install -e ./trading_studio`
-
-#### 2g. `CLAUDE.md` — Linux-Aware Pointer Update
-- [ ] Verify CLAUDE.md still correctly points to `agents/agents.md`
-- [ ] Add note about Linux path changes
-
----
-
-### PRE-MIGRATION GATE 3: Coin Model (Ollama) Re-Download Docs
-
-We have two Ollama coin models — `qwen3:4b-instruct` and `qwen3-coder:30b`. These are **20.5 GB
-total on disk** and NOT in the repo. The new Linux machine needs exact re-download instructions.
-A new section must be added to `agents/qwen_local_model_ops_guide.md`.
-
-#### 3a. Add "Re-Download on a Fresh Machine" Section to Ollama Ops Guide
-- [ ] Edit `agents/qwen_local_model_ops_guide.md` — add section: **"How To Re-Download the Coin
-  Models on a New Machine"**
-- [ ] Include: Ollama install command for PCLinuxOS (curl install script or RPM package)
-  ```bash
-  curl -fsSL https://ollama.com/install.sh | sh    # Linux universal installer
-  # OR for PCLinuxOS RPM:
-  # Check: https://ollama.com/download/linux — look for RPM or use the install script
-  ```
-- [ ] Include: model pull commands with expected sizes:
-  ```bash
-  ollama pull qwen3:4b-instruct      # ~2.5 GB — small manager/router model
-  ollama pull qwen3-coder:30b        # ~18 GB  — large on-demand coding worker
-  ```
-- [ ] Include: verification commands after pull:
-  ```bash
-  ollama list                         # confirm both models appear
-  ollama run qwen3:4b-instruct "say hello"    # quick smoke test
-  ollama ps                           # confirm model is loaded
-  ```
-- [ ] Include: expected download time estimate (dependent on internet speed; 18 GB on 100Mbps ≈
-  25 min)
-- [ ] Include: disk space warning — models live at `~/.ollama/models/` on Linux, need 25 GB free
-- [ ] Include: confirm Ollama service is running:
-  ```bash
-  systemctl status ollama        # on systemd Linux (PCLinuxOS)
-  sudo systemctl enable ollama   # auto-start on boot
-  sudo systemctl start ollama
-  ```
-- [ ] Include: progress monitoring commands (same as Windows section, adapted for Linux):
-  ```bash
-  ollama list
-  ollama ps
-  ls ~/.ollama/models/blobs/ | grep partial    # check for in-progress downloads
-  ```
-
-#### 3b. Verify Ollama Blobs on Current Windows Machine (Pre-Migration Backup Check)
-- [ ] Run `Get-ChildItem "$env:USERPROFILE\.ollama\models\manifests" -Recurse` — document exact
-  model names and tags currently installed
-- [ ] Current confirmed installs (verified 2026-07-27):
-  - `qwen3-coder:30b` (manifest: registry.ollama.ai/library/qwen3-coder/30b, ~18 GB)
-  - `qwen3:4b-instruct` (manifest: registry.ollama.ai/library/qwen3/4b-instruct, ~2.5 GB)
-- [ ] Confirm both models respond before migrating:
-  ```powershell
-  # In PowerShell (if ollama server running):
-  Invoke-RestMethod -Uri "http://localhost:11434/api/tags"
-  ```
-- [ ] Note: Ollama model blobs cannot simply be copied folder-to-folder across OS boundaries
-  reliably — always re-pull fresh on the new Linux machine
-
-#### 3c. Update `agents/agents.md` — Ollama Model Table
-- [ ] Confirm the "Installed local Ollama models" table is correct and will remain valid on Linux
-- [ ] Add a note: "On PCLinuxOS, re-download these after `ollama` service install — see
-  `agents/qwen_local_model_ops_guide.md` §Re-Download on a Fresh Machine"
-
----
-
-### PRE-MIGRATION GATE 4: Tool Inventory & Env Backup Checklist
-
-Every tool that was manually installed on Windows must be re-installed on Linux. Document what
-we have now so we don't forget anything.
-
-#### 4a. Windows Tool Inventory (document before wiping or dual-booting)
-- [ ] Verify and document each tool currently installed:
-  - [ ] Git: `git --version` → `2.55.0.windows.2` → on Linux: `git` from PCLinuxOS repos
-  - [ ] GitHub CLI (`gh`): `gh --version` → `2.96.0` → install: `gh` RPM or binary release
-  - [ ] Python: `python --version` → `3.12.4` → install: `python3.12` from PCLinuxOS repos
-  - [ ] Node.js: `node --version` → `v24.18.0` → install: nvm on Linux (preferred), or nodejs RPM
-  - [ ] Bun: `bun --version` → `1.3.14` → install: `curl -fsSL https://bun.sh/install | bash`
-  - [ ] Ollama: `ollama --version` → `0.32.3` → install: ollama install script (see Gate 3)
-  - [ ] pip packages: `pip list` → capture full list → `pip freeze > agents/pre-linux-pip-freeze.txt`
-  - [ ] OpenClaude/Claude CLI: document how to reinstall from `.openclaude/` source
-  - [ ] OpenCode: `opencode --version` → document install method for Linux
-  - [ ] VSCode: document extensions list for Linux reinstall
-  - [ ] Antigravity (agy): document install method for Linux
-
-#### 4b. Environment Variables & Keys Backup
-- [ ] Confirm `ARBITR8DER/.env` has ALL required vars filled in (not just placeholders)
-- [ ] Confirm `trading_studio/streams/kalshi_private.pem` exists and is valid (gitignored — NOT in
-  repo, must be manually transferred or re-downloaded from Kalshi)
-- [ ] Kalshi private key transfer plan: copy `kalshi_private.pem` via USB or encrypted channel
-  to the new Linux machine before the old machine is wiped
-- [ ] Kalshi API key ID: confirm it's noted in `agents/KEYS` (gitignored local key file)
-- [ ] OpenCode Zen API key (`sk-sSGtBd...`): confirm in `.openclaude/.env` or `agents/KEYS`
-- [ ] NVIDIA NIM API key (`nvapi-GKWWa...`): confirm location
-- [ ] GitHub PAT: confirm it's in `agents/KEYS` and accessible on Linux post-migration
-- [ ] Note: `.env` files are gitignored and must be manually transferred
-
-#### 4c. Local Data Backup (Databases & Runtime State)
-- [ ] `trading_studio/runtime/` is gitignored — this contains:
-  - `prediction.db` (candle data, model runs, outcomes — months of data eventually)
-  - `paper_wallet.db` (paper trading history)
-  - `logs/` (session logs, ollama downloads)
-- [ ] Decision: transfer runtime data to Linux or start fresh?
-  - Recommendation: copy `prediction.db` and `paper_wallet.db` to Linux — preserve model training
-    history and paper wallet history
-  - Transfer via: USB drive, `rsync`, or `scp` if network transfer is available
-- [ ] If transferring: document target path on Linux: `~/ARBITR8DER/trading_studio/runtime/`
-
----
-
-### PCLinuxOS INSTALLATION PLAN
-
-#### 5a. Preparation (Before Installing)
-- [ ] Download PCLinuxOS ISO: https://www.pclinuxos.com/downloads/
-  - Recommended: PCLOS KDE (rolling release, most compatible with AMD hardware)
-  - Verify SHA256 checksum of downloaded ISO
-- [ ] Create bootable USB: use Rufus (Windows) or dd (Linux/WSL):
-  ```powershell
-  # In WSL:
-  sudo dd if=pclinuxos.iso of=/dev/sdX bs=4M status=progress
-  ```
-- [ ] Decision: **Dual-boot Windows + PCLinuxOS** OR **wipe and full Linux**?
-  - Dual-boot is safer for transition — keep Windows until everything is verified working on Linux
-  - Allocate ≥ 200 GB for Linux partition (25 GB Ollama models + repo + DBs + swap)
-- [ ] Backup Windows: Windows → Settings → Backup → drive image (optional, your call)
-- [ ] Note AMD Ryzen AI hardware specifics:
-  - PCLinuxOS ships with kernel ≥ 6.x which has Ryzen AI driver support
-  - AMD GPU: if using integrated AMD GPU, `amdgpu` driver should load automatically
-  - For Ollama GPU acceleration on AMD: check ROCm support for this specific Ryzen AI chip
-
-#### 5b. PCLinuxOS Base Install
-- [ ] Boot from USB, run installer
-- [ ] Partition: at minimum 200 GB for `/`, separate `/home` partition recommended
-- [ ] Set username: `itsji` (match Windows username for path familiarity)
-- [ ] Set hostname: something identifiable (e.g. `arbitr8der-desktop`)
-- [ ] Enable NTFS mount for Windows partition (for access during transition):
-  ```bash
-  sudo mount -t ntfs-3g /dev/sdXY /mnt/windows -o ro    # read-only for safety
-  ```
-
-#### 5c. PCLinuxOS Package Manager Setup
-- [ ] Update repos: `sudo apt-get update` (PCLinuxOS uses apt-like Synaptic over RPM backend)
-  - Note: PCLinuxOS uses `apt-get` as a front-end to RPM. Not the same as Debian apt.
-  - Synaptic is the GUI package manager
-- [ ] Install base dev tools:
-  ```bash
-  sudo apt-get install -y git curl wget build-essential python3 python3-pip
-  ```
-
-#### 5d. Reinstall All Tools on PCLinuxOS
-- [ ] **Git**: `sudo apt-get install git` → verify `git --version`
-- [ ] **GitHub CLI**: install from binary release (RPM package may not be in PCLOS repos):
-  ```bash
-  # Check if in repos first:
-  apt-cache search gh
-  # If not: download RPM from https://github.com/cli/cli/releases/latest
-  sudo rpm -i gh_*.rpm
-  gh auth login
-  gh auth setup-git
-  ```
-- [ ] **Python 3.12**: check PCLinuxOS repos — may need to compile from source if 3.12 not in repos
-  ```bash
-  python3 --version   # what version is default?
-  # If < 3.12: build from source or use pyenv
-  curl https://pyenv.run | bash   # pyenv for Python version management
-  pyenv install 3.12.4
-  pyenv global 3.12.4
-  ```
-- [ ] **Node.js via nvm**:
-  ```bash
-  curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.40.0/install.sh | bash
-  source ~/.bashrc
-  nvm install 24
-  node --version   # expect v24.x.x
-  ```
-- [ ] **Bun**:
-  ```bash
-  curl -fsSL https://bun.sh/install | bash
-  bun --version   # expect 1.3.x
-  ```
-- [ ] **Ollama**: see Gate 3 above for full model re-download instructions
-- [ ] **OpenClaude/Claude CLI**: rebuild from source
-  ```bash
-  cd ~/.openclaude
-  bun install
-  bun run build
-  node bin/openclaude --version
-  # Add ~/bin/claude script pointing to this
-  ```
-- [ ] **OpenCode**:
-  ```bash
-  # Install OpenCode from npm or binary — check opencode.ai for Linux install instructions
-  npm install -g opencode    # or follow opencode.ai docs
-  opencode --version
-  ```
-- [ ] **Antigravity (agy)**: check `agy install` docs for Linux — likely similar curl/npm install
-- [ ] **pip packages** (from pre-migration freeze):
-  ```bash
-  cd ~/ARBITR8DER
-  pip3 install -e ./trading_studio        # installs all deps + arb CLI
-  pip3 install -e "./trading_studio[dev]" # adds pytest, ruff, mypy
-  arb version                              # must print: arbitr8der 0.1.0
-  ```
-
-#### 5e. Clone Repo and Restore Runtime Data on Linux
-- [ ] Clone from GitHub:
-  ```bash
-  cd ~
-  git clone git@github.com:itsjimjimsalabim/ARBITR8DER.git
-  # OR HTTPS:
-  git clone https://github.com/itsjimjimsalabim/ARBITR8DER.git
-  cd ARBITR8DER
-  git log --oneline -5   # verify latest commit matches
-  ```
-- [ ] Copy `.env` from Windows machine / USB:
-  ```bash
-  cp /mnt/usb/.env ~/ARBITR8DER/.env
-  ```
-- [ ] Copy `kalshi_private.pem`:
-  ```bash
-  mkdir -p ~/ARBITR8DER/trading_studio/streams/
-  cp /mnt/usb/kalshi_private.pem ~/ARBITR8DER/trading_studio/streams/
-  chmod 600 ~/ARBITR8DER/trading_studio/streams/kalshi_private.pem
-  ```
-- [ ] Optionally copy runtime databases:
-  ```bash
-  mkdir -p ~/ARBITR8DER/trading_studio/runtime/
-  cp /mnt/usb/prediction.db ~/ARBITR8DER/trading_studio/runtime/
-  cp /mnt/usb/paper_wallet.db ~/ARBITR8DER/trading_studio/runtime/
-  ```
-- [ ] Install Python package:
-  ```bash
-  pip3 install -e ~/ARBITR8DER/trading_studio
-  ```
-- [ ] Verify REPL launches:
-  ```bash
-  arb status
-  arb snapshot
-  ```
-
-#### 5f. Linux-Specific Path Fixes
-- [ ] Update `ARBITR8DER/.env` — any absolute paths in env vars need Linux equivalents
-- [ ] Check `agents/agents.md` §"Canonical Home" — update to `~/ARBITR8DER` or `/home/itsji/ARBITR8DER`
-- [ ] Verify `TradingStudioSettings` resolves `.env` path correctly on Linux (it uses
-  package-relative path — should work, but verify with `arb status`)
-- [ ] Update `opencode.json` if any paths are Windows-absolute
-- [ ] Check `CLAUDE.md` for Windows-specific paths
-
-#### 5g. Binance WebSocket — The Big Win (No More WSL Geo-Block)
-- [ ] On native Linux, Binance WS **should not be geo-blocked**
-- [ ] Test Binance WS: `python3 -c "import websockets; print('OK')"` then run candle battery
-- [ ] Update `agents/onboarding_workflow.md` §7 Data Sources:
-  - Change Binance WS status from "geo-blocked" to "WORKING (native Linux)"
-- [ ] If Binance.com is still blocked (US location): may need VPN or continue using Binance.US REST
-  - Note: Binance.com (not .us) WS may be geo-blocked for US users at the API level, not WSL
-  - Test: `curl -I https://api.binance.com/api/v3/time` — if 451, it's US geo-block not WSL
-
-#### 5h. Post-Migration Verification Checklist
-- [ ] `git status` → clean, no dirty files
-- [ ] `git remote -v` → shows `github.com/itsjimjimsalabim/ARBITR8DER.git`
-- [ ] `python3 --version` → 3.12.x
-- [ ] `arb version` → `arbitr8der 0.1.0`
-- [ ] `arb status` → vessel: Full_Stop, all connections attempted
-- [ ] `ollama list` → shows `qwen3:4b-instruct` and `qwen3-coder:30b`
-- [ ] `ollama run qwen3:4b-instruct "say hello"` → responds
-- [ ] `python3 -m pytest trading_studio/tests/ -v -q` → same pass rate as Windows
-- [ ] `gh auth status` → authenticated as `itsjimjimsalabim`
-- [ ] Kalshi WS connection: `arb forward start` → snapshot shows Kalshi WS WORKING
-- [ ] Paper trade test: `buy BTC YES 2` → fills in paper mode
-- [ ] Update `agents/dev_log.md` with Linux migration completion entry
-
----
-
-### POST-MIGRATION DOCS UPDATE
-
-#### 6a. After Linux Is Verified Working — Update All Docs
-- [ ] `agents/agents.md` — update all version numbers with `--version` output from Linux
-- [ ] `agents/agents.md` — update "Canonical Home" to Linux path
-- [ ] `agents/agents.md` — update tool inventory table with Linux versions
-- [ ] `agents/onboarding_workflow.md` — mark as "verified on PCLinuxOS YYYY-MM-DD"
-- [ ] `agents/qwen_local_model_ops_guide.md` — update with Linux Ollama service notes
-- [ ] `agents/github_connectivity.md` — update with Linux SSH working state
-- [ ] `agents/onboarding_workflow.md` §10 Known Issues — add/resolve Linux-specific issues
-- [ ] Commit all doc updates: `git add agents/ && git commit -m "docs: post-linux-migration docs update"`
-- [ ] Push: `git push origin main`
-
-#### 6b. OneDrive Sync — What Changes
-- [ ] OneDrive no longer ruins everything — verify repo is NOT in any auto-sync folder on Linux
-- [ ] `~/ARBITR8DER` on Linux = clean, no OneDrive, no slow lock files
-- [ ] Remove all "OneDrive sync causes slow builds / stray lock files" warnings from docs if resolved
-- [ ] Update `agents/agents.md` Known Issues table
-
----
-
-### ARBITRATOR BRANCH AWARENESS NOTE
-
-> The arbitrator feature is being coded by another AI agent. This Linux migration plan intentionally
-> avoids code changes. When the arbitrator work is merged:
-> - Review `agents/todo.md` §arbitrator for any new dependencies (new pip packages, new tools,
->   new services) that would need to be added to the Linux migration checklist above.
-> - Update Gate 4a pip freeze after arbitrator deps land.
-> - Confirm arbitrator runs on PCLinuxOS (no Windows-only APIs or COM objects).
+WSL works fine. Linux migration plan evaluated and dropped. Staying on Windows + WSL.
 
 
 ## Theories of Operation

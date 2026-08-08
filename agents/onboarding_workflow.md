@@ -96,8 +96,9 @@ Read in this order. Each file is short and assumes the previous. If a file in th
 | 6 | `agents/trading_studio_build_plan.md` | The plan for how the studio is built. Read before proposing structure changes. |
 | 7 | `agents/prediction_system_plan.md` | Design notes for the Phase 8 prediction pipeline (features, models, scoring). |
 | 8 | `agents/kalshi_websocket_debugging_reference.md` | Kalshi WS auth gotchas (RSA-PSS salt length, subscribe format). Read before touching WS code. |
-| 9 | `agents/overwatch_workflow.md` | How to actually run a trading session in the REPL. Commands, timing, journaling. |
-| 10 | `agents/github_connectivity.md` | How to push/pull/PR. HTTPS via `gh` is the working path. |
+| 9 | `agents/trading_studio_operating_workflow.md` | **Canonical Operating Manual** — Live REPL playbook, 15-min cadence, and patient limit rules. |
+| 10 | `agents/overwatch_workflow.md` | Legacy Overwatch workflow reference. |
+| 11 | `agents/github_connectivity.md` | How to push/pull/PR. HTTPS via `gh` is the working path. |
 | 11 | `trading_studio/readme.md` | "You are here" map of the package. |
 | 12 | `trading_studio/pyproject.toml` | Real dependencies, CLI entry point (`arb`), ruff/pytest config. |
 

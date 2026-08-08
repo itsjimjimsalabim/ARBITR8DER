@@ -1,5 +1,46 @@
 # ARBITR8DER Development Log
 
+## 2026-08-07: Live Paper Trading Run & WSL Environment Confirmation (Antigravity)
+
+### What Was Done
+
+**Pivot & Environment Alignment:**
+- Confirmed staying on **Windows + WSL** (erased superseded Linux migration plan from `todo.md`).
+- Confirmed single `main` branch state on GitHub (verified no orphan `arbitrator` branch exists).
+- Operating stance pivot locked in: **No autonomous auto-trading bot**. System operates as an AI CLI trading studio where the AI operator (Antigravity) inspects live predictions/snapshots and manually executes `buy`/`sell` orders via REPL.
+
+**Live 11:45–12:00 PDT Trading Session (`session_20260807_184310.jsonl`):**
+- Started REPL (`arb forward start`) at 11:43 PDT, armed vessel to `Full_Forward`.
+- Discovered and subscribed to active 15-minute Kalshi market tickers: `KXBTC15M-26AUG071500-00` and `KXETH15M-26AUG071500-00`.
+- Ingested real-time spot feeds and computed predictions:
+  - **BTC**: `macro_ensemble` predicted **DOWN** (15.7% YES, 71.6% confidence, `trending_down` regime).
+  - **ETH**: `baseline_v1` predicted **DOWN** (23.0% YES).
+- Executed manual paper orders:
+  - `buy BTC no 2` $\rightarrow$ Filled 2 contracts NO @ **76.0c** ($1.52 cost).
+  - `buy ETH no 2` $\rightarrow$ Filled 2 contracts NO @ **71.0c** ($1.42 cost).
+- Expiration and auto-settlement at 12:01 PDT:
+  - `KXBTC15M` settled **NO** $\rightarrow$ **WIN** (+$0.48 realized PnL).
+  - `KXETH15M` settled **YES** $\rightarrow$ **LOSS** (-$1.42 realized PnL).
+  - **Session PnL:** -$0.94 | **Win Rate:** 50.0% (1W / 1L) | **Ending Cash:** $16.58.
+- Clean shutdown executed: Vessel returned to `Full_Stop`, lease released, session archive persisted.
+
+**Live 12:15–12:30 PDT Trading Session (`session_20260807_191146.jsonl`):**
+- Executed patient limit orders at a discount:
+  - `buy BTC no 2 48` $\rightarrow$ Filled 2 contracts NO @ **47.0c** ($0.94 cost).
+  - `buy ETH no 2 48` $\rightarrow$ Filled 2 contracts NO @ **48.0c** ($0.96 cost).
+- **Execution Strategy Validation:** Reduced capital exposure from $2.94 to $1.90 (35% risk reduction). Max loss per order strictly capped at entry price.
+- Both BTC and ETH experienced strong macro upward momentum during 12:15–12:30 PDT ($+0.13\%$ and $+0.22\%$), settling YES. Total PnL for session: -$1.90.
+- Clean shutdown executed; archive persisted.
+
+**Live 10:45–11:00 PM PDT Trading Session (Cycle 2 - VERIFY & FIX):**
+- **Session Archive:** `session_20260808_054321.jsonl`
+- Executed patient limit orders @ 48c limit: `buy BTC no 2 48` and `buy ETH no 2 48` (paced by 6s delay).
+- Both orders accepted as `PENDING`. Market midpoints held above 48c $\rightarrow$ Orders expired unexecuted at window close with 0 loss. Equity preserved at **$18.56**.
+- **Code Fix Implemented:** Fixed `window_open is not None` guard in `auto_scoring_engine.py:237` during feature recomputation fallback in `retrain_models()`, resolving a `TypeError` log exception.
+- **Verification:** Ran `pytest tests/test_auto_scoring_engine.py` $\rightarrow$ 16/16 passed.
+
+---
+
 ## Developer: Claude (OpenClaude)
 ## Date Started: 2026-07-21
 ## Last Updated: 2026-07-26

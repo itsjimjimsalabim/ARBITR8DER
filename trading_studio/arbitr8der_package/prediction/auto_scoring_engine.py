@@ -234,7 +234,7 @@ class AutoScoringEngine:
                         pass
 
                 # Fallback: recompute features from candle data
-                if self._candle_store is not None:
+                if self._candle_store is not None and window_open is not None:
                     try:
                         candles = await self._candle_store.get_candles(
                             asset, "binance", "1m", limit=2000

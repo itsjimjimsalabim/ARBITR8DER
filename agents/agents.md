@@ -54,15 +54,11 @@ Do NOT trust.
 - **We verify bugs and issues exist before we fix them.** Never patch symptoms blindly. Observe, record, and empirically verify the root cause and runtime behavior before attempting any code fix.
 - **The human is not a developer.** Paths, commands, and configurations that "should work" frequently don't. The human cannot debug this. You must.
 
----
-Read these before making architecture changes:
+Read these before making architecture or trading decisions:
+- `agents/trading_studio_operating_workflow.md` (Canonical Operating Manual for AI operators)
 - `agents/Product_Requirements_&_Theories_of_Operations.md`
 - `agents/todo.md`
 - `agents/dev_log.md`
-
-Archived root-level planning and report files live under
-`agents/_archive/2026-07-23-root-cleanup/`. Treat them as historical reference, not current
-operating instructions.
 
 ## Canonical Home
 
@@ -78,6 +74,7 @@ ARBITR8DER/
   scripts/                <- Scratch/debug/utility scripts
   agents/                 <- Per-agent desks + this file (agents.md = one brain)
     agents.md             <- THIS FILE — the single source of truth for all agents
+    trading_studio_operating_workflow.md <- CANONICAL OPERATING MANUAL for AI operators
     todo.md               <- never-ending current backlog
     Product_Requirements_&_Theories_of_Operations.md <- product requirements + operating theory
     dev_log.md            <- current development log
