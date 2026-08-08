@@ -73,6 +73,16 @@
   - Net Session PnL: **+$2.08 (100% Win Rate / 2W 0L)**
 - **Day Cycle 12 Outcome:** Limit orders @ 48c stayed above market midpoints $\rightarrow$ Expired unexecuted with $0 capital loss.
 
+**Live 01:45–02:15 PM PDT Dynamic Trading Session (Cycles 13 & 14):**
+- **Session Archives:** `session_20260808_204207.jsonl` & `session_20260808_205417.jsonl`
+- **Day Cycle 13 Outcome (Aggressive Dynamic Sizing @ 50c):**
+  - Scaled contract sizing to 5 contracts per asset (`buy BTC no 5` & `buy ETH no 5 50`).
+  - Filled 10 contracts @ **50.0c** ($5.00 total capital deployed).
+  - Market prices spiked UP at settlement $\rightarrow$ Settled YES (-$5.00 PnL).
+- **Day Cycle 14 Outcome (Hybrid Convex Limit Sizing @ 48c):**
+  - Issued 5-contract limit orders @ **48c** (`buy BTC no 5 48` & `buy ETH no 5 48`).
+  - Orderbook midpoints stayed below ask threshold $\rightarrow$ Expired unexecuted with $0 capital loss.
+
 ---
 
 ## Developer: Claude (OpenClaude)
