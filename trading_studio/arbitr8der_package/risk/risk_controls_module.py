@@ -93,7 +93,7 @@ class RiskController:
         max_exposure_per_asset: float = 2000.0,
         session_loss_cap: float = 100.0,
         daily_loss_cap: float = 500.0,
-        cooldown_seconds: float = 5.0,
+        cooldown_seconds: float = 0.0,
         stale_book_max_age_seconds: float = 300.0,  # 5 minutes
         min_contracts: int = 2,
     ) -> None:
