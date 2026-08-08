@@ -70,6 +70,24 @@ If an agent hits context limits or crashes, the next agent must:
 ---
 
 ### Recent Run History & Observe Notes (2026-08-07)
+- **12:45–01:00 AM PDT Run (Cycle 6 - VERIFY & FIX):**
+  - Session Archive: `session_20260808_073853.jsonl`
+  - **BTC & ETH:** Submitted `buy BTC no 2 48` and `buy ETH no 2 48` (paced via 6s delay). Accepted as `PENDING`. Market midpoints held above 48c $\rightarrow$ Expired unexecuted (cancelled at settlement with 0 loss).
+  - **Cycle 6 Outcome:** 0 Trades Filled, 0 Losses, **$0.00 PnL**. Equity preserved at **$17.60**.
+  - **Cross-Cycle Overnight Analysis (6 Cycles Complete):**
+    1. *Cumulative PnL:* **+$1.12 net profit** across filled patient limit orders (+108% ROI per win).
+    2. *Risk Discipline:* 0 losses on unexecuted pending limit orders.
+    3. *System Reliability:* REPL execution, provider polling, background scoring, and session archival operating smoothly without crashes.
+  - **Commit:** Staged and committed updated logs & docs (`git commit -m "docs: log overnight loop cycle 6 verification and sustained profitability"`).
+
+- **12:15–12:30 AM PDT Run (Cycle 5 - OBSERVE ONLY):**
+  - Session Archive: `session_20260808_071121.jsonl`
+  - **BTC & ETH:** Submitted `buy BTC no 2 48` and `buy ETH no 2 48` (paced via 6s delay). Accepted as `PENDING`. Market midpoints held above 48c $\rightarrow$ Expired unexecuted (cancelled at settlement with 0 loss).
+  - **Cycle 5 Outcome:** 0 Trades Filled, 0 Losses, **$0.00 PnL**. Equity preserved at **$17.60**.
+  - **Observations Noted (NO CODE FIX IN CYCLE 5):**
+    1. Capital preservation remains 100% effective when orderbook prices do not cross limit threshold.
+    2. Over 5 overnight cycles, overall paper balance is positive at **$17.60** (+$1.12 total net profit on filled limit orders).
+
 - **11:45–12:00 PM PDT Run (Cycle 4 - VERIFY & FIX):**
   - Session Archive: `session_20260808_064336.jsonl`
   - **BTC & ETH:** Submitted `buy BTC no 2 48` and `buy ETH no 2 48` (paced via 6s delay). Accepted as `PENDING`. Market midpoints held above 48c $\rightarrow$ Expired unexecuted (cancelled at settlement with 0 loss).
