@@ -19,26 +19,27 @@
 
 ---
 
-## Active Session — Day Cycle 15 Summary (2026-08-08 14:44 PDT) — COMPLETED
+## Active Session — Continuous Autonomous Trading Loop (2026-08-08 14:50 PDT) ← ACTIVE
 
-**Mode:** PAPER Trading (Manual REPL Stance with X2 Contract Volume)
-**Status:** **DAY CYCLE 15 COMPLETED — SHUTDOWN CLEAN & VERIFIED**
-**Result:** **ZERO CAPITAL LOSS / RISK SHIELD VERIFIED**
-
----
-
-### Cycle Performance Summary
-- **Day Cycle 15 (2:30 PM – 2:45 PM PDT):**
-  - **Contract Volume:** 2 contracts per asset (`buy BTC no 2 48` and `buy ETH no 2 48`).
-  - **Signals:** BTC Macro Ensemble 83.8% NO (70.5% confidence) | ETH 50.0% NO.
-  - **Outcome:** Market orderbook midpoints stayed above 48c limit threshold $\rightarrow$ Expired unexecuted with **$0 capital loss** (cancelled cleanly at settlement). Total wallet cash preserved at **$17.60**.
+**Operator Directive:** Continuous multi-cycle Kalshi trading loop starting at **2:59 PM PDT** (2:45–3:00 PM window).
+**Stance:** X2 Contract Volume (2 contracts/asset), High-EV Directional Trading (YES/NO flexible), Hybrid Limit Pricing ($\le 48\text{¢}$ default / $\le 52\text{¢}$ high-confidence market cross).
+**Cycle Cadence:** Continuous 15-minute Kalshi market windows (:00, :15, :30, :45).
 
 ---
 
-### Overall Trading Milestone Summary (15 Cycles Executed)
-- **Cumulative Overnight & Daytime Net PnL:** Net positive across filled patient limit orders (**+$1.12 overnight / +$2.08 Cycle 11**).
-- **Execution Speed:** Instant back-to-back order placement verified with zero cooldown blocks.
-- **Session Archive:** Written to `session_20260808_211753.jsonl`.
+### Long-Running Continuous Loop Schedule
+1. **Cycle 16 (2:59–3:00 PM PDT):** Start vessel at 2:59 PM PDT $\rightarrow$ `vessel forward` $\rightarrow$ `snapshot` $\rightarrow$ `predict BTC/ETH` $\rightarrow$ Submit 2-contract orders.
+2. **Cycle 17 (3:14–3:15 PM PDT):** Repeat 15m window sequence.
+3. **Cycle 18+ (Continuous):** Continue indefinitely across afternoon/evening windows. Log results to `todo.md` and `dev_log.md`, commit every 2 cycles.
+
+---
+
+### Hand-off Protocol for Autonomous AI Continuity
+If an agent context window closes or resets:
+1. **Check Current PDT Time:** Find the current/upcoming 15-minute Kalshi window (:00, :15, :30, :45).
+2. **Launch REPL 1 Min Before Window Open:** `./trading_studio/.venv/bin/arb forward start` $\rightarrow$ `vessel forward`.
+3. **Execute Strategy:** `snapshot`, `predict BTC/ETH --model auto`, execute 2-contract directional limit orders (`buy ASSET SIDE 2 LIMIT`).
+4. **Log & Commit:** Update `todo.md` & `dev_log.md` and commit locally every 2 cycles. NEVER STOP.
 
 ---
 
