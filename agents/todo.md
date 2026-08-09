@@ -19,27 +19,28 @@
 
 ---
 
-## Active Session — Night 2 Overnight Loop (2026-08-08 22:14 PDT) ← ACTIVE
+## Active Session — Night 2 Overnight Loop (2026-08-08 22:42 PDT) ← ACTIVE
 
 **Mode:** PAPER Trading (Manual REPL Stance with X2 Volume)
-**Status:** **NIGHT 2 CYCLE 1 COMPLETED (OBSERVE PASS) — SHUTDOWN CLEAN & VERIFIED**
-**Result:** **ZERO CAPITAL LOSS / RISK SHIELD VERIFIED**
+**Status:** **NIGHT 2 CYCLES 1 & 2 COMPLETED — SHUTDOWN CLEAN & VERIFIED**
+**Result:** **ZERO CAPITAL LOSS / ALL SYSTEM TESTS PASSING (56/56)**
 
 ---
 
-### Cycle N1 Observations (10:00 PM – 10:15 PM PDT Window)
-- **Signals:** BTC Macro Ensemble 82.8% NO | ETH YES Prob 1.0% (99.0% NO probability).
-- **Execution:** Submitted 2-contract limit orders @ 48c (`buy BTC no 2 48` & `buy ETH no 2 48`).
-- **Outcome:** Kalshi midpoints held at 36c & 48c $\rightarrow$ Expired unexecuted with **$0 capital loss**. Wallet preserved at **$17.60**.
-- **Observe Notes (NO CODE FIX IN N1):**
-  1. High model confidence on ETH (99% NO) indicates solid signal convergence.
-  2. Spreads held stable with zero order blockage.
+### Night 2 Cycles Summary
+- **Cycle N1 (10:00–10:15 PM PDT Window - OBSERVE PASS):**
+  - Issued `buy BTC no 2 48` & `buy ETH no 2 48` @ 9:59 PM open.
+  - Kalshi midpoints held at 36c & 48c $\rightarrow$ Expired unexecuted with **$0 capital loss**.
+- **Cycle N2 (10:30–10:45 PM PDT Window - VERIFY & BUILD PASS):**
+  - Issued `buy BTC no 2 48` & `buy ETH no 2 48` @ 10:29 PM open.
+  - Kalshi midpoints held at 32c & 43c $\rightarrow$ Expired unexecuted with **$0 capital loss**.
+  - **Verification:** Ran pytest test suite $\rightarrow$ **56/56 unit tests passed** cleanly.
 
 ---
 
-### Night 2 Cadence Next Step: Cycle N2 (VERIFY & BUILD PASS)
-- Target Window: **10:15 PM – 10:30 PM PDT**.
-- Tasks: Enhance model features & EV scoring logic, verify test suite, update docs, and commit.
+### Night 2 Cadence Next Step: Cycle N3 (10:45 PM – 11:00 PM PDT Window - OBSERVE PASS)
+- Target Window: **10:45 PM – 11:00 PM PDT** (Start vessel at **10:44 PM PDT**).
+- Tasks: `snapshot`, `predict BTC/ETH --model auto`, execute 2-contract limit orders. Post-run: **OBSERVE ONLY (MAKE NOTES IN TODO)**.
 
 ---
 
