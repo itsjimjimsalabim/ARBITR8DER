@@ -236,12 +236,13 @@ class AutoScoringEngine:
                 # Fallback: recompute features from candle data
                 if self._candle_store is not None and window_open is not None:
                     try:
+                        w_open = float(window_open)
                         candles = await self._candle_store.get_candles(
                             asset, "binance", "1m", limit=2000
                         )
                         if candles:
                             # Group into 15m windows
-                            boundary_ts = float(int(window_open / 900) * 900)
+                            boundary_ts = float(int(w_open / 900) * 900)
                             window_candles = [
                                 c for c in candles
                                 if boundary_ts <= c["open_time"] < boundary_ts + 900
