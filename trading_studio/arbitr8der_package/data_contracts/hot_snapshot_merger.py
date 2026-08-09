@@ -62,6 +62,11 @@ def _age_from_events(a: datetime | None, b: datetime | None) -> float | None:
 # Snapshot merger
 # ---------------------------------------------------------------------------
 
+from arbitr8der_package.config.structured_logging_configuration_module import get_logger
+
+logger = get_logger(__name__)
+
+
 class SnapshotMerger:
     """Merges all five provider states into per-asset HotSnapshots.
 
@@ -93,8 +98,19 @@ class SnapshotMerger:
         self._polymarket: dict[str, PolymarketSentimentEvent] = {}
         # Per-asset CoinGecko macro
         self._coingecko: dict[Asset, CoinGeckoMacroEvent] = {}
-        # Sequence tracking for Kalshi gap detection
-        self._last_kalshi_seq: dict[str, int] = {}
+        self._callbacks: list[Callable[[HotSnapshot], None]] = []
+
+    def on_snapshot(self, callback: Callable[[HotSnapshot], None]) -> None:
+        """Register a callback invoked whenever snapshots are built."""
+        self._callbacks.append(callback)
+
+    def _notify_callbacks(self, snapshots: list[HotSnapshot]) -> None:
+        for snap in snapshots:
+            for cb in self._callbacks:
+                try:
+                    cb(snap)
+                except Exception as exc:
+                    logger.error("Snapshot callback error: %s", exc)
 
     @property
     def version(self) -> int:
@@ -273,6 +289,7 @@ class SnapshotMerger:
             )
             snapshots.append(snapshot)
 
+        self._notify_callbacks(snapshots)
         return snapshots
 
     def _find_kalshi_for_asset(self, asset: Asset) -> KalshiOrderBookEvent | None:
