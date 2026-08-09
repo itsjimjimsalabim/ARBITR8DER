@@ -4,6 +4,24 @@
 **Onboarding workflow:** `agents/onboarding_workflow.md` (read this first if new)
 **Current implementation state:** Phase 8 — Prediction System (8a-8l complete, retraining loop closed, auto-trader wired)
 
+## Codex Static Audit — 2026-08-08 22:51–22:55 PDT (for Antigravity)
+
+**Scope:** Read-only code/architecture audit while Antigravity held the active PAPER-session lease. No orders, runtime state, or trading code were changed. These are verified implementation findings, not claims about the current session outcome.
+
+### Prioritize before any ARMED work
+
+- [ ] **P0 — A second CLI invocation can overwrite an active session's shared vessel state.** `VesselStateMachine.__init__` always calls `_load_and_force_stop()`, which persists `Full_Stop`; `arb status` constructs this state machine too. Any concurrent status/vessel command can therefore corrupt the active REPL's shared `vessel_state.json` and destroys the file's authority as a kill-switch/audit source. Fix ownership semantics: status must be read-only, and only the lease owner may mutate vessel state. Add a two-process regression test.
+- [ ] **P0 — Stream lease expires during a healthy session and is non-atomic.** `RuntimeLease.acquire()` does a read-then-write with no OS/file lock, and the orchestrator acquires it only at startup—there is no heartbeat/renewal. After the 300-second TTL, another process can acquire the lease and start duplicate provider streams. Implement atomic exclusive acquisition plus owner/PID/start-time metadata and a periodic renewal; fail closed when the owner is alive.
+- [ ] **P0 — Manual PAPER limit orders do not get evaluated for fills.** `PaperVenueAdapter.update_pending_orders()` has only one production caller: `AutoTradingEngine._evaluate_all_assets()`. But the current directive is manual REPL and the auto-trader remains disabled by default, so `buy ... LIMIT` orders stay pending until expiry regardless of favorable ticks. Move pending-order evaluation to the shared ingestion/snapshot path, and update risk/reconciliation there. Add a manual-REPL pending-fill integration test.
+- [ ] **P0 — `sell` fabricates binary settlement from midpoint instead of executing an exit.** `handle_sell_command()` converts `current_mid > 50` into a YES/NO outcome and calls `settle_order()`, crediting either $1.00 or $0.00 per contract. A mid-window sell can thus book a full settlement win/loss without a real bid, fill, or slippage model. Replace it with a PAPER close at the appropriate executable side/bid (with fees), or disable early close until that model exists. Add tests for YES and NO exits at 49c/51c.
+- [ ] **P1 — Risk accounting is wrong for manual market NO orders and drifts after settlement.** `handle_buy_command()` omits `midpoint_cents` when constructing `OrderIntent`; `RiskController.check()` therefore uses its 50c fallback. Even if supplied, a NO market order should cost `100 - yes_midpoint`, not `yes_midpoint`; fees are excluded as well. Separately, automatic settlement paths never call `RiskController.record_settlement()`, so risk balance/exposure/position counts can diverge from the wallet and block or mis-size later trades. Pass side-correct executable prices plus fees into risk, and reconcile risk state atomically on all fill/settlement paths.
+- [ ] **P1 — Reconciliation events are not linked to the actual paper order.** The REPL records intent under a predictable synthetic ID (`intent_{asset}_{side}_{contracts}`), then records the fill under the generated `paper_<uuid>` ID, and records the risk check under the ticker. One trade therefore has three IDs, and repeated same-shape intents collide in the in-memory grouping. Generate one correlation/intent ID before submission and persist it through the resulting order, fill, settlement, and journal records.
+- [ ] **P2 — Wallet reset is performed twice per REPL startup.** `IngestionOrchestrator.start()` resets the paper wallet, then `TradingREPL.run()` resets the same venue again after the worker is ready. This doubles authenticated balance calls and can erase in-session counters if startup sequencing changes. Choose one owner for session initialization and cover it with a single-start test.
+
+**Codex feeling:** I’m encouraged by the explicit PAPER-first posture and the amount of test coverage, but I am not comfortable treating the present paper PnL as decision-grade while manual limit fills, early exits, risk accounting, and single-owner session control disagree. These are tractable fixes; they should be validated with deterministic integration tests before increasing volume or considering ARMED mode.
+
+---
+
 ## Rules For The Next Implementing AI
 
 - All executable trading software belongs under `trading_studio/`, including `src/`, tests, scripts, runtime paths, package metadata, and a future UI.
@@ -19,27 +37,15 @@
 
 ---
 
-## Active Session — Night 2 Overnight Loop (2026-08-08 22:42 PDT) ← ACTIVE
+## Active Session — Night 2 Overnight Loop (2026-08-08 23:19 PDT) ← ACTIVE
 
-**Mode:** PAPER Trading (Manual REPL Stance with X2 Volume)
-**Status:** **NIGHT 2 CYCLES 1 & 2 COMPLETED — SHUTDOWN CLEAN & VERIFIED**
-**Result:** **ZERO CAPITAL LOSS / ALL SYSTEM TESTS PASSING (56/56)**
-
----
-
-### Night 2 Cycles Summary
-- **Cycle N1 (10:00–10:15 PM PDT Window - OBSERVE PASS):**
-  - Issued `buy BTC no 2 48` & `buy ETH no 2 48` @ 9:59 PM open.
-  - Kalshi midpoints held at 36c & 48c $\rightarrow$ Expired unexecuted with **$0 capital loss**.
-- **Cycle N2 (10:30–10:45 PM PDT Window - VERIFY & BUILD PASS):**
-  - Issued `buy BTC no 2 48` & `buy ETH no 2 48` @ 10:29 PM open.
-  - Kalshi midpoints held at 32c & 43c $\rightarrow$ Expired unexecuted with **$0 capital loss**.
-  - **Verification:** Ran pytest test suite $\rightarrow$ **56/56 unit tests passed** cleanly.
+**Mode:** PAPER Trading (Manual REPL Stance with Real-Time Limit Fills)
+**Status:** **NIGHT 2 CYCLES 1–3 COMPLETED — SHUTDOWN CLEAN & VERIFIED**
 
 ---
 
-### Night 2 Cadence Next Step: Cycle N3 (10:45 PM – 11:00 PM PDT Window - OBSERVE PASS)
-- Target Window: **10:45 PM – 11:00 PM PDT** (Start vessel at **10:44 PM PDT**).
+### Night 2 Cadence Next Step: Cycle N4 (11:15 PM – 11:30 PM PDT Window - OBSERVE PASS)
+- Target Window: **11:15 PM – 11:30 PM PDT** (Start vessel at **11:14 PM PDT**).
 - Tasks: `snapshot`, `predict BTC/ETH --model auto`, execute 2-contract limit orders. Post-run: **OBSERVE ONLY (MAKE NOTES IN TODO)**.
 
 ---

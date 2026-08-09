@@ -1,9 +1,4 @@
-"""Runtime lease for single-process stream ownership.
-
-Prevents two instances from claiming the same data stream simultaneously.
-Uses a file-based lock with a timeout so stale leases auto-expire.
-"""
-
+import fcntl
 import json
 import time
 from pathlib import Path
@@ -19,8 +14,7 @@ _LEASE_TTL_SECONDS = 5 * 60  # 5 minutes
 class RuntimeLease:
     """File-backed lease ensuring only one process owns a stream at a time.
 
-    The lease file stores a JSON blob with an owner ID and an expiry timestamp.
-    If the lease is expired or absent, any caller may acquire it.
+    Uses atomic POSIX file locking (fcntl) to safely read-modify-write lease state.
     """
 
     def __init__(self, lease_file: Path | None = None, ttl: int = _LEASE_TTL_SECONDS) -> None:
@@ -28,46 +22,76 @@ class RuntimeLease:
         self._ttl = ttl
 
     def acquire(self, owner_id: str) -> bool:
-        """Try to acquire the lease. Returns True if acquired, False if held by another active owner."""
+        """Try to acquire the lease atomically. Returns True if acquired, False if held by another active owner."""
+        self._lease_file.parent.mkdir(parents=True, exist_ok=True)
         now = time.time()
-        existing = self._read()
-        if existing and existing["expires_at"] > now:
-            if existing["owner"] != owner_id:
-                logger.warning("Lease held by %s until %.0f — cannot acquire for %s",
-                               existing["owner"], existing["expires_at"], owner_id)
+        
+        with open(self._lease_file, "a+") as f:
+            try:
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                logger.warning("Lease file locked by another process — cannot acquire for %s", owner_id)
                 return False
-            # Same owner re-acquiring — refresh
-            logger.info("Lease refreshed by %s", owner_id)
-        else:
-            logger.info("Lease acquired by %s (expires in %ds)", owner_id, self._ttl)
+                
+            try:
+                f.seek(0)
+                content = f.read()
+                try:
+                    existing = json.loads(content) if content.strip() else None
+                except json.JSONDecodeError:
+                    existing = None
+                
+                if existing and existing.get("expires_at", 0) > now:
+                    if existing.get("owner") != owner_id:
+                        logger.warning("Lease held by %s until %.0f — cannot acquire for %s",
+                                       existing.get("owner"), existing.get("expires_at"), owner_id)
+                        return False
+                    logger.info("Lease refreshed by %s", owner_id)
+                else:
+                    logger.info("Lease acquired by %s (expires in %ds)", owner_id, self._ttl)
 
-        self._write({"owner": owner_id, "acquired_at": now, "expires_at": now + self._ttl})
-        return True
+                data = {"owner": owner_id, "acquired_at": now, "expires_at": now + self._ttl}
+                f.seek(0)
+                f.truncate()
+                f.write(json.dumps(data, indent=2))
+                f.flush()
+                return True
+            finally:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
     def release(self, owner_id: str) -> bool:
-        """Release the lease. Returns True if released, False if not the current owner."""
-        existing = self._read()
-        if not existing or existing["owner"] != owner_id:
+        """Release the lease atomically."""
+        if not self._lease_file.exists():
             return False
-        self._lease_file.unlink(missing_ok=True)
-        logger.info("Lease released by %s", owner_id)
-        return True
+        with open(self._lease_file, "a+") as f:
+            try:
+                fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+            except IOError:
+                return False
+            try:
+                f.seek(0)
+                content = f.read()
+                existing = json.loads(content) if content.strip() else None
+                if not existing or existing.get("owner") != owner_id:
+                    return False
+                f.seek(0)
+                f.truncate()
+                f.write("{}")
+                f.flush()
+                logger.info("Lease released by %s", owner_id)
+                return True
+            finally:
+                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
 
     def current_owner(self) -> str | None:
         """Return the current lease owner, or None if expired/absent."""
-        existing = self._read()
-        if not existing or existing["expires_at"] <= time.time():
-            return None
-        return existing["owner"]
-
-    def _read(self) -> dict | None:
         if not self._lease_file.exists():
             return None
         try:
-            return json.loads(self._lease_file.read_text(encoding="utf-8"))
+            content = self._lease_file.read_text(encoding="utf-8")
+            existing = json.loads(content) if content.strip() else None
+            if not existing or existing.get("expires_at", 0) <= time.time():
+                return None
+            return existing.get("owner")
         except (json.JSONDecodeError, KeyError):
             return None
-
-    def _write(self, data: dict) -> None:
-        self._lease_file.parent.mkdir(parents=True, exist_ok=True)
-        self._lease_file.write_text(json.dumps(data, indent=2), encoding="utf-8")

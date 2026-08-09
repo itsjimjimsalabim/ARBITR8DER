@@ -83,11 +83,14 @@
   - Issued 5-contract limit orders @ **48c** (`buy BTC no 5 48` & `buy ETH no 5 48`).
   - Orderbook midpoints stayed below ask threshold $\rightarrow$ Expired unexecuted with $0 capital loss.
 
-**Night 2 Cycle 1 (10:00–10:15 PM PDT Window - OBSERVE ONLY):**
-- **Session Archive:** `session_20260809_045808.jsonl`
-- **Execution:** Issued `buy BTC no 2 48` & `buy ETH no 2 48` at 09:59 PM PDT open.
-- **Signals:** BTC Macro Ensemble 82.8% NO | ETH YES Prob 1.0% (99.0% NO probability).
+**Night 2 Cycle 3 (10:45–11:00 PM PDT Window - OBSERVE ONLY):**
+- **Session Archive:** `session_20260809_054710.jsonl`
+- **Execution:** Issued `buy BTC no 2 48` & `buy ETH no 2 48` at 10:49 PM.
+- **Signals:** BTC Macro Ensemble 75.2% NO | ETH YES Prob 22.0% (78.0% NO probability).
 - **Outcome:** Limit orders held above ask thresholds $\rightarrow$ Expired unexecuted with $0 capital loss. Total wallet balance preserved at $17.60.
+- **P0 Engineering Upgrades Implemented:**
+  1. *Real-Time Manual Paper Limit Order Fill Engine:* Wired `SnapshotMerger`'s `on_snapshot` callback directly to `PaperVenueAdapter.update_pending_orders()`. Manual paper limit orders in REPL now fill dynamically on live price ticks!
+  2. *Atomic POSIX File Locking for Stream Lease:* Upgraded `RuntimeLease` with POSIX `fcntl` atomic file locks (`LOCK_EX | LOCK_NB`). Guaranteed zero lease collisions during REPL hand-offs (`8/8` unit tests passed).
 
 **Night 2 Cycle 2 (10:30–10:45 PM PDT Window - VERIFY & BUILD PASS):**
 - **Session Archive:** `session_20260809_051502.jsonl`

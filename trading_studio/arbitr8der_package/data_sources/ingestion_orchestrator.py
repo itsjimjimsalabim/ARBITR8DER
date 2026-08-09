@@ -413,6 +413,20 @@ class IngestionOrchestrator:
         self._coinbase.on_ticker(self._on_coinbase_ticker)
         self._polymarket.on_sentiment(self._on_polymarket_sentiment)
         self._coingecko.on_macro_update(self._on_coingecko_update)
+        
+        # Trigger real-time pending paper order fill evaluation on every snapshot update
+        self._merger.on_snapshot(self._on_snapshot_update)
+
+    def _on_snapshot_update(self, snapshot: Any) -> None:
+        """Evaluate pending paper limit orders in real time on snapshot emission."""
+        if self._paper_venue is not None and snapshot.kalshi_midpoint_cents is not None:
+            self._paper_venue.update_pending_orders(
+                asset=snapshot.asset.value if hasattr(snapshot.asset, "value") else str(snapshot.asset),
+                yes_ask_cents=snapshot.kalshi_midpoint_cents,
+                no_ask_cents=100.0 - snapshot.kalshi_midpoint_cents,
+                yes_bid_cents=snapshot.kalshi_midpoint_cents,
+                no_bid_cents=100.0 - snapshot.kalshi_midpoint_cents,
+            )
 
     def _register_kalshi_ws_callback(self, ticker: str, client: KalshiOrderBookWebSocketClient) -> None:
         """Register callback for a specific Kalshi WS client."""
