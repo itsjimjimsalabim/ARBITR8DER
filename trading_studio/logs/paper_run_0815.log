@@ -1,0 +1,70 @@
+2026-08-07 08:14:05,942 | INFO     | arbitr8der_package.vessel.vessel_state_machine | Loaded previous state: full_forward (forcing Full_Stop)
+2026-08-07 08:14:05,969 | WARNING  | arbitr8der_package.vessel.vessel_state_machine | Vessel forced to Full_Stop: startup: forced full stop
+2026-08-07 08:14:06,083 | INFO     | arbitr8der_package.execution.paper_venue_adapter | Paper venue adapter initialized, balance=$17.00
+2026-08-07 08:14:06,109 | INFO     | arbitr8der_package.config.stream_provider_runtime_lease_file_lock | Lease acquired by ingestion-6012c51b (expires in 300s)
+2026-08-07 08:14:06,129 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Ingestion orchestrator starting (owner=ingestion-6012c51b)
+2026-08-07 08:14:06,191 | INFO     | arbitr8der_package.execution.paper_venue_adapter | Paper venue adapter initialized, balance=$17.00
+2026-08-07 08:14:07,712 | INFO     | arbitr8der_package.data_sources.coingecko_macro_data_poller | Starting CoinGecko poller for ['BTC', 'ETH'] (every 60s)
+2026-08-07 08:14:07,773 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Starting candle collection battery
+2026-08-07 08:14:07,823 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Backfilling Binance BTCUSDT 1m candles
+2026-08-07 08:14:07,827 | INFO     | arbitr8der_package.prediction.settlement_watcher | Settlement watcher started (interval=60s)
+2026-08-07 08:14:08,907 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 08:14:09,847 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 08:14:09,870 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Triggering periodic background model retraining...
+2026-08-07 08:14:09,884 | INFO     | arbitr8der_package.prediction.macro_prediction_model | FrequencyLookup trained on 79 samples, 22 unique groups
+Executing script: runtime/paper_batch_run_0815.txt (18 lines)
+[script line 3] vessel battery
+2026-08-07 08:14:13,708 | INFO     | arbitr8der_package.vessel.vessel_state_machine | Vessel transition: full_stop -> battery (reason: operator: battery command)
+Vessel -> Battery
+[script line 4] vessel forward
+2026-08-07 08:14:13,744 | INFO     | arbitr8der_package.vessel.vessel_state_machine | Vessel transition: battery -> full_forward (reason: operator: forward command)
+Vessel -> Full_Forward
+[script] sleeping 40.0s...
+2026-08-07 08:14:15,063 | INFO     | arbitr8der_package.prediction.macro_prediction_model | LightGBM trained on 79 samples, val accuracy: 81.2%
+2026-08-07 08:14:15,066 | INFO     | arbitr8der_package.prediction.micro_prediction_model | MomentumLookup trained on 79 samples, 1 unique groups
+2026-08-07 08:14:15,078 | INFO     | arbitr8der_package.prediction.micro_prediction_model | LogisticRegression trained on 79 samples, train accuracy: 87.3%
+2026-08-07 08:14:15,081 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Retrained BTC models on 79 samples — freq_groups=22, lgbm_trained=True
+2026-08-07 08:14:15,085 | INFO     | arbitr8der_package.prediction.macro_prediction_model | FrequencyLookup trained on 83 samples, 18 unique groups
+2026-08-07 08:14:15,095 | ERROR    | arbitr8der_package.data_sources.ingestion_orchestrator | Scoring engine error: float() argument must be a string or a real number, not 'NoneType'
+2026-08-07 08:14:15,248 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&endTime=1786115647902&limit=1000 "HTTP/1.1 451 "
+2026-08-07 08:14:15,277 | WARNING  | arbitr8der_package.data_sources.binance_spot_price_stream | Binance WebSocket disconnected:  — reconnecting in 2.0s (failures=1)
+2026-08-07 08:14:15,313 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXBTC15M "HTTP/1.1 200 OK"
+2026-08-07 08:14:15,319 | INFO     | httpx | HTTP Request: GET https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true "HTTP/1.1 200 OK"
+2026-08-07 08:14:15,325 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 08:14:15,330 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/portfolio/balance "HTTP/1.1 200 OK"
+2026-08-07 08:14:15,341 | INFO     | arbitr8der_package.data_sources.kalshi_rest_market_discovery_client | Kalshi balance: $17.52 (1752 cents)
+2026-08-07 08:14:15,441 | INFO     | arbitr8der_package.execution.paper_venue_adapter | Synced paper wallet balance and starting balance to live Kalshi balance: $17.52
+2026-08-07 08:14:15,450 | INFO     | arbitr8der_package.execution.paper_venue_adapter | Paper wallet reset for new session at $17.52
+2026-08-07 08:14:15,453 | INFO     | arbitr8der_package.risk.risk_controls_module | Risk: balance synced to venue wallet: $17.52
+2026-08-07 08:14:15,456 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Paper wallet reset for new session: $17.52
+2026-08-07 08:14:15,464 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | All provider tasks launched (11 tasks)
+2026-08-07 08:14:15,475 | INFO     | arbitr8der_package.execution.auto_trading_engine | Auto-trading engine started (disabled by default)
+2026-08-07 08:14:15,588 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXETH15M "HTTP/1.1 200 OK"
+2026-08-07 08:14:15,595 | INFO     | arbitr8der_package.data_sources.kalshi_rest_market_discovery_client | Discovered 2 active BTC/ETH 15m markets
+2026-08-07 08:14:15,600 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Discovered 2 active Kalshi markets
+2026-08-07 08:14:15,647 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Started Kalshi WS for KXBTC15M-26AUG071115-15
+2026-08-07 08:14:15,698 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Started Kalshi WS for KXETH15M-26AUG071115-15
+2026-08-07 08:14:15,706 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Authenticating Kalshi WebSocket with RSA-PSS signature
+2026-08-07 08:14:15,710 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Authenticating Kalshi WebSocket with RSA-PSS signature
+2026-08-07 08:14:15,714 | WARNING  | arbitr8der_package.data_sources.coinbase_spot_price_stream | Coinbase WebSocket disconnected:  — reconnecting in 2.0s
+2026-08-07 08:14:20,668 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval=1m&endTime=1786115647902&limit=1000 "HTTP/1.1 200 OK"
+2026-08-07 08:14:20,691 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 08:14:21,034 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Connected to Kalshi WebSocket for KXBTC15M-26AUG071115-15
+2026-08-07 08:14:21,037 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Sent subscribe for KXBTC15M-26AUG071115-15 (cmd_id=1)
+2026-08-07 08:14:21,051 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Connected to Kalshi WebSocket for KXETH15M-26AUG071115-15
+2026-08-07 08:14:21,056 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Sent subscribe for KXETH15M-26AUG071115-15 (cmd_id=1)
+2026-08-07 08:14:21,109 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Subscribed to orderbook_delta (sid=1)
+2026-08-07 08:14:21,114 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Order book snapshot applied for KXBTC15M-26AUG071115-15 (seq=1, yes_levels=6, no_levels=95)
+2026-08-07 08:14:21,135 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Subscribed to orderbook_delta (sid=1)
+2026-08-07 08:14:21,139 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Order book snapshot applied for KXETH15M-26AUG071115-15 (seq=1, yes_levels=100, no_levels=1)
+2026-08-07 08:14:21,925 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Binance backfill complete for BTCUSDT: 1000 candles stored
+2026-08-07 08:14:21,930 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Backfilling Coinbase BTC-USD 1m candles
+2026-08-07 08:14:22,891 | ERROR    | arbitr8der_package.data_sources.binance_spot_price_stream | Binance WebSocket connection failed: server rejected WebSocket connection: HTTP 451 (failures=2)
+2026-08-07 08:14:22,895 | WARNING  | arbitr8der_package.data_sources.binance_spot_price_stream | Binance WS never connected after 2 attempts — switching to REST spot price polling
+2026-08-07 08:14:22,898 | INFO     | arbitr8der_package.data_sources.binance_spot_price_stream | Starting Binance REST spot price polling for ['btcusdt', 'ethusdt']
+2026-08-07 08:14:23,163 | INFO     | arbitr8der_package.data_sources.coinbase_spot_price_stream | Connected to Coinbase WebSocket
+2026-08-07 08:14:25,482 | WARNING  | arbitr8der_package.data_sources.ingestion_orchestrator | Provider task 'settlement-watcher' exited normally (unexpected)
+2026-08-07 08:14:25,961 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 08:14:27,246 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60&limit=300&start=2026-08-07T14%3A57%3A00%2B00%3A00 "HTTP/1.1 200 OK"
+2026-08-07 08:14:27,339 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Coinbase backfill complete for BTC-USD: 350 candles stored
+2026-08-07 08:14:27,342 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Backfilling Binance ETHUSDT 1m candles

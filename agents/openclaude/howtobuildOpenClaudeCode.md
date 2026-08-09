@@ -145,7 +145,7 @@ Both environments share the same settings file.
 |-------|-------|-----|
 | `defaultMode` | `"fullAccess"` | Auto-approve all tool calls (replaces old `bypassPermissions`) |
 | `allowBypassPermissionsMode` | `false` | Disabled — we use `fullAccess` now |
-| `maxTurns` | `9999` | Unlimited REPL turns (default was 50) |
+| `maxTurns` | `9999` | Headless/print path turn cap (CLI options). Does NOT gate the interactive REPL — that's `DEFAULT_REPL_MAX_TURNS` (now 500) in `src/screens/replMaxTurns.ts`. |
 | `contextWindow` | `500000` | 500K token context window (default was 200K) |
 | `skipDangerousModePermissionPrompt` | `true` | No prompts when using dangerous flags |
 | `skipFullAccessModePermissionPrompt` | `true` | No prompts when using fullAccess mode |
@@ -167,6 +167,21 @@ Note: The source repo (`C:\Users\itsji\openclaude\`) was deleted. The built CLI 
 launchers is at `C:\Users\itsji\.openclaude\dist\cli.mjs`. If you need the source,
 re-clone from `https://github.com/Gitlawb/openclaude.git`.
 
+> ⚠️ **CRITICAL: source edits do NOT take effect until you rebuild.** The launchers
+> (`~/bin/claude`, `claude.bat`) exec `dist/cli.mjs` directly — a prebuilt bundle.
+> Editing `src/…` alone changes nothing in the running CLI. After ANY source change
+> (tuning, bugfix, new feature), you MUST re-run:
+> ```bash
+> cd /mnt/c/Users/itsji/.openclaude && bun run build
+> ```
+> then relaunch `claude`. This bit us on 2026-08-09: the footer still showed a fake
+> `$31.13` cost because `dist/cli.mjs` was the stale Jul 22 build; the fixes were in
+> source for 2 days but never compiled. After rebuilding, verify with:
+> ```bash
+> grep -c "UNKNOWN_MODEL_ZERO_COST" dist/cli.mjs   # expect ≥ 1
+> grep -c "compactionCount"          dist/cli.mjs   # expect ≥ 1
+> ```
+
 If building from a fresh clone:
 ```bash
 git clone <repo-url> openclaude
@@ -185,7 +200,14 @@ bun run build
 
 | Parameter | Default | Our Value | File | Why |
 |-----------|---------|-----------|------|-----|
-| `DEFAULT_REPL_MAX_TURNS` | 50 | **9,999** | `src/screens/replMaxTurns.ts` | Unlimited REPL turns for long sessions |
+| `DEFAULT_REPL_MAX_TURNS` | 50 | **500** | `src/screens/replMaxTurns.ts` | 500 REPL turns — 10× the old cap, no more mid-session "Reached the maximum number of turns (50)." |
+| `normalizeMaxMessagesCompactionThreshold` default | `'200'` | **`'1000'`** | `src/utils/config.ts` | Compaction was firing at ~50K tokens because the *message-count* force path defaulted to 200 tool-heavy messages. Raising to 1000 lets Big Pickle use its 200K window (token-threshold path already computed ~150K). |
+| Unknown-model cost on non-Anthropic routes | `COST_TIER_5_25` ($5/$25 per Mtok) | **$0** | `src/utils/modelCost.ts` | OpenCode Zen bills independently of Anthropic pricing. Unknown models (like `big-pickle`) now report $0 via `UNKNOWN_MODEL_ZERO_COST` when `shouldUseIntegrationRuntimeLimits()` is true — the footer's cost segment (rendered only when cost > 0) disappears instead of showing a fabricated $8.87. |
+| Session compaction counter | _(none)_ | **`compacted N×`** | `src/bootstrap/state.ts`, `src/components/BuiltinStatusLine.tsx`, `src/cost-tracker.ts` | New `compactionCount` in session state, incremented in `markPostCompaction()` (all 4 compaction paths route through it). Shown as `compacted N×` in the footer status line and `Compactions:` in `/cost` output. |
+
+**2026-08-07 changes**: See the four rows above. All implemented and verified (`bunx tsc --noEmit` clean, tests green).
+
+**2026-08-09 changes** (this session): **Rebuilt `dist/cli.mjs`** (`bun run build`, exit 0). Root cause of the still-visible fake footer cost: the running CLI was the stale Jul 22 bundle — our Aug 7 source edits (zero-cost, `'1000'` threshold, compaction counter) were never compiled in. "Close and refresh" relaunched the same old bundle. After the rebuild, grep confirms `UNKNOWN_MODEL_ZERO_COST` (1×), `compactionCount` (2×), and the minified threshold `...value:"1000"` are all in `dist/cli.mjs`. See section 3.8 for the rebuild-required warning.
 
 ### Full Parameter Table — Defaults vs Recommended for Big Pickle
 
@@ -211,7 +233,7 @@ bun run build
 | `AUTOCOMPACT_FAILURE_COOLDOWN_MS` | 300,000 (5min) | **120,000 (2min)** | `OPENCLAUDE_AUTOCOMPACT_FAILURE_COOLDOWN_MS` | `src/services/compact/autoCompact.ts` |
 | `MAX_CONSECUTIVE_AUTOCOMPACT_FAILURES` | 3 | 3 | _(code only)_ | `src/services/compact/autoCompact.ts` |
 | **Turns & Goals** | | | | |
-| `DEFAULT_REPL_MAX_TURNS` | 50 | **9,999** ✅ done | _(code only)_ | `src/screens/replMaxTurns.ts` |
+| `DEFAULT_REPL_MAX_TURNS` | 50 | **500** ✅ done | _(code only)_ | `src/screens/replMaxTurns.ts` |
 | `DEFAULT_GOAL_MAX_TURNS` | 50 | 50 | _(code only)_ | `src/services/goal/state.ts` |
 | `DEFAULT_OPTIONS.maxTurns` (multiTurn) | 10 | 10 | _(code only)_ | `src/utils/multiTurnContext.ts` |
 | **Session Memory** | | | | |
@@ -243,7 +265,7 @@ export OPENCLAUDE_AUTOCOMPACT_FAILURE_COOLDOWN_MS=120000
 | **Capped default 16K** | The 8K cap over-reserves for p99 output of ~5K. 16K gives more room before the escalation retry. |
 | **Auto-compact at 85%** | The default ~84% threshold fires compaction early. 85% lets you use more context before the summary. Rare compaction in OpenCode confirms Big Pickle handles full context well. |
 | **Cooldown 2min** | 5min is too long if compact genuinely fails — you're stuck waiting. 2min retries faster. |
-| **REPL turns 9999** | ✅ Already done. Unlimited interactive turns. |
+| **REPL turns 500** | ✅ Already done. Raised 50 → 500 (the old 50-turn cap killed long sessions). |
 
 ### What NOT to Touch
 
@@ -267,7 +289,7 @@ When the session hit "32K tokens," this is what was happening:
 | MAX_OUTPUT_TOKENS_UPPER_LIMIT | 64,000 | `src/utils/context.ts` |
 | CAPPED_DEFAULT_MAX_TOKENS | 8,000 | `src/utils/context.ts` |
 | MODEL_CONTEXT_WINDOW_DEFAULT | 200,000 | `src/utils/context.ts` |
-| DEFAULT_REPL_MAX_TURNS | 9,999 | `src/screens/replMaxTurns.ts` |
+| DEFAULT_REPL_MAX_TURNS | 500 | `src/screens/replMaxTurns.ts` |
 | DEFAULT_GOAL_MAX_TURNS | 50 | `src/services/goal/state.ts` |
 | POST_COMPACT_TOKEN_BUDGET | 50,000 | `src/services/compact/compact.ts` |
 
@@ -276,7 +298,7 @@ When the session hit "32K tokens," this is what was happening:
 - The context window is **200K tokens** (or 128K for OpenAI fallback models).
 - Auto-compact triggers when context gets too full (~84% of effective context window).
 - After compaction, a summary replaces old messages, freeing space.
-- The REPL allows **9,999 turns** (tweaked from default 50).
+- The REPL allows **500 turns** (tweaked from default 50) via `DEFAULT_REPL_MAX_TURNS`.
 - Goals (automated multi-turn tasks) get **50 turns** by default.
 
 ### How to Get More Output

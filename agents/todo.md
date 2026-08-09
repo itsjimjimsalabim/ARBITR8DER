@@ -4,6 +4,33 @@
 **Onboarding workflow:** `agents/onboarding_workflow.md` (read this first if new)
 **Current implementation state:** Phase 8 — Prediction System (8a-8l complete, retraining loop closed, auto-trader wired)
 
+## Two-Desk Target — Kalshi and Polymarket
+
+- Objective: make the trading studio profitable enough to fund stable cloud operation with capacity for trading processes and AI operation/oversight.
+- No monthly cloud budget is set. Connectivity and operating availability are currently unstable.
+- Polymarket is live and the portfolio has cash, per operator report. This backlog entry does not authorize a live order.
+- Target operating model: one AI can operate the Kalshi desk and one AI can operate the Polymarket desk. Compare realized, fee-adjusted PnL per hour after each desk has independent, verified accounting.
+- Keep credentials, streams, orders, positions, runtime data, logs, and PnL isolated by platform.
+
+Target file layout:
+
+```
+ARBITR8DER/
+  agents/                   <- shared AI context, plans, and operator docs
+  kalshi/                   <- move the current Trading Studio code here
+  polymarket/               <- blank platform root; build separately
+  UI/                       <- shared user-interface work
+```
+
+Tasks:
+
+- [ ] Inventory current `trading_studio/` paths, imports, launchers, tests, runtime paths, and documentation references.
+- [ ] Move the current Trading Studio code into root-level `kalshi/` without changing behavior.
+- [ ] Update imports, launchers, tests, runtime paths, and documentation to the Kalshi location; run the full test suite.
+- [ ] Create an otherwise blank root-level `polymarket/` directory. Do not copy Kalshi execution code or runtime data into it.
+- [ ] Create a root-level `UI/` directory only when UI work begins. Keep it separate from both execution desks.
+- [ ] Define separate desk-level accounting and a realized, fee-adjusted PnL-per-hour comparison before any competition between AI operators.
+
 ## Codex Static Audit — 2026-08-08 22:51–22:55 PDT (for Antigravity)
 
 **Scope:** Read-only code/architecture audit while Antigravity held the active PAPER-session lease. No orders, runtime state, or trading code were changed. These are verified implementation findings, not claims about the current session outcome.
@@ -24,16 +51,16 @@
 
 ## Rules For The Next Implementing AI
 
-- All executable trading software belongs under `trading_studio/`, including `src/`, tests, scripts, runtime paths, package metadata, and a future UI.
+- Target layout: executable platform software belongs under root-level `kalshi/` or `polymarket/`; UI code belongs under root-level `UI/`. Until the migration task is completed, the current Kalshi implementation remains in `trading_studio/`.
 - `agents/` contains shared context and planning only. Do not put runnable trading helpers there.
 - Do not restore or copy the deleted root package or code from historical repositories. Use history only for lessons and test cases.
 - Start each process in `Full_Stop` and PAPER mode. No task in this backlog authorizes a live order.
 - Before changing code, verify the current worktree and preserve unrelated user changes.
 - There is exactly ONE `.env`: `ARBITR8DER/.env` at the repo root. `trading_studio/.env` is gone. `TradingStudioSettings` loads the root `.env` by absolute path resolved from the package location, not CWD. Do not recreate `trading_studio/.env`.
-- `trading_studio/runtime/` is the only runtime directory. The empty `runtime/` at the repo root is vestigial; delete it if it reappears, do not write to it.
+- Until migration, `trading_studio/runtime/` is the active Kalshi runtime directory. After migration, Kalshi and Polymarket must each use their own platform-local runtime directory. Do not share runtime data.
 - `.qodo/` is auto-created by the VSCode Qodo extension. It is gitignored. Delete on sight, never commit.
 - File/variable names: at least 4 self-documenting words. Persona is "Paulie" — cold, calculating coder.
-- **Core Philosophy: High-Speed AI-First Architecture**: Build exclusively for AI agent usability and execution speed. NO UI code or decorative graphics in `trading_studio/` (yet). Keep all outputs as compact plain-text or clean structured data tables optimized for machine parsing and token efficiency.
+- **Core Philosophy: High-Speed AI-First Architecture**: Build for AI agent usability and execution speed. Keep UI code in `UI/`, separate from both execution desks. Keep execution outputs compact plain text or structured data for machine parsing and token efficiency.
 
 ---
 
@@ -60,21 +87,12 @@
 
 ---
 
-### Overnight Portfolio Summary
-- **Starting Balance:** $17.52
-- **Ending Balance:** $17.52
-- **Net PnL:** $0.00
-- **Total Trades Settled:** 0 (Patient limit orders held at $\le 48\text{¢}$ limit threshold, cleanly avoiding negative EV execution).
-- **Vessel still `full_forward`** (last_activity 23:38 PDT).
-- **Recommended next action for Antigravity on resume:** exit ALL stale REPLs (PIDs 31592/40275/40620), then resume the OBSERVE cadence at the next 15-min window. Wallet is safe at **$17.52**, nothing to repair.
-- If Antigravity context window reset: follow the Hand-off Protocol below — start REPL 1 min before the next window, run `snapshot`/`predict`/`buy no 48` cadence, and commit the cycle notes.
-- **OpenClaude note:** 4h+ quiet. The overnight OBSERVE session has effectively gone silent; only data ingestion remains. Next automated check ~05:18 AM PDT. If you resume before then, leave a note in this todo and the watch will pick it up.
-
----
-
-### Night 2 Cadence Next Step: Cycle N13 (05:00 AM – 05:15 AM PDT Window - OBSERVE PASS)
-- Target Window: **05:00 AM – 05:15 AM PDT** (Start vessel at **04:59 AM PDT**).
-- Tasks: `snapshot`, `predict BTC/ETH --model auto`, execute 2-contract limit orders. Post-run: **OBSERVE ONLY (MAKE NOTES IN TODO)**.
+### ⚠️ OPENCLAUDE HOURLY WATCH — 06:18 AM PDT: DAY BREAK — NO ACTIVITY SINCE NIGHT 2 CLOSE ✔
+- **No new commits** since `8acfb32` (04:48 PDT Night 2 close). No new brain messages or task dirs since task-2079 (04:32).
+- **Process table clean** — no REPLs running. Vessel **`full_stop`** (last_activity 04:38 PDT). Streams stopped with the REPL exits (last ingestion 04:28).
+- **Wallet:** **$17.52**, 0 fills, 0 settled trades. Nothing to repair.
+- **Interpretation:** Night 2 is complete and the overnight session has ended for the day. Antigravity is not currently operating.
+- **OpenClaude note:** watch will continue hourly; if Antigravity starts a Day 3 session the watch will pick it up and log it. No action needed while idle.
 
 ---
 

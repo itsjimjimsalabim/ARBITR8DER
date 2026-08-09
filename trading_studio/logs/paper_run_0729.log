@@ -1,0 +1,665 @@
+2026-08-07 07:27:24,991 | INFO     | arbitr8der_package.vessel.vessel_state_machine | Loaded previous state: full_stop (forcing Full_Stop)
+2026-08-07 07:27:25,017 | WARNING  | arbitr8der_package.vessel.vessel_state_machine | Vessel forced to Full_Stop: startup: forced full stop
+2026-08-07 07:27:25,138 | INFO     | arbitr8der_package.execution.paper_venue_adapter | Paper venue adapter initialized, balance=$17.00
+2026-08-07 07:27:25,162 | INFO     | arbitr8der_package.config.stream_provider_runtime_lease_file_lock | Lease acquired by ingestion-d13e5755 (expires in 300s)
+2026-08-07 07:27:25,183 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Ingestion orchestrator starting (owner=ingestion-d13e5755)
+2026-08-07 07:27:25,259 | INFO     | arbitr8der_package.execution.paper_venue_adapter | Paper venue adapter initialized, balance=$17.00
+2026-08-07 07:27:26,733 | INFO     | arbitr8der_package.data_sources.coingecko_macro_data_poller | Starting CoinGecko poller for ['BTC', 'ETH'] (every 60s)
+2026-08-07 07:27:26,787 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Starting candle collection battery
+2026-08-07 07:27:26,836 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Backfilling Binance BTCUSDT 1m candles
+2026-08-07 07:27:26,840 | INFO     | arbitr8der_package.prediction.settlement_watcher | Settlement watcher started (interval=60s)
+2026-08-07 07:27:25,433 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:27:26,810 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:27:26,835 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Triggering periodic background model retraining...
+2026-08-07 07:27:26,850 | INFO     | arbitr8der_package.prediction.macro_prediction_model | FrequencyLookup trained on 77 samples, 20 unique groups
+Executing script: runtime/paper_batch_run_0729.txt (14 lines)
+[script line 2] snapshot
+No snapshot data yet. Data sources may still be connecting.
+[script line 3] predict BTC --model auto
+No snapshot data yet — wait for data sources to populate
+[script line 4] predict ETH --model auto
+No snapshot data yet — wait for data sources to populate
+[script line 5] opportunities
+Unknown command: opportunities. Type 'help' for available commands.
+[script line 6] autotrade on
+Auto-trading engine not running. Start with 'forward start'.
+[script] sleeping 780.0s...
+2026-08-07 07:27:34,399 | INFO     | arbitr8der_package.prediction.macro_prediction_model | LightGBM trained on 77 samples, val accuracy: 81.2%
+2026-08-07 07:27:34,404 | INFO     | arbitr8der_package.prediction.micro_prediction_model | MomentumLookup trained on 77 samples, 1 unique groups
+2026-08-07 07:27:34,415 | INFO     | arbitr8der_package.prediction.micro_prediction_model | LogisticRegression trained on 77 samples, train accuracy: 88.3%
+2026-08-07 07:27:34,419 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Retrained BTC models on 77 samples — freq_groups=20, lgbm_trained=True
+2026-08-07 07:27:34,422 | INFO     | arbitr8der_package.prediction.macro_prediction_model | FrequencyLookup trained on 82 samples, 18 unique groups
+2026-08-07 07:27:34,425 | ERROR    | arbitr8der_package.data_sources.ingestion_orchestrator | Scoring engine error: float() argument must be a string or a real number, not 'NoneType'
+2026-08-07 07:27:34,428 | WARNING  | arbitr8der_package.data_sources.binance_spot_price_stream | Binance WebSocket disconnected:  — reconnecting in 2.0s (failures=1)
+2026-08-07 07:27:34,431 | WARNING  | arbitr8der_package.data_sources.coinbase_spot_price_stream | Coinbase WebSocket disconnected:  — reconnecting in 2.0s
+2026-08-07 07:27:34,437 | WARNING  | arbitr8der_package.execution.paper_venue_adapter | Failed to sync live Kalshi balance: 
+2026-08-07 07:27:34,442 | WARNING  | arbitr8der_package.execution.paper_venue_adapter | Falling back to default paper wallet balance of $17.00 for new session
+2026-08-07 07:27:34,449 | INFO     | arbitr8der_package.execution.paper_venue_adapter | Paper wallet reset for new session at $17.00
+2026-08-07 07:27:34,452 | INFO     | arbitr8der_package.risk.risk_controls_module | Risk: balance synced to venue wallet: $17.00
+2026-08-07 07:27:34,456 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Paper wallet reset for new session: $17.00
+2026-08-07 07:27:34,463 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | All provider tasks launched (11 tasks)
+2026-08-07 07:27:34,468 | ERROR    | arbitr8der_package.data_sources.ingestion_orchestrator | Kalshi discovery error: 
+2026-08-07 07:27:34,472 | INFO     | arbitr8der_package.execution.auto_trading_engine | Auto-trading engine started (disabled by default)
+2026-08-07 07:27:34,531 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&endTime=1786112846899&limit=1000 "HTTP/1.1 451 "
+2026-08-07 07:27:34,622 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:27:34,696 | INFO     | httpx | HTTP Request: GET https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true "HTTP/1.1 200 OK"
+2026-08-07 07:27:39,915 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:27:40,024 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval=1m&endTime=1786112846899&limit=1000 "HTTP/1.1 200 OK"
+2026-08-07 07:27:41,176 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Binance backfill complete for BTCUSDT: 1000 candles stored
+2026-08-07 07:27:41,184 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Backfilling Coinbase BTC-USD 1m candles
+2026-08-07 07:27:41,995 | INFO     | arbitr8der_package.data_sources.coinbase_spot_price_stream | Connected to Coinbase WebSocket
+2026-08-07 07:27:42,128 | ERROR    | arbitr8der_package.data_sources.binance_spot_price_stream | Binance WebSocket connection failed: server rejected WebSocket connection: HTTP 451 (failures=2)
+2026-08-07 07:27:42,134 | WARNING  | arbitr8der_package.data_sources.binance_spot_price_stream | Binance WS never connected after 2 attempts — switching to REST spot price polling
+2026-08-07 07:27:42,138 | INFO     | arbitr8der_package.data_sources.binance_spot_price_stream | Starting Binance REST spot price polling for ['btcusdt', 'ethusdt']
+2026-08-07 07:27:44,481 | WARNING  | arbitr8der_package.data_sources.ingestion_orchestrator | Provider task 'settlement-watcher' exited normally (unexpected)
+2026-08-07 07:27:45,267 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:27:46,554 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60&limit=300&start=2026-08-07T14%3A16%3A00%2B00%3A00 "HTTP/1.1 200 OK"
+2026-08-07 07:27:46,634 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Coinbase backfill complete for BTC-USD: 350 candles stored
+2026-08-07 07:27:46,638 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Backfilling Binance ETHUSDT 1m candles
+2026-08-07 07:27:47,419 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:27:47,540 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:27:50,328 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:27:50,665 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:27:51,455 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:27:51,818 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=ETHUSDT&interval=1m&endTime=1786112866646&limit=1000 "HTTP/1.1 451 "
+2026-08-07 07:27:54,777 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=ETHUSDT&interval=1m&endTime=1786112866646&limit=1000 "HTTP/1.1 200 OK"
+2026-08-07 07:27:55,451 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:27:55,550 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:27:55,905 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Binance backfill complete for ETHUSDT: 1000 candles stored
+2026-08-07 07:27:55,912 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Backfilling Coinbase ETH-USD 1m candles
+2026-08-07 07:28:01,255 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/ETH-USD/candles?granularity=60&limit=300&start=2026-08-02T11%3A39%3A00%2B00%3A00 "HTTP/1.1 200 OK"
+2026-08-07 07:28:01,410 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Coinbase backfill complete for ETH-USD: 350 candles stored
+2026-08-07 07:28:02,031 | WARNING  | arbitr8der_package.data_sources.ingestion_orchestrator | Provider task 'candle-battery' exited normally (unexpected)
+2026-08-07 07:28:05,567 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:28:05,904 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:28:06,141 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:28:06,749 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:28:07,496 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:28:12,135 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:28:16,526 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:28:16,636 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:28:17,363 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:28:22,629 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:28:23,471 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:28:24,425 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:28:24,401 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:28:24,510 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:28:25,622 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:28:30,989 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/ETH-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:28:34,809 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXBTC15M "HTTP/1.1 200 OK"
+2026-08-07 07:28:34,884 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:28:34,895 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXETH15M "HTTP/1.1 200 OK"
+2026-08-07 07:28:34,908 | INFO     | arbitr8der_package.data_sources.kalshi_rest_market_discovery_client | Discovered 2 active BTC/ETH 15m markets
+2026-08-07 07:28:34,914 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Discovered 2 active Kalshi markets
+2026-08-07 07:28:34,981 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Started Kalshi WS for KXBTC15M-26AUG071030-30
+2026-08-07 07:28:35,039 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Started Kalshi WS for KXETH15M-26AUG071030-30
+2026-08-07 07:28:35,045 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Authenticating Kalshi WebSocket with RSA-PSS signature
+2026-08-07 07:28:35,050 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Authenticating Kalshi WebSocket with RSA-PSS signature
+2026-08-07 07:28:35,146 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:28:35,267 | INFO     | httpx | HTTP Request: GET https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true "HTTP/1.1 200 OK"
+2026-08-07 07:28:37,825 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:28:39,859 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:28:40,368 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Connected to Kalshi WebSocket for KXBTC15M-26AUG071030-30
+2026-08-07 07:28:40,374 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Sent subscribe for KXBTC15M-26AUG071030-30 (cmd_id=1)
+2026-08-07 07:28:40,383 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Connected to Kalshi WebSocket for KXETH15M-26AUG071030-30
+2026-08-07 07:28:40,387 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Sent subscribe for KXETH15M-26AUG071030-30 (cmd_id=1)
+2026-08-07 07:28:40,450 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Subscribed to orderbook_delta (sid=1)
+2026-08-07 07:28:40,454 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Order book snapshot applied for KXBTC15M-26AUG071030-30 (seq=1, yes_levels=101, no_levels=0)
+2026-08-07 07:28:40,457 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Subscribed to orderbook_delta (sid=1)
+2026-08-07 07:28:40,460 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Order book snapshot applied for KXETH15M-26AUG071030-30 (seq=1, yes_levels=101, no_levels=0)
+2026-08-07 07:28:45,499 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:28:45,598 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:28:50,962 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:28:54,728 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:28:54,736 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:28:55,938 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:28:56,010 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:28:56,039 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:28:56,201 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:28:54,479 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:28:57,476 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:28:57,483 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:28:58,979 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:29:04,282 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:29:07,194 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:29:07,433 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:29:10,293 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:29:11,206 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:29:17,770 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:29:17,866 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:29:24,415 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:29:25,051 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:29:25,780 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:29:26,005 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:29:30,206 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:29:30,212 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:29:31,283 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:29:35,344 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXBTC15M "HTTP/1.1 200 OK"
+2026-08-07 07:29:35,391 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:29:35,397 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:29:35,439 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXETH15M "HTTP/1.1 200 OK"
+2026-08-07 07:29:35,445 | INFO     | arbitr8der_package.data_sources.kalshi_rest_market_discovery_client | Discovered 2 active BTC/ETH 15m markets
+2026-08-07 07:29:35,448 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Discovered 2 active Kalshi markets
+2026-08-07 07:29:35,598 | INFO     | httpx | HTTP Request: GET https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true "HTTP/1.1 200 OK"
+2026-08-07 07:29:36,270 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:29:36,499 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:29:36,695 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:29:40,742 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:29:41,388 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:29:41,871 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:29:46,853 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:29:46,946 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:29:47,102 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:29:51,954 | INFO     | arbitr8der_package.data_sources.binance_spot_price_stream | Attempting Binance WS reconnect from REST fallback...
+2026-08-07 07:29:52,313 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:29:54,571 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:29:54,993 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/ETH-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:29:55,269 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:30:00,461 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:30:00,559 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:30:01,020 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Order book snapshot applied for KXETH15M-26AUG071030-30 (seq=1043, yes_levels=0, no_levels=0)
+2026-08-07 07:30:01,028 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Order book snapshot applied for KXBTC15M-26AUG071030-30 (seq=2133, yes_levels=0, no_levels=0)
+2026-08-07 07:30:04,560 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:30:07,569 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Order book snapshot applied for KXBTC15M-26AUG071030-30 (seq=2134, yes_levels=0, no_levels=0)
+2026-08-07 07:30:07,573 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Order book snapshot applied for KXETH15M-26AUG071030-30 (seq=1044, yes_levels=0, no_levels=0)
+2026-08-07 07:30:08,118 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:30:08,132 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:30:09,814 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:30:10,889 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:30:10,979 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:30:11,107 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:30:11,601 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:30:11,607 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Triggering periodic background model retraining...
+2026-08-07 07:30:11,616 | INFO     | arbitr8der_package.prediction.macro_prediction_model | FrequencyLookup trained on 77 samples, 20 unique groups
+2026-08-07 07:30:12,232 | INFO     | arbitr8der_package.prediction.macro_prediction_model | LightGBM trained on 77 samples, val accuracy: 81.2%
+2026-08-07 07:30:12,236 | INFO     | arbitr8der_package.prediction.micro_prediction_model | MomentumLookup trained on 77 samples, 1 unique groups
+2026-08-07 07:30:12,244 | INFO     | arbitr8der_package.prediction.micro_prediction_model | LogisticRegression trained on 77 samples, train accuracy: 88.3%
+2026-08-07 07:30:12,247 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Retrained BTC models on 77 samples — freq_groups=20, lgbm_trained=True
+2026-08-07 07:30:12,249 | INFO     | arbitr8der_package.prediction.macro_prediction_model | FrequencyLookup trained on 82 samples, 18 unique groups
+2026-08-07 07:30:12,251 | ERROR    | arbitr8der_package.data_sources.ingestion_orchestrator | Scoring engine error: float() argument must be a string or a real number, not 'NoneType'
+2026-08-07 07:30:13,374 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:30:13,384 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:30:15,112 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:30:20,438 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:30:21,338 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:30:21,447 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:30:25,761 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:30:26,695 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:30:29,384 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:30:29,487 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:30:35,803 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXBTC15M "HTTP/1.1 200 OK"
+2026-08-07 07:30:35,914 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXETH15M "HTTP/1.1 200 OK"
+2026-08-07 07:30:35,930 | INFO     | arbitr8der_package.data_sources.kalshi_rest_market_discovery_client | Discovered 2 active BTC/ETH 15m markets
+2026-08-07 07:30:35,936 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Discovered 2 active Kalshi markets
+2026-08-07 07:30:36,000 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Started Kalshi WS for KXBTC15M-26AUG071045-45
+2026-08-07 07:30:36,049 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Started Kalshi WS for KXETH15M-26AUG071045-45
+2026-08-07 07:30:36,055 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Stopped Kalshi WS for closed market KXBTC15M-26AUG071030-30
+2026-08-07 07:30:36,059 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Stopped Kalshi WS for closed market KXETH15M-26AUG071030-30
+2026-08-07 07:30:36,063 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Authenticating Kalshi WebSocket with RSA-PSS signature
+2026-08-07 07:30:36,067 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Authenticating Kalshi WebSocket with RSA-PSS signature
+2026-08-07 07:30:36,072 | INFO     | httpx | HTTP Request: GET https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true "HTTP/1.1 200 OK"
+2026-08-07 07:30:39,935 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:30:40,041 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:30:41,362 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Connected to Kalshi WebSocket for KXETH15M-26AUG071045-45
+2026-08-07 07:30:41,366 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Sent subscribe for KXETH15M-26AUG071045-45 (cmd_id=1)
+2026-08-07 07:30:41,371 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Connected to Kalshi WebSocket for KXBTC15M-26AUG071045-45
+2026-08-07 07:30:41,375 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Sent subscribe for KXBTC15M-26AUG071045-45 (cmd_id=1)
+2026-08-07 07:30:41,441 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Subscribed to orderbook_delta (sid=1)
+2026-08-07 07:30:41,449 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Subscribed to orderbook_delta (sid=1)
+2026-08-07 07:30:41,455 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Order book snapshot applied for KXBTC15M-26AUG071045-45 (seq=1, yes_levels=40, no_levels=61)
+2026-08-07 07:30:41,461 | INFO     | arbitr8der_package.data_sources.kalshi_orderbook_websocket_client | Order book snapshot applied for KXETH15M-26AUG071045-45 (seq=1, yes_levels=33, no_levels=68)
+2026-08-07 07:30:42,710 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:30:43,583 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:30:46,154 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:30:46,164 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:30:50,257 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:30:50,354 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:30:51,374 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:30:51,386 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:30:55,301 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:30:57,020 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:30:57,923 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:30:58,117 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:30:58,356 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:31:00,523 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:31:05,703 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:31:08,725 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:31:08,962 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:31:10,914 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:31:13,836 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:31:14,743 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:31:16,246 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:31:19,300 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:31:19,401 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:31:20,783 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:31:21,505 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/ETH-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:31:24,059 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:31:24,071 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:31:23,547 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:31:26,783 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:31:26,798 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:31:27,272 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:31:27,385 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:31:28,216 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:31:28,782 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:31:29,328 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:31:34,046 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:31:36,290 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXBTC15M "HTTP/1.1 200 OK"
+2026-08-07 07:31:36,341 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXETH15M "HTTP/1.1 200 OK"
+2026-08-07 07:31:36,356 | INFO     | arbitr8der_package.data_sources.kalshi_rest_market_discovery_client | Discovered 2 active BTC/ETH 15m markets
+2026-08-07 07:31:36,367 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Discovered 2 active Kalshi markets
+2026-08-07 07:31:36,495 | INFO     | httpx | HTTP Request: GET https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true "HTTP/1.1 200 OK"
+2026-08-07 07:31:37,614 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:31:37,721 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:31:45,257 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:31:46,186 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:31:48,048 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:31:48,300 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:31:53,310 | INFO     | arbitr8der_package.data_sources.binance_spot_price_stream | Attempting Binance WS reconnect from REST fallback...
+2026-08-07 07:31:59,551 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:31:59,558 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:31:59,715 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:32:00,594 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:32:01,799 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:32:01,896 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:32:04,771 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:32:04,781 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:32:12,117 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:32:12,216 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:32:16,589 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 134 outcomes from candles for BTC
+2026-08-07 07:32:17,551 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:32:21,825 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:32:22,563 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:32:22,799 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:32:24,520 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:32:29,728 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:32:30,650 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:32:30,746 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:32:31,023 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:32:32,074 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:32:34,340 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:32:34,931 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:32:36,644 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXBTC15M "HTTP/1.1 200 OK"
+2026-08-07 07:32:36,693 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXETH15M "HTTP/1.1 200 OK"
+2026-08-07 07:32:36,702 | INFO     | arbitr8der_package.data_sources.kalshi_rest_market_discovery_client | Discovered 2 active BTC/ETH 15m markets
+2026-08-07 07:32:36,707 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Discovered 2 active Kalshi markets
+2026-08-07 07:32:36,856 | INFO     | httpx | HTTP Request: GET https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true "HTTP/1.1 200 OK"
+2026-08-07 07:32:37,506 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:32:37,515 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:32:39,570 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:32:40,285 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:32:41,099 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:32:41,204 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:32:42,692 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:32:42,701 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:32:44,861 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:32:45,510 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/ETH-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:32:47,998 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:32:48,932 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:32:48,941 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Triggering periodic background model retraining...
+2026-08-07 07:32:48,953 | INFO     | arbitr8der_package.prediction.macro_prediction_model | FrequencyLookup trained on 77 samples, 20 unique groups
+2026-08-07 07:32:49,021 | INFO     | arbitr8der_package.prediction.macro_prediction_model | LightGBM trained on 77 samples, val accuracy: 81.2%
+2026-08-07 07:32:49,029 | INFO     | arbitr8der_package.prediction.micro_prediction_model | MomentumLookup trained on 77 samples, 1 unique groups
+2026-08-07 07:32:49,036 | INFO     | arbitr8der_package.prediction.micro_prediction_model | LogisticRegression trained on 77 samples, train accuracy: 88.3%
+2026-08-07 07:32:49,039 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Retrained BTC models on 77 samples — freq_groups=20, lgbm_trained=True
+2026-08-07 07:32:49,044 | INFO     | arbitr8der_package.prediction.macro_prediction_model | FrequencyLookup trained on 82 samples, 18 unique groups
+2026-08-07 07:32:49,046 | ERROR    | arbitr8der_package.data_sources.ingestion_orchestrator | Scoring engine error: float() argument must be a string or a real number, not 'NoneType'
+2026-08-07 07:32:50,164 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:32:51,439 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:32:51,541 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:32:59,413 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:32:59,647 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:33:02,508 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:33:03,422 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:33:10,014 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:33:10,285 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:33:15,409 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:33:15,420 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:33:19,511 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:33:20,610 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:33:20,627 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:33:20,666 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:33:20,776 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:33:23,033 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:33:28,654 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:33:28,759 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:33:36,519 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:33:37,016 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXBTC15M "HTTP/1.1 200 OK"
+2026-08-07 07:33:37,126 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXETH15M "HTTP/1.1 200 OK"
+2026-08-07 07:33:37,132 | INFO     | arbitr8der_package.data_sources.kalshi_rest_market_discovery_client | Discovered 2 active BTC/ETH 15m markets
+2026-08-07 07:33:37,136 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Discovered 2 active Kalshi markets
+2026-08-07 07:33:37,219 | INFO     | httpx | HTTP Request: GET https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true "HTTP/1.1 200 OK"
+2026-08-07 07:33:37,473 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:33:39,123 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:33:39,224 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:33:45,853 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:33:49,609 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:33:49,710 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:33:50,398 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:33:51,096 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:33:53,386 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:33:53,446 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:33:53,454 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:33:51,862 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for ETH
+2026-08-07 07:33:53,220 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:33:53,841 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:33:56,370 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:33:56,379 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:33:57,473 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:33:57,580 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:33:58,479 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:33:59,056 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:34:02,588 | INFO     | arbitr8der_package.data_sources.binance_spot_price_stream | Attempting Binance WS reconnect from REST fallback...
+2026-08-07 07:34:03,733 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:34:04,342 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:34:07,853 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:34:08,771 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:34:09,550 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/ETH-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:34:13,369 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:34:13,474 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:34:23,817 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:34:23,918 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:34:22,239 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:34:23,223 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:34:29,092 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:34:29,106 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:34:31,672 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:34:31,767 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:34:34,299 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:34:34,313 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:34:37,370 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXBTC15M "HTTP/1.1 200 OK"
+2026-08-07 07:34:37,415 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXETH15M "HTTP/1.1 200 OK"
+2026-08-07 07:34:37,433 | INFO     | arbitr8der_package.data_sources.kalshi_rest_market_discovery_client | Discovered 2 active BTC/ETH 15m markets
+2026-08-07 07:34:37,439 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Discovered 2 active Kalshi markets
+2026-08-07 07:34:37,619 | INFO     | httpx | HTTP Request: GET https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true "HTTP/1.1 200 OK"
+2026-08-07 07:34:39,167 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:34:40,059 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:34:42,095 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:34:42,205 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:34:52,562 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:34:52,792 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:34:53,500 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:34:54,430 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:35:00,662 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:35:00,764 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:35:03,953 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:35:07,087 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:35:07,096 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:35:09,215 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:35:09,877 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:35:10,381 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:35:11,109 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:35:11,297 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:35:11,336 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:35:12,312 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:35:12,322 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:35:14,519 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:35:15,208 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:35:19,760 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:35:20,454 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:35:21,540 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:35:21,772 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:35:23,197 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:35:24,831 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:35:25,748 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:35:25,757 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Triggering periodic background model retraining...
+2026-08-07 07:35:25,768 | INFO     | arbitr8der_package.prediction.macro_prediction_model | FrequencyLookup trained on 77 samples, 20 unique groups
+2026-08-07 07:35:25,842 | INFO     | arbitr8der_package.prediction.macro_prediction_model | LightGBM trained on 77 samples, val accuracy: 81.2%
+2026-08-07 07:35:25,847 | INFO     | arbitr8der_package.prediction.micro_prediction_model | MomentumLookup trained on 77 samples, 1 unique groups
+2026-08-07 07:35:25,854 | INFO     | arbitr8der_package.prediction.micro_prediction_model | LogisticRegression trained on 77 samples, train accuracy: 88.3%
+2026-08-07 07:35:25,857 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Retrained BTC models on 77 samples — freq_groups=20, lgbm_trained=True
+2026-08-07 07:35:25,861 | INFO     | arbitr8der_package.prediction.macro_prediction_model | FrequencyLookup trained on 82 samples, 18 unique groups
+2026-08-07 07:35:25,865 | ERROR    | arbitr8der_package.data_sources.ingestion_orchestrator | Scoring engine error: float() argument must be a string or a real number, not 'NoneType'
+2026-08-07 07:35:28,411 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:35:29,604 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:35:29,702 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:35:33,603 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/ETH-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:35:37,696 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXBTC15M "HTTP/1.1 200 OK"
+2026-08-07 07:35:37,742 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXETH15M "HTTP/1.1 200 OK"
+2026-08-07 07:35:37,748 | INFO     | arbitr8der_package.data_sources.kalshi_rest_market_discovery_client | Discovered 2 active BTC/ETH 15m markets
+2026-08-07 07:35:37,752 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Discovered 2 active Kalshi markets
+2026-08-07 07:35:37,958 | INFO     | httpx | HTTP Request: GET https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true "HTTP/1.1 200 OK"
+2026-08-07 07:35:39,903 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:35:40,015 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:35:41,805 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:35:42,726 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:35:45,095 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:35:45,104 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:35:50,217 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:35:50,292 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:35:50,300 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:35:50,318 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:35:56,190 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:35:57,071 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:35:58,154 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:35:58,383 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:36:03,391 | INFO     | arbitr8der_package.data_sources.binance_spot_price_stream | Attempting Binance WS reconnect from REST fallback...
+2026-08-07 07:36:13,018 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:36:14,003 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:36:14,171 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:36:14,281 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:36:20,127 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:36:23,037 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:36:23,048 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:36:22,032 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:36:22,135 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:36:22,934 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:36:25,762 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:36:25,772 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:36:27,474 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:36:28,225 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:36:28,424 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:36:32,522 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:36:32,639 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:36:33,493 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:36:33,892 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:36:38,037 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXBTC15M "HTTP/1.1 200 OK"
+2026-08-07 07:36:38,087 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXETH15M "HTTP/1.1 200 OK"
+2026-08-07 07:36:38,093 | INFO     | arbitr8der_package.data_sources.kalshi_rest_market_discovery_client | Discovered 2 active BTC/ETH 15m markets
+2026-08-07 07:36:38,097 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Discovered 2 active Kalshi markets
+2026-08-07 07:36:38,292 | INFO     | httpx | HTTP Request: GET https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true "HTTP/1.1 200 OK"
+2026-08-07 07:36:39,240 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:36:42,875 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:36:42,980 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:36:44,477 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:36:45,025 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:36:46,521 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:36:49,828 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:36:50,730 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:36:50,846 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:36:52,566 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:36:57,817 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/ETH-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:36:58,587 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:36:58,597 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:37:00,011 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:37:01,055 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:37:01,152 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:37:01,548 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:37:03,798 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:37:03,811 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:37:11,370 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:37:11,604 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:37:17,545 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:37:18,426 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:37:21,860 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:37:21,961 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:37:29,810 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:37:30,030 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:37:31,663 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:37:32,347 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:37:33,731 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:37:36,504 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:37:36,511 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:37:38,323 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXBTC15M "HTTP/1.1 200 OK"
+2026-08-07 07:37:38,372 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXETH15M "HTTP/1.1 200 OK"
+2026-08-07 07:37:38,378 | INFO     | arbitr8der_package.data_sources.kalshi_rest_market_discovery_client | Discovered 2 active BTC/ETH 15m markets
+2026-08-07 07:37:38,382 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Discovered 2 active Kalshi markets
+2026-08-07 07:37:38,663 | INFO     | httpx | HTTP Request: GET https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true "HTTP/1.1 200 OK"
+2026-08-07 07:37:38,982 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:37:40,382 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:37:40,482 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:37:41,741 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:37:41,777 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:37:44,376 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:37:48,984 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:37:49,638 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:37:50,105 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:37:50,709 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:37:50,946 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:37:58,139 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:37:58,686 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:37:58,785 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:38:03,326 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:38:03,618 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:38:03,792 | INFO     | arbitr8der_package.data_sources.binance_spot_price_stream | Attempting Binance WS reconnect from REST fallback...
+2026-08-07 07:38:04,536 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:38:04,546 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Triggering periodic background model retraining...
+2026-08-07 07:38:04,556 | INFO     | arbitr8der_package.prediction.macro_prediction_model | FrequencyLookup trained on 77 samples, 20 unique groups
+2026-08-07 07:38:04,613 | INFO     | arbitr8der_package.prediction.macro_prediction_model | LightGBM trained on 77 samples, val accuracy: 81.2%
+2026-08-07 07:38:04,621 | INFO     | arbitr8der_package.prediction.micro_prediction_model | MomentumLookup trained on 77 samples, 1 unique groups
+2026-08-07 07:38:04,627 | INFO     | arbitr8der_package.prediction.micro_prediction_model | LogisticRegression trained on 77 samples, train accuracy: 88.3%
+2026-08-07 07:38:04,630 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Retrained BTC models on 77 samples — freq_groups=20, lgbm_trained=True
+2026-08-07 07:38:04,634 | INFO     | arbitr8der_package.prediction.macro_prediction_model | FrequencyLookup trained on 82 samples, 18 unique groups
+2026-08-07 07:38:04,637 | ERROR    | arbitr8der_package.data_sources.ingestion_orchestrator | Scoring engine error: float() argument must be a string or a real number, not 'NoneType'
+2026-08-07 07:38:08,618 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:38:13,953 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:38:14,480 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:38:14,490 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:38:14,774 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:38:15,000 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:38:19,156 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=ETHUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:38:19,685 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:38:19,693 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:38:20,651 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:38:21,551 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:38:21,850 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/ETH-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:38:22,860 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:38:22,956 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:38:33,180 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:38:33,279 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:38:35,034 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:38:35,916 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:38:38,737 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXBTC15M "HTTP/1.1 200 OK"
+2026-08-07 07:38:38,840 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?limit=100&status=open&series_ticker=KXETH15M "HTTP/1.1 200 OK"
+2026-08-07 07:38:38,848 | INFO     | arbitr8der_package.data_sources.kalshi_rest_market_discovery_client | Discovered 2 active BTC/ETH 15m markets
+2026-08-07 07:38:38,854 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Discovered 2 active Kalshi markets
+2026-08-07 07:38:39,028 | INFO     | httpx | HTTP Request: GET https://api.coingecko.com/api/v3/simple/price?ids=bitcoin%2Cethereum&vs_currencies=usd&include_market_cap=true&include_24hr_vol=true&include_24hr_change=true&include_last_updated_at=true "HTTP/1.1 200 OK"
+2026-08-07 07:38:43,642 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:38:43,751 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:38:49,943 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:38:51,866 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:38:49,947 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:38:49,955 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:38:50,341 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:38:51,508 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:38:51,608 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:38:52,770 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=settled&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:38:55,123 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:38:55,133 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:38:58,009 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXBTC15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:39:01,945 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:39:02,182 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:39:03,275 | INFO     | httpx | HTTP Request: GET https://api.elections.kalshi.com/trade-api/v2/markets?series_ticker=KXETH15M&status=closed&limit=20 "HTTP/1.1 200 OK"
+2026-08-07 07:39:06,272 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:39:07,198 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:39:12,385 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:39:12,489 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:39:20,203 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:39:20,295 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:39:20,656 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 133 outcomes from candles for BTC
+2026-08-07 07:39:21,531 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Recorded 132 outcomes from candles for ETH
+2026-08-07 07:39:22,150 | INFO     | httpx | HTTP Request: GET https://api.binance.com/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 451 "
+2026-08-07 07:39:27,501 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/klines?symbol=BTCUSDT&interval=1m&limit=5 "HTTP/1.1 200 OK"
+2026-08-07 07:39:27,984 | INFO     | httpx | HTTP Request: GET https://gamma-api.polymarket.com/markets?active=true&closed=false&tag=crypto "HTTP/1.1 200 OK"
+2026-08-07 07:39:27,995 | INFO     | arbitr8der_package.data_sources.polymarket_sentiment_analysis_poller | Found 0 BTC markets on Polymarket
+2026-08-07 07:39:30,613 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=BTCUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:39:30,711 | INFO     | httpx | HTTP Request: GET https://api.binance.us/api/v3/ticker/price?symbol=ETHUSDT "HTTP/1.1 200 OK"
+2026-08-07 07:39:32,684 | INFO     | httpx | HTTP Request: GET https://api.exchange.coinbase.com/products/BTC-USD/candles?granularity=60&limit=5 "HTTP/1.1 200 OK"
+[script line 8] positions
+No open positions.
+Wallet: $17.00 (PnL: $+0.00)
+[script line 9] wallet
+=== PAPER Wallet ===
+  Balance:       $17.00
+  Starting:      $17.00
+  Total PnL:     $+0.00
+  Total trades:  0
+[script line 10] predict BTC --model auto
+
+  Asset.BTC [macro_ensemble]:
+    Prediction:   DOWN (15.7% YES)
+    Confidence:   71.6%
+    Regime:       volatile
+    RSI(7):       46.8
+    Return(1h):   -0.16%
+    Ticker:       KXBTC15M-26AUG071045-45
+
+[script line 11] predict ETH --model auto
+2026-08-07 07:39:33,216 | INFO     | arbitr8der_package.prediction.feature_extraction_engine | Extracted 9 features for Asset.ETH (v389, 40% complete)
+2026-08-07 07:39:33,221 | INFO     | arbitr8der_package.prediction.baseline_prediction_engine | Prediction: Asset.ETH KXETH15M-26AUG071045-45 YES=40.00% conf=0.35 edge=0.00%
+=== Asset.ETH Prediction (KXETH15M-26AUG071045-45) ===
+  Model:      baseline_v1
+  YES prob:   40.0%
+  Confidence: 35.0%
+  Edge:       +0.00%
+  Snapshot:   v389
+
+[script line 12] snapshot
+=== BTC Snapshot v389 ===
+  Created:      2026-08-07T14:39:32.085678+00:00
+  Spot avg:     $65,169.74
+  Disagreement: 0.080497%
+  Kalshi mid:   44c
+  Sources:
+    kalshi_btc                ok
+    binance_btc               ok
+    coinbase_btc              ok
+    polymarket_btc            disconnected
+    coingecko_btc             stale
+  Stale:  coingecko_btc
+  Missing: polymarket_btc
+
+=== ETH Snapshot v389 ===
+  Created:      2026-08-07T14:39:32.085678+00:00
+  Spot avg:     $1,922.43
+  Disagreement: 0.096753%
+  Kalshi mid:   40c
+  Sources:
+    kalshi_eth                ok
+    binance_eth               ok
+    coinbase_eth              ok
+    polymarket_eth            disconnected
+    coingecko_eth             stale
+  Stale:  coingecko_eth
+  Missing: polymarket_eth
+
+[script line 13] autotrade off
+2026-08-07 07:39:33,238 | INFO     | arbitr8der_package.execution.auto_trading_engine | Auto-trading DISABLED
+Auto-trading disabled.
+[script line 14] exit
+Shutting down...
+Stopping data ingestion...
+2026-08-07 07:39:33,242 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Ingestion orchestrator stopping
+2026-08-07 07:39:33,245 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Stopping candle collection battery
+2026-08-07 07:39:33,252 | INFO     | arbitr8der_package.data_sources.candle_collection_battery | Battery stopped. Total candles stored: 6035
+2026-08-07 07:39:33,254 | INFO     | arbitr8der_package.prediction.auto_scoring_engine | Auto-scoring engine stopped
+2026-08-07 07:39:33,258 | INFO     | arbitr8der_package.prediction.settlement_watcher | Settlement watcher stopped (recorded 0 outcomes)
+2026-08-07 07:39:33,264 | INFO     | arbitr8der_package.execution.auto_trading_engine | Auto-trading engine stopped
+2026-08-07 07:39:33,398 | INFO     | arbitr8der_package.config.stream_provider_runtime_lease_file_lock | Lease released by ingestion-d13e5755
+2026-08-07 07:39:33,402 | INFO     | arbitr8der_package.data_sources.ingestion_orchestrator | Ingestion orchestrator stopped, lease released
+2026-08-07 07:39:34,216 | INFO     | arbitr8der_package.cli.session_archive_module | Session archive written: /mnt/c/Users/itsji/ARBITR8DER/trading_studio/runtime/archives/sessions/session_20260807_142725.jsonl (3 events)
+Traceback (most recent call last):
+  File "<string>", line 1, in <module>
+  File "/mnt/c/Users/itsji/ARBITR8DER/trading_studio/arbitr8der_package/cli/interactive_trading_repl_loop.py", line 1366, in start_repl
+    _run_script(script, json_output=json_output)
+  File "/mnt/c/Users/itsji/ARBITR8DER/trading_studio/arbitr8der_package/cli/interactive_trading_repl_loop.py", line 150, in _run_script
+    repl._shutdown()
+  File "/mnt/c/Users/itsji/ARBITR8DER/trading_studio/arbitr8der_package/cli/interactive_trading_repl_loop.py", line 1345, in _shutdown
+    self._loop.call_soon_threadsafe(self._loop.stop)
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 840, in call_soon_threadsafe
+    self._check_closed()
+  File "/usr/lib/python3.12/asyncio/base_events.py", line 541, in _check_closed
+    raise RuntimeError('Event loop is closed')
+RuntimeError: Event loop is closed
+Session archive: /mnt/c/Users/itsji/ARBITR8DER/trading_studio/runtime/archives/sessions/session_20260807_142725.jsonl
+Vessel -> Full_Stop. Session ended.

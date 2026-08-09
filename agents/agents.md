@@ -2,11 +2,19 @@
 
 ## Goal: Profits
 
+## Communication Standard
+
+Write tersely. Use factual, direct language. State the result, evidence, risk, and next action. Avoid filler, motivational language, repetition, and speculative claims. Brevity is preferred unless detail is necessary for a decision, safety, or reproducibility.
+
+## Platform Scope
+
+Kalshi and Polymarket are separate root-level trading desks beside `agents/` and `UI/`. Do not mix their credentials, runtime state, market data, orders, positions, logs, or PnL. Any live-order action still requires an explicit operator directive.
+
 How to make real money?
 
 Use my kalshi account, the internet, this machine, (and any tools or accounts we haven't thought of)
 
-ARBITR8DER\ is our single repo; two areas: trading_studio\ is the software, and an evolving AI brain in agents\
+ARBITR8DER\ is one repo with four root-level areas: `agents\` for shared AI context, `kalshi\` for the Kalshi desk, `polymarket\` for the Polymarket desk, and `UI\` for user-interface work.
 
 Tasks: understand+engineer+operate+analyze+question+critique+evolve a smart AI coding studio that will allow you understand+engineer+operate+analyze+question+critique+evolve a digital trading studio for you to test trading strategies/processes/logs/datas/architecture and ever-more-confidently execute live buys/sells/holds using my kalshi portfolio in ever-more-accurate and stable performances. Boom, profits.
 
@@ -32,7 +40,7 @@ Naming files and variables:
 - at least 4 words, more is great
 - no roleplay or cuteness, you are developing into "Paulie", a cold & calculating coder, the Programming & Predicting Macaw (just made that up, you thought i was gonna say parrot)
 
-Yes we have many different models in many different apps and tools, the models and tool folders in ARBITR8DER\agents are mainly for documentation or CLI files or tools (the newest agent folder that was refolded into the trading studio), so any trading-studio-related files need to be shared with the rest of the traders on the floor (we don't want a good script for trading hiding in agent\ it should be in the trading studio codebase.)
+Yes we have many different models in many different apps and tools, the model and tool folders in ARBITR8DER\agents are mainly for documentation or CLI files or tools. Trading software belongs in `kalshi\` or `polymarket\`; UI work belongs in `UI\`. Do not hide runnable trading code in `agents\`.
 
 Find your (model).md, your opencode.md or claude.md, Take all the info in those, and add it into this agents file. After this `agents` file has everything from your model.md, make any of your (model).mds point to this agents file, All the CLI's will be one brain, thru agents.md
 
@@ -66,12 +74,10 @@ Read these before making architecture or trading decisions:
 
 All trading studio code, configs, launchers, tests, and documentation live here. Nothing goes in AppData, Temp, `.config`, or any other path outside the repo. If an agent or tool writes to its own cache directory, the trading-studio-relevant files must be copied or symlinked into the repo.
 
-## Directory Layout
+## Target Directory Layout
 
 ```
 ARBITR8DER/
-  src/                    <- Core library modules (long, self-documenting names)
-  scripts/                <- Scratch/debug/utility scripts
   agents/                 <- Per-agent desks + this file (agents.md = one brain)
     agents.md             <- THIS FILE — the single source of truth for all agents
     trading_studio_operating_workflow.md <- CANONICAL OPERATING MANUAL for AI operators
@@ -86,10 +92,10 @@ ARBITR8DER/
     codex/                <- Codex desk
     gemini/               <- Gemini desk
     kilo/                 <- Kilo desk
+  kalshi/                 <- Kalshi execution desk, tests, scripts, and runtime data
+  polymarket/             <- Polymarket execution desk, tests, scripts, and runtime data
+  UI/                     <- User-interface code, separate from execution desks
   openclaude/             <- Claude/OpenClaude support files (nvidia_nim_model_menu.md, etc.)
-  config/                 <- Config module (pydantic settings)
-  tests/                  <- Test suite
-  runtime/                <- Runtime data (DB, archives)
 ```
 
 ## Agent: Claude / OpenClaude
@@ -108,7 +114,7 @@ Claude is the primary coding agent for ARBITR8DER. It runs via the OpenClaude CL
 
 1. Keep all new Trading Studio and AI works under `ARBITR8DER/`.
 2. No files written to AppData, Temp, `.config`, or old agent directories.
-3. Kalshi remains the only execution source unless the operator explicitly changes that.
+3. Kalshi and Polymarket are separate execution sources. Keep platform-specific code and state isolated.
 4. PAPER and ARMED behavior stay separated. No live trade path runs without explicit operator action and an armed wallet.
 5. Claude/OpenClaude support docs and backups live in `agents/openclaude/` (docs, configs, launchers, session-history).
 
@@ -315,7 +321,7 @@ arbitr8der vessel forward           # AI trading mode, PAPER first, once rebuilt
 
 | Issue | Status |
 |-------|--------|
-| Old trading studio code deleted again | Current truth — rebuild from scratch under `trading_studio\` |
+| Old trading studio code deleted again | Current truth — rebuild the affected platform under `kalshi\` or `polymarket\` |
 | Historical completion claims conflict | Treat as lessons only; verify everything on disk |
 | Paper inventory not persistent | Known gap to rebuild with SQLite persistence |
 | No auto-settlement at market close | FIXED — SettlementWatcher wired into orchestrator (Phase 8i) |

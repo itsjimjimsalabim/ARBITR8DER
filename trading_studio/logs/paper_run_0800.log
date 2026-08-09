@@ -1,0 +1,12 @@
+2026-08-07 07:59:18,594 | INFO     | arbitr8der_package.vessel.vessel_state_machine | Loaded previous state: full_forward (forcing Full_Stop)
+2026-08-07 07:59:18,621 | WARNING  | arbitr8der_package.vessel.vessel_state_machine | Vessel forced to Full_Stop: startup: forced full stop
+2026-08-07 07:59:18,752 | INFO     | arbitr8der_package.execution.paper_venue_adapter | Paper venue adapter initialized, balance=$17.00
+2026-08-07 07:59:18,782 | WARNING  | arbitr8der_package.config.stream_provider_runtime_lease_file_lock | Lease held by ingestion-d45f93ff until 1786114929 — cannot acquire for ingestion-860c36c2
+2026-08-07 07:59:18,785 | ERROR    | arbitr8der_package.data_sources.ingestion_orchestrator | Cannot acquire stream lease — another instance owns it
+2026-08-07 07:59:18,788 | ERROR    | arbitr8der_package.cli.interactive_trading_repl_loop | Orchestrator failed to start
+Executing script: runtime/paper_batch_run_0800.txt (18 lines)
+[script line 3] vessel battery
+2026-08-07 07:59:18,814 | INFO     | arbitr8der_package.vessel.vessel_state_machine | Vessel transition: full_stop -> battery (reason: operator: battery command)
+Vessel -> Battery
+[script line 4] vessel forward
+2026-08-07 07:59:18,851 | INFO     | arbitr8der_package.vessel.vessel_state_machine | Vessel transition: battery -> full_forward (reason: operator: forward command)
