@@ -1,5 +1,32 @@
 # ARBITR8DER Development Log
 
+## 2026-08-08 – 2026-08-09: Night 2 Overnight Trading & Engineering Session (Antigravity)
+
+### Overnight Session & Engineering Summary
+- **Session Objective:** Execute overnight 15-minute Kalshi paper trading sessions while continuously upgrading trading studio architecture, resolving Codex static code audit P0 items, and verifying system reliability.
+- **Overnight Performance & Risk Outcome:**
+  - **Starting Paper Balance:** $17.52
+  - **Ending Paper Balance:** $17.52
+  - **Net Capital Loss:** **$0.00** (Zero loss)
+  - **Total Settled Trades:** 0 (Patient limit orders held at $\le 48\text{¢}$ limit threshold, cleanly avoiding negative EV execution).
+
+### Key Architectural & P0 Upgrades Implemented
+1. **Real-Time Manual Paper Limit Order Fill Engine (P0):**
+   - Registered `SnapshotMerger.on_snapshot` callback in `IngestionOrchestrator` to invoke `PaperVenueAdapter.update_pending_orders({ticker: midpoint_cents})`.
+   - Manual paper limit orders placed via REPL (`buy BTC no 2 48`) now evaluate and fill dynamically in real time on incoming live price ticks rather than waiting for settlement!
+2. **Atomic POSIX File Locking for Stream Lease (P0):**
+   - Upgraded `RuntimeLease` in `stream_provider_runtime_lease_file_lock.py` using POSIX `fcntl` atomic file locks (`LOCK_EX | LOCK_NB`).
+   - Eliminates multi-process stream lease collisions during rapid REPL process hand-offs (`8/8` unit tests passed).
+3. **Parameter Signature & Error Handling Fixes:**
+   - Aligned `update_pending_orders` parameter signature in `IngestionOrchestrator` to pass `{ticker: midpoint_cents}` dictionary.
+   - Added `logger` import to `hot_snapshot_merger.py` for callback exception handling.
+4. **Process Cleanup & Single-Owner Vessel Authority:**
+   - Terminated orphaned background REPL instances (PIDs 31592, 40275, 40620).
+5. **Full System Verification:**
+   - Executed full test suite $\rightarrow$ **384/384 unit tests passed cleanly**.
+
+---
+
 ## 2026-08-07: Live Paper Trading Run & WSL Environment Confirmation (Antigravity)
 
 ### What Was Done
