@@ -165,20 +165,20 @@ def handle_sell_command(args, orchestrator, risk, venue, reconciler):
         print(f"Failed to settle {ticker}")
 
 def handle_cancel_command(args, venue):
-    ticker = args.strip()
-    if not ticker:
-        print("Usage: cancel TICKER")
+    target = args.strip()
+    if not target:
+        print("Usage: cancel TICKER_OR_ORDER_ID")
         return
 
     pending = venue.get_pending_orders()
     order = None
     for o in pending:
-        if o.ticker == ticker:
+        if o.order_id == target or o.ticker == target:
             order = o
             break
 
     if order is None:
-        print(f"No pending order found for {ticker}")
+        print(f"No pending order found for {target}")
         return
 
     cancelled = venue.cancel_order(order.order_id)
