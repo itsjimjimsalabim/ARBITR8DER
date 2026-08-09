@@ -19,27 +19,33 @@
 
 ---
 
-## Active Session — Continuous Autonomous Trading Loop (2026-08-08 14:50 PDT) ← ACTIVE
+## Active Session — Night 2 Overnight Trading & Programming Loop (2026-08-08 21:56 PDT) ← ACTIVE
 
-**Operator Directive:** Continuous multi-cycle Kalshi trading loop starting at **2:59 PM PDT** (2:45–3:00 PM window).
-**Stance:** X2 Contract Volume (2 contracts/asset), High-EV Directional Trading (YES/NO flexible), Hybrid Limit Pricing ($\le 48\text{¢}$ default / $\le 52\text{¢}$ high-confidence market cross).
-**Cycle Cadence:** Continuous 15-minute Kalshi market windows (:00, :15, :30, :45).
+**Operator Directive:** Full-forward paper trader and programmer overnight loop. Real live trading potentially starts tomorrow!
+**Cadence Structure:** Alternating **Observe/Trade (Notes Only)** $\rightarrow$ **Verify & Fix/Enhance Studio/Retrain/Doc/Commit** across 15-minute Kalshi windows.
+**Upcoming Target:** **10:00–10:15 PM PDT Window** (Start vessel at **9:59 PM PDT** / 21:59 PDT).
 
 ---
 
-### Long-Running Continuous Loop Schedule
-1. **Cycle 16 (2:59–3:00 PM PDT):** Start vessel at 2:59 PM PDT $\rightarrow$ `vessel forward` $\rightarrow$ `snapshot` $\rightarrow$ `predict BTC/ETH` $\rightarrow$ Submit 2-contract orders.
-2. **Cycle 17 (3:14–3:15 PM PDT):** Repeat 15m window sequence.
-3. **Cycle 18+ (Continuous):** Continue indefinitely across afternoon/evening windows. Log results to `todo.md` and `dev_log.md`, commit every 2 cycles.
+### Night 2 Overnight Cadence Schedule (9:54 PM – 8:00 AM PDT)
+1. **Cycle N1 (9:59–10:00 PM PDT):**
+   - Start REPL at **9:59 PM PDT**: `./trading_studio/.venv/bin/arb forward start` $\rightarrow$ `vessel forward`.
+   - Take `snapshot`, `predict BTC/ETH --model auto`, submit dynamic directional limit orders (`buy ASSET SIDE 2 48`).
+   - Post-run: **ANALYZE ONLY — RECORD NOTES IN TODO. DO NOT FIX CODE.**
+2. **Cycle N2 (10:14–10:15 PM PDT):**
+   - Run trading session.
+   - Post-run: **VERIFY & UPGRADE.** Compare notes from N1 & N2. Enhance model features/EV logic in `trading_studio/`, run pytest, update docs, commit locally.
+3. **Continuous Alternating Loop (10:30 PM – 8:00 AM PDT):**
+   - Repeat alternating `Observe/Notes` $\rightarrow$ `Verify/Program/Doc/Commit` every 15-minute Kalshi window through 8:00 AM PDT.
 
 ---
 
 ### Hand-off Protocol for Autonomous AI Continuity
-If an agent context window closes or resets:
-1. **Check Current PDT Time:** Find the current/upcoming 15-minute Kalshi window (:00, :15, :30, :45).
+If an agent context window resets:
+1. **Check Current PDT Time:** Find the upcoming 15-minute Kalshi window (:00, :15, :30, :45).
 2. **Launch REPL 1 Min Before Window Open:** `./trading_studio/.venv/bin/arb forward start` $\rightarrow$ `vessel forward`.
-3. **Execute Strategy:** `snapshot`, `predict BTC/ETH --model auto`, execute 2-contract directional limit orders (`buy ASSET SIDE 2 LIMIT`).
-4. **Log & Commit:** Update `todo.md` & `dev_log.md` and commit locally every 2 cycles. NEVER STOP.
+3. **Execute Trade Stance:** `snapshot`, `predict BTC/ETH --model auto`, execute 2-contract directional limit/EV orders.
+4. **Program & Commit:** On alternating cycles, improve `trading_studio/` code, update docs, commit locally. NEVER STOP.
 
 ---
 
