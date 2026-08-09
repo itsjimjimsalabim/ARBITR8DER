@@ -39,6 +39,7 @@ def handle_buy_command(args, orchestrator, risk, venue, reconciler, current_stat
         contracts=contracts,
         ticker=ticker,
         limit_cents=limit_cents,
+        midpoint_cents=midpoint_cents,
         snapshot_version=snapshot_version,
     )
 
