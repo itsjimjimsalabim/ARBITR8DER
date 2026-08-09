@@ -260,8 +260,9 @@ class AutoScoringEngine:
                                 feature_vectors.append(features)
                                 outcomes.append(outcome_str)
                     except Exception as e:
-                        logger.debug("Retrain: could not recompute features for %s window %.0f: %s",
-                                     asset, window_open, e)
+                        w_str = f"{float(window_open):.0f}" if window_open is not None else "unknown"
+                        logger.debug("Retrain: could not recompute features for %s window %s: %s",
+                                     asset, w_str, e)
 
             if len(feature_vectors) < 20:
                 logger.info("Retrain %s: only %d samples with features (need 20+)",
