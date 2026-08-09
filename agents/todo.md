@@ -19,24 +19,27 @@
 
 ---
 
-## Active Session — Night 2 Overnight Trading & Programming Loop (2026-08-08 21:56 PDT) ← ACTIVE
+## Active Session — Night 2 Overnight Loop (2026-08-08 22:14 PDT) ← ACTIVE
 
-**Operator Directive:** Full-forward paper trader and programmer overnight loop. Real live trading potentially starts tomorrow!
-**Cadence Structure:** Alternating **Observe/Trade (Notes Only)** $\rightarrow$ **Verify & Fix/Enhance Studio/Retrain/Doc/Commit** across 15-minute Kalshi windows.
-**Upcoming Target:** **10:00–10:15 PM PDT Window** (Start vessel at **9:59 PM PDT** / 21:59 PDT).
+**Mode:** PAPER Trading (Manual REPL Stance with X2 Volume)
+**Status:** **NIGHT 2 CYCLE 1 COMPLETED (OBSERVE PASS) — SHUTDOWN CLEAN & VERIFIED**
+**Result:** **ZERO CAPITAL LOSS / RISK SHIELD VERIFIED**
 
 ---
 
-### Night 2 Overnight Cadence Schedule (9:54 PM – 8:00 AM PDT)
-1. **Cycle N1 (9:59–10:00 PM PDT):**
-   - Start REPL at **9:59 PM PDT**: `./trading_studio/.venv/bin/arb forward start` $\rightarrow$ `vessel forward`.
-   - Take `snapshot`, `predict BTC/ETH --model auto`, submit dynamic directional limit orders (`buy ASSET SIDE 2 48`).
-   - Post-run: **ANALYZE ONLY — RECORD NOTES IN TODO. DO NOT FIX CODE.**
-2. **Cycle N2 (10:14–10:15 PM PDT):**
-   - Run trading session.
-   - Post-run: **VERIFY & UPGRADE.** Compare notes from N1 & N2. Enhance model features/EV logic in `trading_studio/`, run pytest, update docs, commit locally.
-3. **Continuous Alternating Loop (10:30 PM – 8:00 AM PDT):**
-   - Repeat alternating `Observe/Notes` $\rightarrow$ `Verify/Program/Doc/Commit` every 15-minute Kalshi window through 8:00 AM PDT.
+### Cycle N1 Observations (10:00 PM – 10:15 PM PDT Window)
+- **Signals:** BTC Macro Ensemble 82.8% NO | ETH YES Prob 1.0% (99.0% NO probability).
+- **Execution:** Submitted 2-contract limit orders @ 48c (`buy BTC no 2 48` & `buy ETH no 2 48`).
+- **Outcome:** Kalshi midpoints held at 36c & 48c $\rightarrow$ Expired unexecuted with **$0 capital loss**. Wallet preserved at **$17.60**.
+- **Observe Notes (NO CODE FIX IN N1):**
+  1. High model confidence on ETH (99% NO) indicates solid signal convergence.
+  2. Spreads held stable with zero order blockage.
+
+---
+
+### Night 2 Cadence Next Step: Cycle N2 (VERIFY & BUILD PASS)
+- Target Window: **10:15 PM – 10:30 PM PDT**.
+- Tasks: Enhance model features & EV scoring logic, verify test suite, update docs, and commit.
 
 ---
 
