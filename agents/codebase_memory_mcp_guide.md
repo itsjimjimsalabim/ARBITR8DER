@@ -13,7 +13,7 @@
 
 ## What It Does
 
-CBM indexes `trading_studio/arbitr8der_package/` into a persistent knowledge graph using
+CBM indexes `kalshi_desk/kalshi_desk_package/` into a persistent knowledge graph using
 tree-sitter AST analysis. Instead of reading 52 source files to understand the codebase,
 you issue one graph query and get a structured answer in milliseconds using ~99% fewer tokens.
 
@@ -46,7 +46,7 @@ CBM exposes tools your agent calls via MCP. After indexing, use these directly:
 
 ```
 # Index the project (do once per session, or on first use)
-index_repository(project="arbitr8der", path="/mnt/c/Users/itsji/ARBITR8DER/trading_studio")
+index_repository(project="arbitr8der", path="/mnt/c/Users/itsji/ARBITR8DER/kalshi_desk")
 
 # Trace a call chain
 trace_path(function_name="settle_expired_positions", direction="inbound")
@@ -73,7 +73,7 @@ query_graph(project="arbitr8der", query="MATCH (f:Function)-[:CALLS]->(g) WHERE 
 
 ```bash
 # From WSL, after installing CBM:
-codebase-memory-mcp index /mnt/c/Users/itsji/ARBITR8DER/trading_studio --project arbitr8der
+codebase-memory-mcp index /mnt/c/Users/itsji/ARBITR8DER/kalshi_desk --project arbitr8der
 
 # Verify the index:
 codebase-memory-mcp cli search_graph '{"project": "arbitr8der", "name_pattern": ".*Orchestrator.*"}'

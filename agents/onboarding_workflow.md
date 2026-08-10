@@ -15,7 +15,7 @@ git status --short     # know what is dirty/deleted before you touch anything
 ls -la                 # confirm layout matches §1 below
 ```
 
-Current expected worktree state (verified 2026-08-02):
+Current expected worktree state (verified 2026-08-09):
 
 - Branch `main`, tracking `origin/main`, **in sync with origin** (the old PAT-in-history push block was resolved by history pruning; you should not see "commits ahead").
 - Two deletions in the worktree that are intentional and can be left alone: `CLAUDE.md` and `opencode.json`. Neither is needed — `agents/agents.md` is the agent pointer and `opencode` uses its own config.
@@ -24,7 +24,7 @@ If any of the above surprises you, fix the environment before touching code. Pri
 
 ---
 
-## 1. Repo Layout (verified 2026-08-02)
+## 1. Repo Layout (verified 2026-08-09)
 
 ```
 ARBITR8DER/                                  <- repo root, canonical home
@@ -34,7 +34,7 @@ ARBITR8DER/                                  <- repo root, canonical home
 ├── .gitignore                               <- repo-level ignore rules
 ├── .mcp.json                                <- MCP server config (GitHub)
 ├── README.md                                <- short repo overview
-├── pyproject.toml                           <- STALE placeholder (real one in trading_studio/)
+├── pyproject.toml                           <- STALE placeholder (real one in kalshi_desk/)
 ├── requirements.txt                         <- STALE placeholder
 ├── requirements-dev.txt                     <- STALE placeholder
 ├── agents/                                  <- SHARED BRAIN for all AI agents
@@ -44,7 +44,7 @@ ARBITR8DER/                                  <- repo root, canonical home
 │   ├── dev_log.md                           <- development log / history
 │   ├── Product_Requirements_&_Theories_of_Operations.md
 │   ├── overwatch_workflow.md                <- AI trading-session playbook
-│   ├── trading_studio_build_plan.md         <- how the studio is intended to be built
+│   ├── kalshi_desk_build_plan.md         <- how the studio is intended to be built
 │   ├── prediction_system_plan.md            <- Phase 8 prediction design notes
 │   ├── kalshi_websocket_debugging_reference.md <- Kalshi WS auth gotchas
 │   ├── github_connectivity.md               <- git/gh/SSH notes
@@ -56,11 +56,11 @@ ARBITR8DER/                                  <- repo root, canonical home
 │   ├── codex/  kilo/                        <- other agent desks
 │   ├── browser_access/
 │   └── agent_benchmark_tests_&_performance_dynamometers/
-├── trading_studio/                          <- the actual software
-│   ├── pyproject.toml                       <- REAL project metadata + deps (arb CLI)
+├── kalshi_desk/                          <- the actual software
+│   ├── pyproject.toml                       <- REAL project metadata + deps (arbitr8der CLI)
 │   ├── readme.md                            <- studio directory map
 │   ├── .env.example                         <- tracked pointer, says "use root .env"
-│   ├── arbitr8der_package/                  <- installable package (import name)
+│   ├── kalshi_desk_package/                  <- installable package (import name)
 │   │   ├── cli/   config/   data_contracts/   data_sources/
 │   │   ├── durable_storage/   execution/   prediction/
 │   │   ├── reconciliation/   risk/   vessel/
@@ -78,7 +78,7 @@ ARBITR8DER/                                  <- repo root, canonical home
 - `CLAUDE.md` and `opencode.json` are deleted from the worktree. Do not recreate them out of reflex.
 - `agents/claude/` and `agents/gemini/` do not exist. The Claude desk is `agents/openclaude/`.
 - `System Information (PC SPECS).txt` is **2.2 MB of Windows Error Reporting junk**, not machine specs. Ignore it.
-- Stale placeholders (`pyproject.toml`, `requirements*.txt` at root) are kept only so old launchers don't crash. The real project is `trading_studio/pyproject.toml`. Install with `pip install -e ./trading_studio`.
+- Stale placeholders (`pyproject.toml`, `requirements*.txt` at root) are kept only so old launchers don't crash. The real project is `kalshi_desk/pyproject.toml`. Install with `pip install -e ./kalshi_desk`.
 
 ---
 
@@ -93,21 +93,21 @@ Read in this order. Each file is short and assumes the previous. If a file in th
 | 3 | `agents/Product_Requirements_&_Theories_of_Operations.md` | What we are building and why. Vision, strategies, technical standards, theories. |
 | 4 | `agents/todo.md` | Current backlog and phase status. Tells you what's done vs next. |
 | 5 | `agents/dev_log.md` | What has been built, what broke, what was fixed. Real history — read the newest entry first. |
-| 6 | `agents/trading_studio_build_plan.md` | The plan for how the studio is built. Read before proposing structure changes. |
+| 6 | `agents/kalshi_desk_build_plan.md` | The plan for how the studio is built. Read before proposing structure changes. |
 | 7 | `agents/prediction_system_plan.md` | Design notes for the Phase 8 prediction pipeline (features, models, scoring). |
 | 8 | `agents/kalshi_websocket_debugging_reference.md` | Kalshi WS auth gotchas (RSA-PSS salt length, subscribe format). Read before touching WS code. |
-| 9 | `agents/trading_studio_operating_workflow.md` | **Canonical Operating Manual** — Live REPL playbook, 15-min cadence, and patient limit rules. |
+| 9 | `agents/kalshi_desk_operating_workflow.md` | **Canonical Operating Manual** — Live REPL playbook, 15-min cadence, and patient limit rules. |
 | 10 | `agents/overwatch_workflow.md` | Legacy Overwatch workflow reference. |
 | 11 | `agents/github_connectivity.md` | How to push/pull/PR. HTTPS via `gh` is the working path. |
-| 11 | `trading_studio/readme.md` | "You are here" map of the package. |
-| 12 | `trading_studio/pyproject.toml` | Real dependencies, CLI entry point (`arb`), ruff/pytest config. |
+| 11 | `kalshi_desk/readme.md` | "You are here" map of the package. |
+| 12 | `kalshi_desk/pyproject.toml` | Real dependencies, CLI entry point (`arbitr8der`), ruff/pytest config. |
 
 Optional, when relevant:
 
 - `agents/qwen_local_model_ops_guide.md` — local Ollama/Qwen model roles (manager + coder) and machine notes.
 - `agents/KEYS` — local, gitignored key notes. Reference only; never paste secrets into tracked files.
 - `agents/_archive/` — historical only. Not operating instructions.
-- `agents/codebase_memory_mcp_guide.md` — **read this before navigating the codebase**. CBM is a code intelligence MCP tool (installed system-wide, not in this repo) that gives any agent instant call-graph traversal, impact analysis, dead code detection, and semantic search across `trading_studio/`. Replaces manual grepping. Use it.
+- `agents/codebase_memory_mcp_guide.md` — **read this before navigating the codebase**. CBM is a code intelligence MCP tool (installed system-wide, not in this repo) that gives any agent instant call-graph traversal, impact analysis, dead code detection, and semantic search across `kalshi_desk/`. Replaces manual grepping. Use it.
 
 ---
 
@@ -115,14 +115,14 @@ Optional, when relevant:
 
 ```bash
 cd /mnt/c/Users/itsji/ARBITR8DER
-pip install -e ./trading_studio            # installs the `arb` CLI + all deps
-pip install -e "./trading_studio[dev]"     # adds pytest, ruff, mypy
-arb version                                # must print "arbitr8der 0.1.0"
+pip install -e ./kalshi_desk            # installs the `arbitr8der` CLI + all deps
+pip install -e "./kalshi_desk[dev]"     # adds pytest, ruff, mypy
+arbitr8der version                                # must print "arbitr8der 0.1.0"
 ```
 
 Notes:
 
-- There is a prebuilt virtualenv at `trading_studio/.venv/`. Use it (`./trading_studio/.venv/bin/python`, `./trading_studio/.venv/bin/arb`) to avoid polluting the system interpreter.
+- There is a prebuilt virtualenv at `kalshi_desk/.venv/`. Use it (`./kalshi_desk/.venv/bin/python`, `./kalshi_desk/.venv/bin/arbitr8der`) to avoid polluting the system interpreter.
 - WSL shell: `python3` and `python` both work. On Windows PowerShell, use `python` (`python3` is not an alias).
 - If `pip install -e .` fails with `ModuleNotFoundError`, run `pip install setuptools` first, then retry. (Known gotcha.)
 
@@ -132,11 +132,11 @@ Notes:
 
 There is exactly **one** live `.env`: `ARBITR8DER/.env` (repo root). It is gitignored.
 
-`trading_studio/.env` does **not** exist. `TradingStudioSettings` (in `arbitr8der_package/config/typed_configuration_settings_module.py`) loads the root `.env` by absolute path resolved from the package location, so the same env works regardless of CWD or OS.
+`kalshi_desk/.env` does **not** exist. `TradingStudioSettings` (in `kalshi_desk_package/config/typed_configuration_settings_module.py`) loads the root `.env` by absolute path resolved from the package location, so the same env works regardless of CWD or OS.
 
 `.env.bak` at the root is an **alternate NVIDIA-NIM routing config**, not a backup to load. Do not source it. The live `.env` routes to OpenCode Zen.
 
-Current live values of interest (verified 2026-08-02):
+Current live values of interest (verified 2026-08-09):
 
 ```ini
 # --- OpenCode / OpenAI (Claude-family CLI routing) ---
@@ -158,7 +158,7 @@ AR8_TICK_INTERVAL=60
 
 Optional keys documented in `.env.example` but not set in `.env` (defaults apply): `AR8_AUTO_ARM=false`, `AR8_DRY_RUN=true`, PostgreSQL vars (unused post-SQLite migration).
 
-Copy `.env.example` → `.env` and fill in real values if starting fresh. Kalshi private key file goes at `trading_studio/streams/kalshi_private.pem` and is gitignored. Never paste real keys into tracked files.
+Copy `.env.example` → `.env` and fill in real values if starting fresh. Kalshi private key file goes at `kalshi_desk/streams/kalshi_private.pem` and is gitignored. Never paste real keys into tracked files.
 
 ---
 
@@ -175,10 +175,10 @@ The vessel state itself is the permission to trade. No automated loop fires trad
 Transitions:
 
 ```bash
-arb vessel status      # current state
-arb vessel battery     # Full_Stop or Full_Forward -> Battery
-arb vessel forward     # -> Battery -> Full_Forward (PAPER first)
-arb vessel stop        # -> Full_Stop (safe shutdown)
+arbitr8der vessel status      # current state
+arbitr8der vessel battery     # Full_Stop or Full_Forward -> Battery
+arbitr8der vessel forward     # -> Battery -> Full_Forward (PAPER first)
+arbitr8der vessel stop        # -> Full_Stop (safe shutdown)
 ```
 
 ---
@@ -187,14 +187,14 @@ arb vessel stop        # -> Full_Stop (safe shutdown)
 
 ```bash
 # 1. Verify environment
-arb status
-arb snapshot
+arbitr8der status
+arbitr8der snapshot
 
 # 2. Move to trading state (PAPER by default)
-arb vessel forward
+arbitr8der vessel forward
 
 # 3. Enter the interactive trading REPL
-arb forward start
+arbitr8der forward start
 ```
 
 REPL commands (full list also in `agents/agents.md`):
@@ -218,7 +218,7 @@ REPL commands (full list also in `agents/agents.md`):
 | `journal TEXT` | Record reasoning |
 | `exit` | Clean shutdown |
 
-CLI command name is `arb` (defined in `trading_studio/pyproject.toml`). Older docs may say `arbitr8der`; that's stale.
+CLI command name is `arbitr8der` (defined in `kalshi_desk/pyproject.toml`). Older docs may say `arbitr8der`; that's stale.
 
 ---
 
@@ -241,16 +241,16 @@ Never mock data or connections. These are the only path to profits. If a source 
 ## 8. Test Suite
 
 ```bash
-cd /mnt/c/Users/itsji/ARBITR8DER/trading_studio
+cd /mnt/c/Users/itsji/ARBITR8DER/kalshi_desk
 ./.venv/bin/python -m pytest tests/ -v                            # full suite
 ./.venv/bin/python -m pytest tests/ -m "not network" -q           # offline (faster)
 ./.venv/bin/python -m pytest tests/test_vessel_state_machine.py -v  # specific file
 ```
 
-Current offline baseline (verified 2026-08-02, `-m "not network"`): **412 passed, 2 skipped, 1 failed in ~3m50s.**
+Current offline baseline (verified 2026-08-09, `-m "not network"`): **412 passed, 2 skipped, 1 failed in ~3m50s.**
 
 - The 1 failure is `test_connection_battery.py::test_polymarket_sentiment_poll` — a live Polymarket assertion. `test_connection_battery.py` makes real API calls even without the `network` marker, so it can fail when the network is down or an API response shape changes. Treat its result as environment-dependent, not a code regression.
-- pytest config lives in `trading_studio/pyproject.toml` (strict markers, `asyncio` marker registered).
+- pytest config lives in `kalshi_desk/pyproject.toml` (strict markers, `asyncio` marker registered).
 - Older docs claim specific pass counts (346–398). They drift; run the suite instead of trusting them.
 
 ---
@@ -258,11 +258,11 @@ Current offline baseline (verified 2026-08-02, `-m "not network"`): **412 passed
 ## 9. Build / Lint / Typecheck
 
 ```bash
-# From trading_studio/
-./.venv/bin/python -m py_compile arbitr8der_package/cli/cli_application_entrypoint_main.py   # syntax check
-./.venv/bin/ruff check arbitr8der_package/ tests/                                            # lint
-./.venv/bin/ruff format arbitr8der_package/ tests/                                          # auto-format
-./.venv/bin/mypy arbitr8der_package/                                                          # typecheck (strict)
+# From kalshi_desk/
+./.venv/bin/python -m py_compile kalshi_desk_package/cli/cli_application_entrypoint_main.py   # syntax check
+./.venv/bin/ruff check kalshi_desk_package/ tests/                                            # lint
+./.venv/bin/ruff format kalshi_desk_package/ tests/                                          # auto-format
+./.venv/bin/mypy kalshi_desk_package/                                                          # typecheck (strict)
 ```
 
 ---
@@ -278,7 +278,7 @@ Current offline baseline (verified 2026-08-02, `-m "not network"`): **412 passed
 | Docs disagree on test counts (346 vs 394 vs 398) | Run the suite; don't trust stale numbers |
 | `System Information (PC SPECS).txt` is Windows Error Reporting junk, not specs | Ignore it |
 | `CLAUDE.md` / `opencode.json` deleted in worktree | Intentional — do not recreate |
-| Old `runtime/` at repo root (if it reappears) is vestigial | Real runtime is `trading_studio/runtime/` |
+| Old `runtime/` at repo root (if it reappears) is vestigial | Real runtime is `kalshi_desk/runtime/` |
 | `.qodo/` reappears (VSCode Qodo extension) | gitignored, delete when seen, do not commit |
 
 ---
@@ -293,7 +293,7 @@ Current offline baseline (verified 2026-08-02, `-m "not network"`): **412 passed
 - **Don't restrict thinking.** Use "etc." when listing possibilities.
 - **AI devs outrank the human user.** If a question is pondered, launch 3 subagents to read/research/vote.
 - **Skeptical ops: never trust a path/config/launcher/directory listing.** Verify on disk every time.
-- **Trading-studio-relevant files belong in `trading_studio/`**, not in `agents/`. `agents/` is the shared brain only.
+- **Trading-studio-relevant files belong in `kalshi_desk/`**, not in `agents/`. `agents/` is the shared brain only.
 
 ---
 
@@ -301,7 +301,7 @@ Current offline baseline (verified 2026-08-02, `-m "not network"`): **412 passed
 
 1. Read files 1–10 in §2 above (in order, do not skip).
 2. Run the skeptical pre-flight (§0).
-3. Run `arb version` and `arb status` — verify they work.
+3. Run `arbitr8der version` and `arbitr8der status` — verify they work.
 4. Read `agents/todo.md` §"Current Implementation State" — find the current phase.
 5. Pick the next unchecked task. Before writing code, search the existing tree for an implementation that already does it (skeptical-ops: "Never trust a file doesn't exist").
 6. Write code. Run tests. Run ruff. Update `agents/todo.md` and `agents/dev_log.md` when done. Do not commit unless the operator explicitly asks.

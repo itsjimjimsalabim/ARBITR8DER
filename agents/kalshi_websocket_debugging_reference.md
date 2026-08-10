@@ -128,7 +128,7 @@ Kalshi API v2 uses a `cmd`-based protocol, NOT the `type`/`channels` format.
 
 Use REST to find active markets before subscribing:
 ```python
-from arbitr8der_package.data_sources.kalshi_rest_market_discovery_client import KalshiRestMarketDiscoveryClient
+from kalshi_desk_package.data_sources.kalshi_rest_market_discovery_client import KalshiRestMarketDiscoveryClient
 
 client = KalshiRestMarketDiscoveryClient()
 markets = await client.discover_active_markets()
@@ -144,8 +144,8 @@ markets = await client.discover_active_markets()
 ---
 
 ## Data Files
-- Private key PEM: `trading_studio/streams/kalshi_private.pem`
-- API key ID: in `trading_studio/.env` as `AR8_KALSHI_API_KEY_ID`
+- Private key PEM: `kalshi_desk/streams/kalshi_private.pem`
+- API key ID: in `kalshi_desk/.env` as `AR8_KALSHI_API_KEY_ID`
 - All keys consolidated: `agents/KEYS`
 
 ---

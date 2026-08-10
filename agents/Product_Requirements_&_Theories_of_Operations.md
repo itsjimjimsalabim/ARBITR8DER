@@ -7,7 +7,7 @@ Trading studio to be operated by different AI's until basic bots are developed b
 ## Core Operating Philosophy: High-Speed AI-First Architecture
 
 1. **Built Strictly for AI Agent Operation**: The trading studio is engineered for AI agent usability, execution speed, and token efficiency—not human visual UI or terminal eye-candy.
-2. **No UI Code in Trading Studio (Yet)**: No visual UI components, web dashboards, or elaborate decorative terminal graphics belong inside the core trading studio codebase (`trading_studio/`). UI is lowest priority and will remain completely separate.
+2. **No UI Code in Trading Studio (Yet)**: No visual UI components, web dashboards, or elaborate decorative terminal graphics belong inside the core trading studio codebase (`kalshi_desk/`). UI is lowest priority and will remain completely separate.
 3. **Compact Text & Data Table Outputs**: All system outputs, status reports, and prediction summaries must be streamlined into fast, compact plain-text or structured data tables tailored for instant parsing and minimal context consumption by AI models.
 
 ---
@@ -39,7 +39,7 @@ I want this folder layout:
 
 ARBITR8DER\
   - agents\ (Central mind folder shared by all the AI's for coding, all supporting docs)
-  - trading_studio (software AI's use to Operate as Prediction Market traders)
+  - kalshi_desk (software AI's use to Operate as Prediction Market traders)
 
 I don't want supporting docs in the trading studio anymore, i want them in agents\, readmes in trading studio folders to act as "you are here" directory maps with the current folder it's in expanded to full list.
 
@@ -277,10 +277,10 @@ The fresh restart uses two main repo folders:
 | Path | Purpose |
 |------|---------|
 | `agents\` | Shared brain for all AI operators and coders: requirements, todo, dev log, keys notes, agent desks, workstation context |
-| `trading_studio\` | The actual headless/CLI software AI operators use to collect data, predict, paper trade, journal, and eventually trade |
+| `kalshi_desk\` | The actual headless/CLI software AI operators use to collect data, predict, paper trade, journal, and eventually trade |
 
-Supporting docs belong in `agents\`, not in `trading_studio\`. Folders inside
-`trading_studio\` may have short README files only as "you are here" directory maps.
+Supporting docs belong in `agents\`, not in `kalshi_desk\`. Folders inside
+`kalshi_desk\` may have short README files only as "you are here" directory maps.
 
 Nothing trading-studio-relevant should be written to AppData, Temp, `.config`, or old agent
 directories without being mirrored or documented under `ARBITR8DER\`.
@@ -352,7 +352,7 @@ WSL quality-of-life tools still worth installing or verifying: `ruff`, `uv`, `jq
 
 - `agents/KEYS` is the local ignored key store for sensitive values and notes.
 - Full API tokens, private keys, and wallet secrets must never be pasted into tracked docs.
-- `.env` at `ARBITR8DER\` is shared by `agents\` and `trading_studio\` when needed.
+- `.env` at `ARBITR8DER\` is shared by `agents\` and `kalshi_desk\` when needed.
 - OpenCode/OpenClaude launcher scripts must load keys from ignored storage or environment
   variables, not embed keys in plaintext.
 

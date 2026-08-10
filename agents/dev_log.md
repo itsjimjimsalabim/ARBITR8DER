@@ -1,5 +1,19 @@
 # ARBITR8DER Development Log
 
+## 2026-08-09: Two-Desk Migration Complete (Antigravity)
+
+### What Was Done
+- Migrated canonical Kalshi trading desk from `trading_studio/` to `kalshi_desk/`.
+- Package renamed from `arbitr8der_package` → `kalshi_desk_package`; `reconciliation/`, `risk/`, `vessel/` consolidated into `core/`.
+- CLI command renamed from `arb` → `arbitr8der` (no abbreviations policy).
+- All 406 tests verified passing on `kalshi_desk/`.
+- `trading_studio/` deleted (not archived — operator decision).
+- `polymarket_desk/` placeholder created (empty, not yet implemented).
+- All agent documentation updated to reflect new paths and CLI command.
+- `.gitignore` and `.env.example` updated for `kalshi_desk/` paths.
+
+---
+
 ## 2026-08-08 – 2026-08-09: Night 2 Overnight Trading & Engineering Session (Antigravity)
 
 ### Overnight Session & Engineering Summary
@@ -37,7 +51,7 @@
 - Operating stance pivot locked in: **No autonomous auto-trading bot**. System operates as an AI CLI trading studio where the AI operator (Antigravity) inspects live predictions/snapshots and manually executes `buy`/`sell` orders via REPL.
 
 **Live 11:45–12:00 PDT Trading Session (`session_20260807_184310.jsonl`):**
-- Started REPL (`arb forward start`) at 11:43 PDT, armed vessel to `Full_Forward`.
+- Started REPL (`arbitr8der forward start`) at 11:43 PDT, armed vessel to `Full_Forward`.
 - Discovered and subscribed to active 15-minute Kalshi market tickers: `KXBTC15M-26AUG071500-00` and `KXETH15M-26AUG071500-00`.
 - Ingested real-time spot feeds and computed predictions:
   - **BTC**: `macro_ensemble` predicted **DOWN** (15.7% YES, 71.6% confidence, `trending_down` regime).
@@ -152,7 +166,7 @@
 - **`backtest_engine.py`**: Updated `aggregate_1m_to_15m_candles` to safely default `None` values in `quote_volume` and `trades` from Coinbase sources.
 - **`event_data_models.py`**: Fixed `KalshiOrderBookEvent` depth typing to accept `dict[int, float]` alongside `list[OrderBookLevel]`, resolving Pydantic validation errors on live orderbook snapshot updates.
 - **`hot_snapshot_merger.py`**: Added fallback to `kalshi_event.midpoint` so `HotSnapshot` retains continuous Kalshi pricing.
-- **`cli_application_entrypoint_main.py`**: Fixed `arb predict` command to execute predictions via `BaselinePredictionEngine` and updated `arb status` owner reporting.
+- **`cli_application_entrypoint_main.py`**: Fixed `arbitr8der predict` command to execute predictions via `BaselinePredictionEngine` and updated `arbitr8der status` owner reporting.
 
 **Data Seeding & Backtesting:**
 - Ingested **10,000 1-minute historical candles** (5,000 BTC, 5,000 ETH) and aggregated 334 15-minute candles.
@@ -193,12 +207,12 @@
 ### Test Results
 
 - `python -m py_compile` on touched modules: PASS
-- `python -m pytest trading_studio/tests/test_auto_trading_engine.py -q`: PASS
+- `python -m pytest kalshi_desk/tests/test_auto_trading_engine.py -q`: PASS
 
 ### Notes
 
 - The environment here does not have `numpy`, so the regression test uses a local fake backtest module instead of importing the full feature stack.
-- `pytest` strict marker validation needed the `asyncio` marker registered in `trading_studio/pyproject.toml`.
+- `pytest` strict marker validation needed the `asyncio` marker registered in `kalshi_desk/pyproject.toml`.
 
 ---
 
@@ -206,7 +220,7 @@
 
 ### Phase 0: Boundary And Security (2026-07-23)
 
-Created the self-contained `trading_studio/` Python project:
+Created the self-contained `kalshi_desk/` Python project:
 - `pyproject.toml` with dependencies (pydantic, aiohttp, websockets, typer, pytest)
 - `src/arbitr8der/` package structure
 - `.env.example` placeholders (no real keys committed)
@@ -425,9 +439,9 @@ The PAPER trading engine — the first real step toward profits:
 
 ### File Locations
 
-All code lives under `trading_studio/arbitr8der_package/`:
+All code lives under `kalshi_desk/kalshi_desk_package/`:
 ```
-arbitr8der_package/
+kalshi_desk_package/
   cli/                          # REPL, entry point, journal, archive, scorecard
   config/                       # Settings, logging, path resolver, lease lock
   data_contracts/               # Pydantic models for all data types
@@ -441,12 +455,12 @@ arbitr8der_package/
 
 ### Import Convention
 
-All imports use `arbitr8der_package.*` (the installable package name).
+All imports use `kalshi_desk_package.*` (the installable package name).
 
 ### Test Convention
 
-Tests live in `trading_studio/tests/test_phase{N}_*.py` with `pytest.ini` at `trading_studio/`.
-Run with: `cd trading_studio && python -m pytest tests/ -v`
+Tests live in `kalshi_desk/tests/test_phase{N}_*.py` with `pytest.ini` at `kalshi_desk/`.
+Run with: `cd kalshi_desk && python -m pytest tests/ -v`
 
 ---
 
@@ -459,15 +473,15 @@ Run with: `cd trading_studio && python -m pytest tests/ -v`
 **Path Drifts:**
 - `agents/codex/AWAKENING.md` referenced `docs/Theories_of_Operations.md` (obsolete)
 - `agents/opencode/` prompts files contained old doc structure references
-- `.gitignore` lacked explicit coverage for `.qodo/`, vestigial root `runtime/`, and trading_studio-specific runtime paths
+- `.gitignore` lacked explicit coverage for `.qodo/`, vestigial root `runtime/`, and kalshi_desk-specific runtime paths
 
 **Configuration State:**
 - Root `.env` exists and is canonical (single source of truth verified)
-- `trading_studio/.env` does NOT exist (correct, no duplication)
+- `kalshi_desk/.env` does NOT exist (correct, no duplication)
 - `typed_configuration_settings_module.py` loads `.env` by absolute path from package location (correct pattern)
 - Root `runtime/` vestigial (confirmed deleted, gitignore active)
 - `.qodo/` not present (VSCode extension junk, gitignore active)
-- `.venv/` cleanup: trading_studio/.venv/ is local runtime state (not tracked, correct)
+- `.venv/` cleanup: kalshi_desk/.venv/ is local runtime state (not tracked, correct)
 
 ### What Was Fixed
 
@@ -477,18 +491,18 @@ Run with: `cd trading_studio && python -m pytest tests/ -v`
 
 2. **.gitignore**: Consolidated rules into single canonical file:
    - Root-level: ignore `.env`, `__pycache__/`, `.qodo/`, vestigial `runtime/`
-   - trading_studio-specific: ignore `.venv/`, `trading_studio/runtime/data/state/logs/archives/`
+   - kalshi_desk-specific: ignore `.venv/`, `kalshi_desk/runtime/data/state/logs/archives/`
    - Database files: `*.db`, `*.db-wal`, `*.db-shm`
 
 3. **Verified Critical Systems:**
-   - `arb version` → `arbitr8der 0.1.0` ✓
+   - `arbitr8der version` → `arbitr8der 0.1.0` ✓
    - CLI entry point in `pyproject.toml` → verified
    - `.env` consolidation → single root source ✓
 
 4. **File Inventory Audit:**
    - agents/ desks: openclaude/, opencode/, codex/, kilo/ — all swept for doc references
-   - trading_studio/scripts/: `fetch_real_balance.py` verified as operational
-   - No duplicate `.env` files found (trading_studio/.env confirmed absent)
+   - kalshi_desk/scripts/: `fetch_real_balance.py` verified as operational
+   - No duplicate `.env` files found (kalshi_desk/.env confirmed absent)
 
 ### Pending (Next Agent)
 
@@ -498,7 +512,7 @@ Run with: `cd trading_studio && python -m pytest tests/ -v`
 
 ### Test Status
 
-- CLI verification: PASS (`arb version` returns `arbitr8der 0.1.0`)
+- CLI verification: PASS (`arbitr8der version` returns `arbitr8der 0.1.0`)
 - `.env` loading: PASS (absolute path resolution via settings module)
 - `.gitignore` consistency: PASS (no contradictions, all paths covered)
 - Full pytest suite: DEFERRED (network timeout during pip install; 344 baseline tests expected on next clean install)
@@ -507,7 +521,7 @@ Run with: `cd trading_studio && python -m pytest tests/ -v`
 
 1. **Keep root stale placeholders** (`pyproject.toml`, `requirements.txt`, `requirements-dev.txt`, `.env.example`) as documented pointers. They prevent old launchers from crashing and remind operators where real files live.
 
-2. **Keep trading_studio/.venv/ untracked** (in .gitignore) — it's local machine state, not repo state.
+2. **Keep kalshi_desk/.venv/ untracked** (in .gitignore) — it's local machine state, not repo state.
 
 3. **No architectural changes** — all fixes were drift remediation, not refactoring.
 
@@ -864,7 +878,7 @@ Modified `_cmd_autotrade` in `interactive_trading_repl_loop.py` to:
 3. **Blockers Gate**: Display passed checks, warnings, and blockers. If blockers exist, fail fast and do NOT enable auto-trading.
 
 ### Files Modified
-- `arbitr8der_package/cli/interactive_trading_repl_loop.py`: Modified `_cmd_autotrade` logic and resolved lint/formatting errors.
+- `kalshi_desk_package/cli/interactive_trading_repl_loop.py`: Modified `_cmd_autotrade` logic and resolved lint/formatting errors.
 
 ## Cleanup & Audit Pass (2026-07-26)
 
@@ -873,18 +887,18 @@ Modified `_cmd_autotrade` in `interactive_trading_repl_loop.py` to:
 1. **`agents/codex/AWAKENING.md` Audit**:
    - Verified content. Confirmed path references point to `agents/overwatch_workflow.md`.
 
-2. **`.env` Path Sweep (`arbitr8der_package/`)**:
-   - Swept all `.py` files in `trading_studio/arbitr8der_package/`.
+2. **`.env` Path Sweep (`kalshi_desk_package/`)**:
+   - Swept all `.py` files in `kalshi_desk/kalshi_desk_package/`.
    - Confirmed only `typed_configuration_settings_module.py` handles loading `.env` (`ARBITR8DER/.env` at repo root). Zero hardcoded `.env` paths in package code.
 
-3. **`trading_studio/scripts/` Audit & Refactor**:
+3. **`kalshi_desk/scripts/` Audit & Refactor**:
    - `execute_paper_bid.py`: Removed hardcoded expired ticker (`KXBTC15M-26JUL262230-30`). Refactored to dynamically discover active Kalshi BTC 15M markets via `KalshiRestMarketDiscoveryClient` or take CLI arguments `[TICKER] [SIDE] [CONTRACTS] [PRICE_CENTS]`.
    - `fetch_real_balance.py`: Standardized import formatting and path resolution using `Path(__file__).resolve()`.
    - `run_ai_trading_session.py`: Verified dynamic market discovery (`orchestrator.active_markets()`). Cleaned unused imports and fixed formatting for ruff compliance.
 
 4. **`.gitignore` Audit & Fixes**:
-   - Created missing `trading_studio/runtime/.gitignore` (`*`, `!.gitignore`) to keep the runtime directory tracked while ignoring generated databases, logs, state, and archives.
-   - Fixed root `.gitignore`: Updated line 19 from `runtime/` to `/runtime/` to avoid inadvertently matching `trading_studio/runtime/`.
+   - Created missing `kalshi_desk/runtime/.gitignore` (`*`, `!.gitignore`) to keep the runtime directory tracked while ignoring generated databases, logs, state, and archives.
+   - Fixed root `.gitignore`: Updated line 19 from `runtime/` to `/runtime/` to avoid inadvertently matching `kalshi_desk/runtime/`.
 
 5. **Linter Verification**:
    - `ruff check scripts/` and `ruff format --check scripts/` both pass with 0 errors.
@@ -903,11 +917,11 @@ Open paper positions and filled paper orders persisted indefinitely, even past t
 5. **Testing & Lints**: Wrote integration tests for database and REST-fallback auto-settlement modes. Formatting and lint checks pass cleanly.
 
 ### Files Modified
-- `trading_studio/arbitr8der_package/execution/paper_venue_adapter.py`: Added `settle_expired_positions` and corrected NO fill price logic.
-- `trading_studio/arbitr8der_package/execution/auto_trading_engine.py`: Integrated `settle_expired_positions` into `_evaluate_all_assets` and stored `discovery_client`.
-- `trading_studio/arbitr8der_package/data_sources/ingestion_orchestrator.py`: Propagated `self._kalshi_rest` to `AutoTradingEngine`.
-- `trading_studio/arbitr8der_package/cli/interactive_trading_repl_loop.py`: Integrated `_sync_settle_expired_positions`, type-safe midpoint extraction, and unrealized PnL formatting.
-- `trading_studio/tests/test_paper_trading_readiness.py`: Added `test_auto_settlement` and `test_auto_settlement_rest_fallback` unit tests.
+- `kalshi_desk/kalshi_desk_package/execution/paper_venue_adapter.py`: Added `settle_expired_positions` and corrected NO fill price logic.
+- `kalshi_desk/kalshi_desk_package/execution/auto_trading_engine.py`: Integrated `settle_expired_positions` into `_evaluate_all_assets` and stored `discovery_client`.
+- `kalshi_desk/kalshi_desk_package/data_sources/ingestion_orchestrator.py`: Propagated `self._kalshi_rest` to `AutoTradingEngine`.
+- `kalshi_desk/kalshi_desk_package/cli/interactive_trading_repl_loop.py`: Integrated `_sync_settle_expired_positions`, type-safe midpoint extraction, and unrealized PnL formatting.
+- `kalshi_desk/tests/test_paper_trading_readiness.py`: Added `test_auto_settlement` and `test_auto_settlement_rest_fallback` unit tests.
 - `agents/todo.md`: Checked off completed items.
 - `agents/dev_log.md`: This entry.
 
@@ -929,13 +943,13 @@ Open paper positions and filled paper orders persisted indefinitely, even past t
 4. **Git PAT Excision**: Expired reflogs and pruned dangling commits using `git gc --prune=now --aggressive` to completely remove `ac2e110` from the repository history.
 
 ### Files Modified
-- `trading_studio/arbitr8der_package/execution/auto_trading_engine.py`
-- `trading_studio/arbitr8der_package/execution/paper_venue_adapter.py`
-- `trading_studio/arbitr8der_package/prediction/auto_scoring_engine.py`
-- `trading_studio/arbitr8der_package/prediction/settlement_watcher.py`
-- `trading_studio/arbitr8der_package/data_sources/ingestion_orchestrator.py`
-- `trading_studio/tests/test_settlement_and_importance.py`
-- `trading_studio/tests/test_paper_trading_readiness.py`
+- `kalshi_desk/kalshi_desk_package/execution/auto_trading_engine.py`
+- `kalshi_desk/kalshi_desk_package/execution/paper_venue_adapter.py`
+- `kalshi_desk/kalshi_desk_package/prediction/auto_scoring_engine.py`
+- `kalshi_desk/kalshi_desk_package/prediction/settlement_watcher.py`
+- `kalshi_desk/kalshi_desk_package/data_sources/ingestion_orchestrator.py`
+- `kalshi_desk/tests/test_settlement_and_importance.py`
+- `kalshi_desk/tests/test_paper_trading_readiness.py`
 - `agents/todo.md`
 - `agents/dev_log.md` (this entry)
 
@@ -965,10 +979,10 @@ Open paper positions and filled paper orders persisted indefinitely, even past t
 - Lease released cleanly; session archived to `session_20260802_095924.jsonl`.
 
 ### Files Modified
-- `trading_studio/arbitr8der_package/execution/paper_venue_adapter.py` (+`reset_wallet_for_new_session`, `PaperWallet.win_rate_pct`)
-- `trading_studio/arbitr8der_package/data_sources/kalshi_rest_market_discovery_client.py` (+`signed_auth_headers_for_api_path`, `_load_private_key`)
-- `trading_studio/arbitr8der_package/data_sources/ingestion_orchestrator.py` (session reset in `start()`)
-- `trading_studio/arbitr8der_package/risk/risk_controls_module.py` (+`set_balance`)
-- `trading_studio/arbitr8der_package/cli/interactive_trading_repl_loop.py` (script-mode Binance stream, awaited shutdown, guarded settle, wallet reset in `run()`)
-- `trading_studio/tests/test_connection_battery.py` (network markers)
+- `kalshi_desk/kalshi_desk_package/execution/paper_venue_adapter.py` (+`reset_wallet_for_new_session`, `PaperWallet.win_rate_pct`)
+- `kalshi_desk/kalshi_desk_package/data_sources/kalshi_rest_market_discovery_client.py` (+`signed_auth_headers_for_api_path`, `_load_private_key`)
+- `kalshi_desk/kalshi_desk_package/data_sources/ingestion_orchestrator.py` (session reset in `start()`)
+- `kalshi_desk/kalshi_desk_package/risk/risk_controls_module.py` (+`set_balance`)
+- `kalshi_desk/kalshi_desk_package/cli/interactive_trading_repl_loop.py` (script-mode Binance stream, awaited shutdown, guarded settle, wallet reset in `run()`)
+- `kalshi_desk/tests/test_connection_battery.py` (network markers)
 - `agents/dev_log.md` (this entry)

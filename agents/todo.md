@@ -1,6 +1,6 @@
 # ARBITR8DER Active Todo
 
-**Canonical plan:** `agents/trading_studio_build_plan.md`
+**Canonical plan:** `agents/kalshi_desk_build_plan.md`
 **Onboarding workflow:** `agents/onboarding_workflow.md` (read this first if new)
 **Current implementation state:** Phase 8 — Prediction System (8a-8l complete, retraining loop closed, auto-trader wired)
 
@@ -17,17 +17,17 @@ Target file layout:
 ```
 ARBITR8DER/
   agents/                   <- shared AI context, plans, and operator docs
-  kalshi/                   <- move the current Trading Studio code here
+  kalshi_desk/                   <- move the current Trading Studio code here
   polymarket/               <- blank platform root; build separately
   UI/                       <- shared user-interface work
 ```
 
 Tasks:
 
-- [ ] Inventory current `trading_studio/` paths, imports, launchers, tests, runtime paths, and documentation references.
-- [ ] Move the current Trading Studio code into root-level `kalshi/` without changing behavior.
-- [ ] Update imports, launchers, tests, runtime paths, and documentation to the Kalshi location; run the full test suite.
-- [ ] Create an otherwise blank root-level `polymarket/` directory. Do not copy Kalshi execution code or runtime data into it.
+- [x] Inventory current `kalshi_desk/` paths, imports, launchers, tests, runtime paths, and documentation references.
+- [x] Move the current Trading Studio code into root-level `kalshi_desk/` without changing behavior.
+- [x] Update imports, launchers, tests, runtime paths, and documentation to the Kalshi location; run the full test suite.
+- [x] Create an otherwise blank root-level `polymarket/` directory. Do not copy Kalshi execution code or runtime data into it.
 - [ ] Create a root-level `UI/` directory only when UI work begins. Keep it separate from both execution desks.
 - [ ] Define separate desk-level accounting and a realized, fee-adjusted PnL-per-hour comparison before any competition between AI operators.
 
@@ -37,7 +37,7 @@ Tasks:
 
 ### Prioritize before any ARMED work
 
-- [ ] **P0 — A second CLI invocation can overwrite an active session's shared vessel state.** `VesselStateMachine.__init__` always calls `_load_and_force_stop()`, which persists `Full_Stop`; `arb status` constructs this state machine too. Any concurrent status/vessel command can therefore corrupt the active REPL's shared `vessel_state.json` and destroys the file's authority as a kill-switch/audit source. Fix ownership semantics: status must be read-only, and only the lease owner may mutate vessel state. Add a two-process regression test.
+- [ ] **P0 — A second CLI invocation can overwrite an active session's shared vessel state.** `VesselStateMachine.__init__` always calls `_load_and_force_stop()`, which persists `Full_Stop`; `arbitr8der status` constructs this state machine too. Any concurrent status/vessel command can therefore corrupt the active REPL's shared `vessel_state.json` and destroys the file's authority as a kill-switch/audit source. Fix ownership semantics: status must be read-only, and only the lease owner may mutate vessel state. Add a two-process regression test.
 - [ ] **P0 — Stream lease expires during a healthy session and is non-atomic.** `RuntimeLease.acquire()` does a read-then-write with no OS/file lock, and the orchestrator acquires it only at startup—there is no heartbeat/renewal. After the 300-second TTL, another process can acquire the lease and start duplicate provider streams. Implement atomic exclusive acquisition plus owner/PID/start-time metadata and a periodic renewal; fail closed when the owner is alive.
 - [ ] **P0 — Manual PAPER limit orders do not get evaluated for fills.** `PaperVenueAdapter.update_pending_orders()` has only one production caller: `AutoTradingEngine._evaluate_all_assets()`. But the current directive is manual REPL and the auto-trader remains disabled by default, so `buy ... LIMIT` orders stay pending until expiry regardless of favorable ticks. Move pending-order evaluation to the shared ingestion/snapshot path, and update risk/reconciliation there. Add a manual-REPL pending-fill integration test.
 - [ ] **P0 — `sell` fabricates binary settlement from midpoint instead of executing an exit.** `handle_sell_command()` converts `current_mid > 50` into a YES/NO outcome and calls `settle_order()`, crediting either $1.00 or $0.00 per contract. A mid-window sell can thus book a full settlement win/loss without a real bid, fill, or slippage model. Replace it with a PAPER close at the appropriate executable side/bid (with fees), or disable early close until that model exists. Add tests for YES and NO exits at 49c/51c.
@@ -51,13 +51,13 @@ Tasks:
 
 ## Rules For The Next Implementing AI
 
-- Target layout: executable platform software belongs under root-level `kalshi/` or `polymarket/`; UI code belongs under root-level `UI/`. Until the migration task is completed, the current Kalshi implementation remains in `trading_studio/`.
+- Target layout: executable platform software belongs under root-level `kalshi_desk/` or `polymarket/`; UI code belongs under root-level `UI/`. Until the migration task is completed, the current Kalshi implementation remains in `kalshi_desk/`.
 - `agents/` contains shared context and planning only. Do not put runnable trading helpers there.
 - Do not restore or copy the deleted root package or code from historical repositories. Use history only for lessons and test cases.
 - Start each process in `Full_Stop` and PAPER mode. No task in this backlog authorizes a live order.
 - Before changing code, verify the current worktree and preserve unrelated user changes.
-- There is exactly ONE `.env`: `ARBITR8DER/.env` at the repo root. `trading_studio/.env` is gone. `TradingStudioSettings` loads the root `.env` by absolute path resolved from the package location, not CWD. Do not recreate `trading_studio/.env`.
-- Until migration, `trading_studio/runtime/` is the active Kalshi runtime directory. After migration, Kalshi and Polymarket must each use their own platform-local runtime directory. Do not share runtime data.
+- There is exactly ONE `.env`: `ARBITR8DER/.env` at the repo root. `kalshi_desk/.env` is gone. `TradingStudioSettings` loads the root `.env` by absolute path resolved from the package location, not CWD. Do not recreate `kalshi_desk/.env`.
+- Until migration, `kalshi_desk/runtime/` is the active Kalshi runtime directory. After migration, Kalshi and Polymarket must each use their own platform-local runtime directory. Do not share runtime data.
 - `.qodo/` is auto-created by the VSCode Qodo extension. It is gitignored. Delete on sight, never commit.
 - File/variable names: at least 4 self-documenting words. Persona is "Paulie" — cold, calculating coder.
 - **Core Philosophy: High-Speed AI-First Architecture**: Build for AI agent usability and execution speed. Keep UI code in `UI/`, separate from both execution desks. Keep execution outputs compact plain text or structured data for machine parsing and token efficiency.
@@ -99,9 +99,9 @@ Tasks:
 ### Hand-off Protocol for Autonomous AI Continuity
 If an agent context window resets:
 1. **Check Current PDT Time:** Find the upcoming 15-minute Kalshi window (:00, :15, :30, :45).
-2. **Launch REPL 1 Min Before Window Open:** `./trading_studio/.venv/bin/arb forward start` $\rightarrow$ `vessel forward`.
+2. **Launch REPL 1 Min Before Window Open:** `./kalshi_desk/.venv/bin/arbitr8der forward start` $\rightarrow$ `vessel forward`.
 3. **Execute Trade Stance:** `snapshot`, `predict BTC/ETH --model auto`, execute 2-contract directional limit/EV orders.
-4. **Program & Commit:** On alternating cycles, improve `trading_studio/` code, update docs, commit locally. NEVER STOP.
+4. **Program & Commit:** On alternating cycles, improve `kalshi_desk/` code, update docs, commit locally. NEVER STOP.
 
 ---
 
@@ -176,7 +176,7 @@ If an agent context window resets:
   - **ETH:** `buy ETH no 2 48` $\rightarrow$ Placed as `PENDING` limit order @ 48c (paced via 6s delay) $\rightarrow$ Expired unexecuted (cancelled at settlement).
   - **Cycle 2 Outcome:** 0 Trades Filled, 0 Losses, **$0.00 PnL**. Equity preserved at **$18.56**.
   - **Verified Friction & Code Fixes Applied:**
-    1. *Risk Guard Pacing:* Verified that pacing sequential orders by 5s+ prevents `ORDER BLOCKED: Cooldown active`. Documented pacing rule in `trading_studio_operating_workflow.md`.
+    1. *Risk Guard Pacing:* Verified that pacing sequential orders by 5s+ prevents `ORDER BLOCKED: Cooldown active`. Documented pacing rule in `kalshi_desk_operating_workflow.md`.
     2. *Auto-Scoring NoneType Exception:* Fixed `window_open is not None` guard in `auto_scoring_engine.py:237` to eliminate log errors during background retraining.
     3. *Pytest Verification:* Verified 16/16 `test_auto_scoring_engine.py` unit tests pass.
   - **Commit:** Staged and committed code & doc fixes (`git commit -m "fix(prediction): guard retrain_models against null window_open and document order pacing rules"`).
@@ -301,7 +301,7 @@ Concretely, check:
 - Gate: "analyze and verify issues **then fix**" — before fixing, confirm the issue reproduces
   or is real (cross-run evidence, logs, DB rows). Never patch a symptom on one run's evidence.
 - After a fix: "after changes, **update docs and commit**" — run tests
-  (`./.venv/bin/python -m pytest trading_studio/tests -m "not network"`), update docs
+  (`./.venv/bin/python -m pytest kalshi_desk/tests -m "not network"`), update docs
   (`agents/dev_log.md`, this file, onboarding docs as relevant), then commit.
 - "update docs+commit too" — even small fixes get logged and committed; the docs are the
   memory that survives a fresh window.
@@ -347,7 +347,7 @@ Fresh window: start 1 min before open. Re-verify readiness, launch run script, t
 
 We built a lot vibecoding. We now have to audit, review, and clean. Goals: stop the env/runtime/tooling bugs that come from duplicate and stale paths, get the repo into a single sane shape so the next AI's onboarding is deterministic.
 
-- **One .env, one runtime, one trading_studio.** Duplicate paths breed bugs.
+- **One .env, one runtime, one kalshi_desk.** Duplicate paths breed bugs.
 - **Launch 3 subagents to research/vote** on architecture questions, per agents.md.
 
 
@@ -355,9 +355,9 @@ We built a lot vibecoding. We now have to audit, review, and clean. Goals: stop 
 
 - [x] Read the shared requirements, development log, current backlog, and both competing rebuild plans.
 - [x] Audit the active worktree and Git history, plus the owned GitHub repositories relevant to ARBITR8DER.
-- [x] Consolidate the active rebuild direction into `agents/trading_studio_build_plan.md`.
+- [x] Consolidate the active rebuild direction into `agents/kalshi_desk_build_plan.md`.
 - [x] Remove the two superseded active rebuild plans and replace the studio's plan-like README with a directory map.
-- [x] Phase 0: Boundary And Security — git status, trading_studio/ project scaffold, pyproject.toml, .env placeholders, kalshi key moved to .gitignore, tests directory, runtime paths
+- [x] Phase 0: Boundary And Security — git status, kalshi_desk/ project scaffold, pyproject.toml, .env placeholders, kalshi key moved to .gitignore, tests directory, runtime paths
 - [x] Phase 1: Foundation — VesselStateMachine, TradingStudioSettings, structured logging, path resolver, lease file lock, HotSnapshot/Asset/SourceHealthStatus contracts, JSONL hot snapshot merger
 - [x] Phase 2: Data Contracts & Connectors — BinanceCandle/BinancePriceObservation/BinanceBookTicker, CoinbasePriceTick, PolymarketSentimentObservation, CoinGeckoMacroObservation, KalshiOrderbookDelta, all 5 data source modules wired
 - [x] Phase 3: Real Data Connectors — all 5 sources running with real connections, candle backfill, market discovery, source health monitoring

@@ -48,3 +48,28 @@ Thumbs.db
 # Streams (Kalshi private key) — gitignored at repo level defensively.
 # trading_studio/.gitignore also covers this locally.
 trading_studio/streams/kalshi_private.pem
+
+# Kalshi desk runtime data
+kalshi_desk/runtime/data/
+kalshi_desk/runtime/state/
+kalshi_desk/runtime/logs/
+kalshi_desk/runtime/archives/
+kalshi_desk/runtime/*.db
+kalshi_desk/runtime/*.db-wal
+kalshi_desk/runtime/*.db-shm
+kalshi_desk/runtime/*.log
+kalshi_desk/runtime/*.lock
+kalshi_desk/runtime/*.pid
+kalshi_desk/runtime/*.tmp
+
+# Kalshi desk venv + egg-info
+kalshi_desk/.venv/
+kalshi_desk/*.egg-info/
+
+# Kalshi desk streams (private keys — never commit)
+kalshi_desk/streams/kalshi_private.pem
+
+# Polymarket desk placeholder
+polymarket_desk/runtime/
+polymarket_desk/.env
+polymarket_desk/.venv/

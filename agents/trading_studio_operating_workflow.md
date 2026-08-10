@@ -27,7 +27,7 @@
 15-minute Kalshi binary contracts close at `:00`, `:15`, `:30`, and `:45` of every hour.
 
 ```
-T-3min (e.g. 12:12 PDT)  ──► Launch REPL (`arb forward start`) & Arm Vessel (`vessel forward`)
+T-3min (e.g. 12:12 PDT)  ──► Launch REPL (`arbitr8der forward start`) & Arm Vessel (`vessel forward`)
 T-2min (e.g. 12:13 PDT)  ──► Orderbook & Candle Battery Warmup (wait 40s)
 T-0min (e.g. 12:15 PDT)  ──► Market Rollover (`markets`, `snapshot`, `predict BTC/ETH`)
 T+1min (e.g. 12:16 PDT)  ──► Patient Limit Order Submission (`buy ASSET SIDE N LIMIT`)
@@ -59,27 +59,27 @@ To maintain positive expected value and avoid overpaying for contracts:
 
 ```bash
 # 1. Check CLI version and status
-arb status
+arbitr8der status
 
 # 2. Launch interactive REPL session (starts in Battery mode, auto-syncs live Kalshi cash balance)
-arb forward start
+arbitr8der forward start
 ```
 
 ### Step 2: Arm Vessel & Inspect Universe
 
 ```text
-arb [battery]> vessel forward
+arbitr8der [battery]> vessel forward
 Vessel -> Full_Forward
 
-arb [full_forward]> snapshot
-arb [full_forward]> markets
+arbitr8der [full_forward]> snapshot
+arbitr8der [full_forward]> markets
 ```
 
 ### Step 3: Run Model Predictions & Evaluate Signals
 
 ```text
-arb [full_forward]> predict BTC --model auto
-arb [full_forward]> predict ETH --model auto
+arbitr8der [full_forward]> predict BTC --model auto
+arbitr8der [full_forward]> predict ETH --model auto
 ```
 
 - **Interpretation:**
@@ -91,26 +91,26 @@ arb [full_forward]> predict ETH --model auto
 
 ```text
 # Buy 2 NO contracts of BTC at 48 cents limit
-arb [full_forward]> buy BTC no 2 48
+arbitr8der [full_forward]> buy BTC no 2 48
 
 # Buy 2 NO contracts of ETH at 48 cents limit
-arb [full_forward]> buy ETH no 2 48
+arbitr8der [full_forward]> buy ETH no 2 48
 
 # Verify order fills and open positions
-arb [full_forward]> positions
-arb [full_forward]> pending
+arbitr8der [full_forward]> positions
+arbitr8der [full_forward]> pending
 ```
 
 ### Step 5: Post-Settlement Verification & Shutdown
 
 ```text
 # Inspect auto-settlement results after window close
-arb [full_forward]> wallet
-arb [full_forward]> settlement
+arbitr8der [full_forward]> wallet
+arbitr8der [full_forward]> settlement
 
 # Journal reasoning and session exit
-arb [full_forward]> journal "12:15-12:30 run complete. Patient limit entry @ 48c successful."
-arb [full_forward]> exit
+arbitr8der [full_forward]> journal "12:15-12:30 run complete. Patient limit entry @ 48c successful."
+arbitr8der [full_forward]> exit
 ```
 
 ---

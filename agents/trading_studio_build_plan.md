@@ -1,29 +1,29 @@
 # ARBITR8DER Trading Studio - Canonical Fresh Build Plan
 
 **Status:** The single active rebuild plan as of 2026-07-23.  
-**Implementation target:** `ARBITR8DER/trading_studio/` only.  
+**Implementation target:** `ARBITR8DER/kalshi_desk/` only.  
 **Execution posture:** `Full_Stop` and `PAPER` by default. No implementation phase authorizes a live Kalshi order.
 
 ## 1. Decisions Locked By This Plan
 
 1. `agents/` is the shared operating brain: requirements, this plan, the active todo, development log, agent desks, and historical references. It must not contain executable trading software.
-2. `trading_studio/` is the self-contained trading software project. Every executable trading module, test, operational script, package manifest, runtime path, and future UI source belongs beneath it.
-3. The installable Python distribution and import package remain `arbitr8der`, but its source directory is `trading_studio/src/arbitr8der/`. Install it with `pip install -e .\\trading_studio`.
+2. `kalshi_desk/` is the self-contained trading software project. Every executable trading module, test, operational script, package manifest, runtime path, and future UI source belongs beneath it.
+3. The installable Python distribution and import package remain `arbitr8der`, but its source directory is `kalshi_desk/src/arbitr8der/`. Install it with `pip install -e .\\kalshi_desk`.
 4. The root-level `src/`, `tests/`, `runtime/`, `pyproject.toml`, and requirements files describe the deleted legacy package. They are not a fallback implementation. Retire them only after the nested project installs and tests successfully.
 5. Use RAM for the current hot snapshot and SQLite for durable history, audit, replay, and PAPER state. PostgreSQL is not part of the fresh build unless a later evidence-backed decision replaces SQLite.
 6. Kalshi is the only execution venue. Binance, Coinbase, Polymarket, and CoinGecko are observation sources. Initial market scope is BTC and ETH 15-minute Kalshi markets only.
 7. `PAPER` and `ARMED` share the complete intent, validation, risk, audit, and reconciliation lifecycle, but use separate venue adapters. PAPER must never be described as live-fill parity when a step is simulated.
 8. Historical repositories and deleted code are reference evidence only. Do not restore, transplant, or import their implementation wholesale.
-9. No strategic plans live under `trading_studio/`. Its README files are short directory maps only. The future passive UI, if built, is `trading_studio/ui/`, not a root application.
+9. No strategic plans live under `kalshi_desk/`. Its README files are short directory maps only. The future passive UI, if built, is `kalshi_desk/ui/`, not a root application.
 
 ## 2. Starting Truth And Historical Lessons
 
 ### Verified starting state
 
 - `main` has four commits and the legacy root `src/arbitr8der/` and root test suite are currently deleted in the worktree. Preserve that in-progress migration; do not reset, restore, or silently relocate it.
-- Before this plan consolidation, `trading_studio/` contained only an obsolete planning README, not a package. The README is now a directory map; no package exists yet.
+- Before this plan consolidation, `kalshi_desk/` contained only an obsolete planning README, not a package. The README is now a directory map; no package exists yet.
 - The current root `pyproject.toml` points at the deleted root `src/arbitr8der/`; root `requirements.txt` and `.env.example` are stale. The example environment also contains a concrete Kalshi identifier and PostgreSQL settings, so it must be sanitized before any push.
-- `agents.md` correctly identifies `trading_studio/` as the software home, but its directory map and build commands still describe the deleted root layout. Update it during the boundary phase.
+- `agents.md` correctly identifies `kalshi_desk/` as the software home, but its directory map and build commands still describe the deleted root layout. Update it during the boundary phase.
 - `agents/_archive/` remains historical reference only. It is not an active plan or source of current truth.
 
 ### Lessons retained from Git history
@@ -44,9 +44,9 @@ ARBITR8DER/
     Product_Requirements_&_Theories_of_Operations.md
     dev_log.md
     todo.md
-    trading_studio_build_plan.md    # this file, the only active rebuild plan
+    kalshi_desk_build_plan.md    # this file, the only active rebuild plan
     _archive/                       # historical reference only
-  trading_studio/                   # all executable trading software
+  kalshi_desk/                   # all executable trading software
     readme.md                       # short directory map only
     pyproject.toml                  # `arbitr8der` package definition
     .env.example                    # placeholders only; explains root `.env`
@@ -69,9 +69,9 @@ ARBITR8DER/
 ### Path and packaging rules
 
 - A future agent must not create root-level `src/`, `tests/`, `scripts/`, `runtime/`, or a second Python project for the trading studio.
-- `trading_studio/pyproject.toml` owns dependencies, linting, test configuration, and the `arbitr8der` command. It must be runnable from any current working directory.
+- `kalshi_desk/pyproject.toml` owns dependencies, linting, test configuration, and the `arbitr8der` command. It must be runnable from any current working directory.
 - Resolve the shared root `.env` from the package location, not from the caller's current directory. Never commit secrets, private keys, real account values, or raw runtime data.
-- Add scoped ignores for `trading_studio/runtime/`, local environments, and generated package artifacts. Do not hide source, tests, migrations, or recorded test fixtures.
+- Add scoped ignores for `kalshi_desk/runtime/`, local environments, and generated package artifacts. Do not hide source, tests, migrations, or recorded test fixtures.
 - Use long, self-documenting names for new domain modules, classes, and public functions. Standard Python package markers and well-known protocol terms are the narrow exceptions.
 - Every source subdirectory gets a small README only after it exists. The README states purpose, owned files, runtime inputs/outputs, and the parent map. It does not become a second requirements document.
 
@@ -94,26 +94,26 @@ ARBITR8DER/
 
 1. Record the current dirty-tree migration state in the development log and verify `git status`, `git remote -v`, and the active branch. Do not reset or recover deleted legacy files.
 2. Verify that the studio README remains a directory map and that strategic documents remain under `agents/`; do not add another plan surface.
-3. Create the nested `trading_studio/pyproject.toml`, `src/`, `tests/`, `scripts/`, and `runtime/` boundary before creating domain code.
-4. Move or recreate package metadata beneath `trading_studio/`; then retire the stale root packaging files and root implementation directories in the same deliberate migration change.
+3. Create the nested `kalshi_desk/pyproject.toml`, `src/`, `tests/`, `scripts/`, and `runtime/` boundary before creating domain code.
+4. Move or recreate package metadata beneath `kalshi_desk/`; then retire the stale root packaging files and root implementation directories in the same deliberate migration change.
 5. Replace the tracked example environment with placeholder-only SQLite-era configuration. Treat the exposed Kalshi identifier as needing operator review/rotation before any ARMED work.
 6. Update `agents.md`, the root README, and build instructions so no current document directs an agent to root `src/` or root tests.
 7. Add scoped runtime ignores and confirm secrets and runtime artifacts are not staged.
 
-**Exit gate:** `pip install -e .\\trading_studio` succeeds in a clean environment; `git ls-files` has no root trading implementation tree; no tracked config contains a real credential; one active plan exists under `agents/`.
+**Exit gate:** `pip install -e .\\kalshi_desk` succeeds in a clean environment; `git ls-files` has no root trading implementation tree; no tracked config contains a real credential; one active plan exists under `agents/`.
 
 ### Phase 1 - Safe runnable foundation
 
 **Objective:** Build the smallest installable studio that is safe by construction.
 
-1. Create the package version module, typed configuration, path resolver, structured logging, and CLI entry point under `trading_studio/src/arbitr8der/`.
-2. Implement the `Full_Stop -> Battery -> Full_Forward` state machine with transition audit persistence under `trading_studio/runtime/state/` and forced `Full_Stop` at process start.
+1. Create the package version module, typed configuration, path resolver, structured logging, and CLI entry point under `kalshi_desk/src/arbitr8der/`.
+2. Implement the `Full_Stop -> Battery -> Full_Forward` state machine with transition audit persistence under `kalshi_desk/runtime/state/` and forced `Full_Stop` at process start.
 3. Separate capability boundaries so status/config commands make no network connection and Battery cannot import an order-submission adapter.
 4. Add a single-process runtime lease for provider-stream ownership.
 5. Provide only conservative commands initially: `arbitr8der --version`, `status`, `vessel status`, and explicit state transition commands. All machine-readable output supports `--json`.
 6. Add unit tests for paths, configuration, vessel transitions, forced-stop startup, CLI output, and lease behavior.
 
-**Exit gate:** A fresh install can run `arbitr8der status` from outside the repository without network I/O, writes only beneath `trading_studio/runtime/`, reports `Full_Stop`, and reports PAPER as the default wallet mode.
+**Exit gate:** A fresh install can run `arbitr8der status` from outside the repository without network I/O, writes only beneath `kalshi_desk/runtime/`, reports `Full_Stop`, and reports PAPER as the default wallet mode.
 
 ### Phase 2 - Canonical data contracts and durable storage
 
@@ -127,7 +127,7 @@ ARBITR8DER/
 6. Implement 72-hour hot-history retention with an atomic archive manifest and replay-friendly immutable exports. Never delete data before its archive is verified.
 7. Test migrations, restart behavior, queue backpressure, data-lineage round trips, and CWD-independent paths using temporary databases.
 
-**Exit gate:** A restart-safe local SQLite database can persist and replay a versioned snapshot without blocking the producer path or writing outside `trading_studio/runtime/`.
+**Exit gate:** A restart-safe local SQLite database can persist and replay a versioned snapshot without blocking the producer path or writing outside `kalshi_desk/runtime/`.
 
 ### Phase 3 - Observe real provider contracts, one source at a time
 
@@ -221,11 +221,11 @@ ARBITR8DER/
 Each implementation change must provide all of the following before its todo item is marked complete:
 
 1. A focused test and a relevant end-to-end or read-only network check when external behavior is involved.
-2. A clean install/test/lint command run from `trading_studio/` and recorded outcome in `agents/dev_log.md`.
+2. A clean install/test/lint command run from `kalshi_desk/` and recorded outcome in `agents/dev_log.md`.
 3. A directory-map update for any new studio subsystem.
 4. A check that no secret, runtime database, log, or generated archive is staged for Git.
 5. An update to `agents/todo.md` that moves only verified work forward.
 
 ## 7. Immediate Next Action
 
-Do not begin provider or execution work yet. The next implementing AI starts Phase 0: preserve the current migration, make `trading_studio/` a self-contained installable package, remove stale root-package references, sanitize tracked configuration examples, and verify the package boundary before creating domain modules.
+Do not begin provider or execution work yet. The next implementing AI starts Phase 0: preserve the current migration, make `kalshi_desk/` a self-contained installable package, remove stale root-package references, sanitize tracked configuration examples, and verify the package boundary before creating domain modules.
