@@ -4,17 +4,17 @@
 **Onboarding workflow:** `agents/onboarding_workflow.md` (read this first if new)
 **Current implementation state:** Phase 8 — Prediction System (8a-8l complete, retraining loop closed, auto-trader wired)
 
-## 🕒 Alternating Operator Schedule: Peritia & Plutus (Kalshi 15m Binary Session)
+## 🕒 Alternating Operator Schedule: Plutus & Peritia (Kalshi 15m Binary Session)
 
-**Vessel State:** Remains `Full_Forward` for the entire 9:59 - 11:00 PDT window. Do not force stop between operator hand-offs.
+**Vessel State:** Remains `Full_Forward` for the entire 07:29 - 08:30 PDT window. Do not force stop between operator hand-offs.
 
 | Time Window (PDT) | Operator | Action / Strategy | Hand-off Protocol |
 | :--- | :--- | :--- | :--- |
-| **09:59 - 10:15 PDT** | **Peritia** | **Initial Trading Session (15m window)**. Starts session, arms vessel to `Full_Forward`, places patient limit orders for 10:00-10:15 cycle. | Leaves vessel `Full_Forward`. Logs trades/journal. |
-| **10:15 - 10:30 PDT** | **Plutus** (me) | **Plutus Trading Session (15m window)**. Inspects snapshots/predictions, executes Plutus strategy patient limit orders. | Leaves vessel `Full_Forward`. Logs trades/journal. |
-| **10:30 - 10:45 PDT** | **Peritia** | **Peritia Trading Session (15m window)**. Executes trades using updated/refined Peritia strategy. | Leaves vessel `Full_Forward`. Logs trades/journal. |
-| **10:45 - 11:00 PDT** | **Plutus** (me) | **Plutus Trading Session (15m window)**. Executes trades using updated/refined Plutus strategy. | Prepares final session PnL metrics. |
-| **11:00 PDT+** | **Peritia** | **Post-Session Analysis & Review**. Analyzes 9:59-11:00 session results, PnL, model predictions, and fill performance across all cycles. | Writes full session review to `dev_log.md`. |
+| **07:29 - 07:45 PDT** | **Plutus** (me) | **Initial Trading Session (15m window)**. Starts session, arms vessel to `Full_Forward`, inspects snapshot/predictions, places patient limit orders for 07:30-07:45 cycle. | Leaves vessel `Full_Forward`. Logs trades/journal. |
+| **07:45 - 08:00 PDT** | **Peritia** | **Peritia Trading Session (15m window)**. Inspects snapshots/predictions, executes Peritia strategy limit orders. | Leaves vessel `Full_Forward`. Logs trades/journal. |
+| **08:00 - 08:15 PDT** | **Plutus** (me) | **Plutus Trading Session (15m window)**. Executes trades using updated/refined Plutus strategy. | Leaves vessel `Full_Forward`. Logs trades/journal. |
+| **08:15 - 08:30 PDT** | **Peritia** | **Peritia Trading Session (15m window)**. Executes trades using updated/refined Peritia strategy. | Prepares final session PnL metrics & post-session review. |
+| **08:30 PDT+** | **Plutus & Peritia** | **Post-Session Analysis & Review**. Analyzes 07:29-08:30 session results, PnL, model predictions, and fill performance across all cycles. | Writes full session review to `dev_log.md`. |
 
 ### 🔒 Shared Desk Concurrency & Handoff Rules (Peritia + Plutus)
 1. **Zero Vessel Mutex Collisions:** Never run `arbitr8der vessel stop` or CLI commands that re-instantiate `VesselStateMachine` with `Full_Stop` while the other AI operator is active in their 15m window.
