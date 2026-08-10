@@ -2,9 +2,148 @@
 
 **Canonical plan:** `agents/trading_studio_build_plan.md` (on-disk name; `kalshi_desk_build_plan.md` no longer exists)
 **Onboarding workflow:** `agents/onboarding_workflow.md` (read this first if new)
-**Current implementation state:** Phase 8 — Prediction System (8a-8l complete, retraining loop closed, auto-trader wired)
+**Current implementation state:** Strategic rewrite approved 2026-08-10 — Rust-first Kalshi Vessel rebuild, Polymarket used only as an auxiliary prediction stream, automatic PAPER trading allowed again after gated safety checks.
 
-## 🕒 Alternating Operator Schedule: Plutus & Peritia (Kalshi 15m Binary Session)
+## Current Primary Goal - Rust Kalshi Vessel Rebuild
+
+Build a fresh Kalshi-only trading vessel for BTC/ETH 15-minute markets. The new vessel is Rust-first, multi-language only where required, and designed to automatically fire PAPER trades from deterministic strategy code after the operator explicitly starts the run. Polymarket is not a trading desk target. Polymarket streams are decision inputs for better Kalshi predictions and execution timing.
+
+### Operating Position
+
+- **Execution venue:** Kalshi only, BTC and ETH 15-minute binary markets.
+- **Auxiliary signal venues:** Polymarket, Binance, Coinbase, CoinGecko, and any other verified free stream that improves prediction quality.
+- **Polymarket rule:** Do not place Polymarket orders. Do not build Polymarket wallet, order, or PnL workflows now. Use Polymarket prices, sentiment, orderbook/liquidity, and comparable-event probability movement as Kalshi decision features.
+- **Automation stance:** Autotrading is allowed again in PAPER mode. Code may fire orders automatically only after explicit run start, fresh-market verification, stream health checks, risk checks, and database journaling are online.
+- **ARMED stance:** No live Kalshi order is authorized by this plan. ARMED trading requires a later explicit operator directive after PAPER evidence.
+- **Fresh-start stance:** We want a new codebase and a new database. Preserve the current Python desk and runtime databases until exports, lessons, and regression cases are extracted. Delete only after a reviewed migration checkpoint.
+
+### Target Layout
+
+```text
+ARBITR8DER/
+  agents/                         <- shared plans, research, logs, operator memory
+  kalshi_desk/                    <- new Rust-first Kalshi Vessel
+    rust_kalshi_vessel/           <- core Rust workspace
+    python_kalshi_connector/      <- minimal Python bridge only if Kalshi auth/SDK requires it
+    runtime/                      <- ignored runtime state for the new vessel
+    tests/                        <- Rust/Python integration and replay tests
+  kalshi_legacy_python_desk/      <- temporary archived old desk after extraction, then delete
+  polymarket_desk/                <- no execution build now; signal-only research may live under agents/
+  UI/                             <- later passive scoreboard only
+```
+
+### Why This Rebuild Exists
+
+1. The current desk can connect and paper-trade, but the code accumulated too many patched eras: manual REPL stance, disabled autotrade stance, patient-limit experiments, P0 repairs, and legacy runtime database assumptions.
+2. The current bottleneck is not one bug. It is that the vessel is not continuously running a clean, automatic, evidence-logged decision loop every 15 minutes.
+3. Rust is a better core for a small, always-on trading process: strict types, fast hot-path data handling, predictable state machines, and safer concurrency.
+4. Python may still be needed for Kalshi auth/client compatibility, model experimentation, or SDK gaps. Keep Python as a narrow connector or research sidecar, not the vessel brain.
+5. Polymarket is valuable as a prediction and sentiment source. It is not the next execution platform.
+
+## Rebuild Plan - Phased Checklist
+
+### Phase 0 — Freeze, Extract, and Protect Evidence
+
+- [ ] Stop treating the current Python desk as the future implementation. It is now reference material and a source of lessons/tests.
+- [ ] Inventory current runtime databases: `kalshi_desk/runtime/data/arbitr8der.db`, `kalshi_desk/runtime/data/prediction.db`, `kalshi_desk/runtime/paper_wallet.db`, archived sessions, logs, and decision JSONL.
+- [ ] Export a small evidence pack before deleting anything: schema, sample snapshots, sample orders, sample settlements, prediction rows, session summaries, and known failure cases.
+- [ ] Write `agents/kalshi_rust_rebuild_lessons_from_python.md` with the reusable lessons: Kalshi auth, market discovery, rollover timing, orderbook health, paper physics, cooldowns, session archive format, and prior P0 failures.
+- [ ] Move or rename the old implementation to `kalshi_legacy_python_desk/` only after the new Rust scaffold exists and imports/tests no longer depend on the old path.
+- [ ] Delete old runtime databases only after the evidence pack and lessons document are committed.
+- [ ] Do not delete `.env`, credentials, `agents/`, research files, or session archives until a human-readable export exists.
+
+### Phase 1 — Rust Workspace Skeleton
+
+- [ ] Create a Rust workspace under `kalshi_desk/rust_kalshi_vessel/`.
+- [ ] Define crates/modules for:
+  - `vessel_state_and_runtime_control`
+  - `kalshi_market_discovery_and_orderbook`
+  - `auxiliary_stream_ingestion`
+  - `hot_snapshot_state_store`
+  - `technical_analysis_feature_engine`
+  - `strategy_signal_scoring_engine`
+  - `paper_execution_and_accounting`
+  - `risk_limits_and_order_gates`
+  - `database_writer_and_replay`
+  - `operator_cli_and_run_commands`
+- [ ] Add Rust formatting, linting, test commands, and one smoke test before porting behavior.
+- [ ] Keep file and variable names long and self-explanatory for AI operators.
+
+### Phase 2 — New Database Design
+
+- [ ] Choose the first database target: SQLite for local single-machine reliability unless a concrete PostgreSQL need appears.
+- [ ] Design append-only tables for:
+  - stream observations with provider timestamps and local receive timestamps
+  - Kalshi market snapshots and orderbook levels
+  - Polymarket signal snapshots
+  - Binance/Coinbase spot ticks and candle windows
+  - technical-analysis features
+  - strategy scores and rejected/pass decisions
+  - order intents, paper fills, settlements, PnL, and risk state
+  - run/session metadata and kill-switch transitions
+- [ ] Store every 15-minute decision, including passes. No silent non-decisions.
+- [ ] Build replay mode from database rows before live PAPER orders are enabled.
+- [ ] Add schema migrations from day one; never hand-edit production database shape.
+
+### Phase 3 — Stream Ingestion and Hot Snapshot
+
+- [ ] Kalshi market discovery for active BTC/ETH 15-minute tickers.
+- [ ] Kalshi orderbook snapshot/delta ingestion with staleness and sequence-health fields.
+- [ ] Binance and Coinbase spot feeds for BTC/ETH price movement, spread, and disagreement.
+- [ ] Polymarket signal ingestion for comparable BTC/ETH markets or broader crypto direction markets. Use as features only.
+- [ ] CoinGecko slow-context ingestion for larger market context only.
+- [ ] One compact `HotSnapshot` object containing all decision inputs, data ages, stream health, and a monotonic version.
+- [ ] Refuse to trade when Kalshi book health is stale, empty, crossed, or sequence-broken.
+
+### Phase 4 — Technical Analysis and Pattern Features
+
+- [ ] Build rolling candles from spot streams: 1s/5s/15s/1m/15m where useful.
+- [ ] Add technical indicators: RSI, ATR, Bollinger Bands, realized volatility, VWAP, SMA/EMA slopes, distance-to-strike, candle body/wick ratios.
+- [ ] Add candlestick pattern features: engulfing, hammer/inverted hammer, doji, pin bar, momentum continuation, rejection wick, volatility compression/breakout.
+- [ ] Record whether each pattern helped or hurt in the next 15-minute settlement.
+- [ ] Avoid magic chart-pattern confidence. Patterns are features, not proof.
+
+### Phase 5 — Strategy Engine and Autotrading
+
+- [ ] Start with PAPER-only automatic strategy execution.
+- [ ] Strategy must output: asset, side, limit price, max contracts, confidence, expected value, data snapshot version, and reasons.
+- [ ] Strategy must support pass decisions when edge is too thin.
+- [ ] Initial strategy candidates:
+  - favorite-side near-close edge
+  - patient limit entries around favorable pullbacks
+  - Kalshi book imbalance plus spot momentum
+  - Polymarket sentiment divergence as a directional feature
+  - candlestick reversal/continuation confluence near market rollover
+- [ ] Order gate must check wallet balance, fees, min size, cooldown, max daily loss, max open exposure, stream health, and duplicate-order idempotency.
+- [ ] Every automatic order must be reconstructable from database state and snapshot version.
+
+### Phase 6 — Python Bridge Only If Required
+
+- [ ] Verify whether Kalshi REST/WebSocket auth and order placement can be implemented cleanly in Rust.
+- [ ] If Rust auth is straightforward, keep Kalshi connections fully Rust.
+- [ ] If Python is required, isolate it as a small connector process with a typed local protocol. Rust remains the vessel brain, state machine, strategy gate, database writer, and operator CLI.
+- [ ] Python connector must not own strategy, risk, wallet truth, or database schema.
+
+### Phase 7 — Paper Runs and Deletion Checkpoint
+
+- [ ] Run at least 30 PAPER windows on the new vessel before any ARMED discussion.
+- [ ] Report fee-adjusted PnL, win rate, fill rate, pass rate, average entry price, max drawdown, and feature contribution notes.
+- [ ] Compare new vessel paper results against old archived Python sessions.
+- [ ] Only after the new vessel can ingest, decide, paper-trade, settle, and replay reliably: delete or archive the old Python desk.
+- [ ] Commit the deletion separately with a clear message and a confirmed evidence export path.
+
+### Immediate Next Actions
+
+- [ ] Create `agents/kalshi_rust_rebuild_lessons_from_python.md`.
+- [ ] Export old database schemas and a small sample evidence pack.
+- [ ] Scaffold `kalshi_desk/rust_kalshi_vessel/`.
+- [ ] Draft the new SQLite schema in Rust migrations.
+- [ ] Implement a no-trade stream-health `HotSnapshot` prototype.
+- [ ] Implement replay tests before any live PAPER order loop.
+
+## Historical Note - Alternating Operator Schedule: Plutus & Peritia
+
+**Status:** Superseded by the Rust Kalshi Vessel rebuild. This schedule is retained as prior operating evidence, not the current target. The new target is a single automatic PAPER strategy loop for Kalshi BTC/ETH 15-minute markets, with Polymarket as signal input only.
 
 **Vessel State:** Remains `Full_Forward` for the entire 07:29 - 08:30 PDT window. Do not force stop between operator hand-offs.
 
@@ -23,21 +162,24 @@
 
 ---
 
-## Two-Desk Target — Kalshi and Polymarket
+## Superseded Target - Two-Desk Kalshi and Polymarket
 
-- Objective: make the trading studio profitable enough to fund stable cloud operation with capacity for trading processes and AI operation/oversight.
-- No monthly cloud budget is set. Connectivity and operating availability are currently unstable.
-- Polymarket is live and the portfolio has cash, per operator report. This backlog entry does not authorize a live order.
-- Target operating model: one AI can operate the Kalshi desk and one AI can operate the Polymarket desk. Compare realized, fee-adjusted PnL per hour after each desk has independent, verified accounting.
-- Keep credentials, streams, orders, positions, runtime data, logs, and PnL isolated by platform.
+**Status:** Superseded 2026-08-10. Do not build Polymarket trading, wallet, order, position, or PnL systems now.
+
+Current policy:
+
+- Objective remains profit, but first through a Kalshi-only BTC/ETH 15-minute automatic PAPER vessel.
+- Polymarket is a prediction/sentiment/orderbook signal provider for Kalshi decisions, not an execution target.
+- Keep any existing Polymarket credentials, portfolio state, or research isolated. Do not use them for orders.
+- Do not compare Kalshi-vs-Polymarket desk PnL until a later explicit operator directive revives a Polymarket execution desk.
 
 Target file layout:
 
 ```
 ARBITR8DER/
   agents/                   <- shared AI context, plans, and operator docs
-  kalshi_desk/                   <- move the current Trading Studio code here
-  polymarket/               <- blank platform root; build separately
+  kalshi_desk/              <- Rust-first Kalshi Vessel
+  polymarket_desk/          <- no trading build now; signal-only research/reference if needed
   UI/                       <- shared user-interface work
 ```
 
@@ -47,8 +189,8 @@ Tasks:
 - [x] Move the current Trading Studio code into root-level `kalshi_desk/` without changing behavior.
 - [x] Update imports, launchers, tests, runtime paths, and documentation to the Kalshi location; run the full test suite.
 - [x] Create an otherwise blank root-level `polymarket/` directory. Do not copy Kalshi execution code or runtime data into it.
-- [ ] Create a root-level `UI/` directory only when UI work begins. Keep it separate from both execution desks.
-- [ ] Define separate desk-level accounting and a realized, fee-adjusted PnL-per-hour comparison before any competition between AI operators.
+- [ ] Create a root-level `UI/` directory only when UI work begins. Keep it separate from execution code.
+- [ ] Revisit Polymarket execution only after the Rust Kalshi vessel has 30+ PAPER windows with replayable accounting.
 
 ## Codex Static Audit — 2026-08-08 22:51–22:55 PDT (for Antigravity)
 

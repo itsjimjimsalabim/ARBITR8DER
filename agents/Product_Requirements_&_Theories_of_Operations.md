@@ -6,6 +6,8 @@ Trading studio to be operated by different AI's until basic bots are developed b
 
 ## Core Operating Philosophy: High-Speed AI-First Architecture
 
+**2026-08-10 strategic rewrite:** Build a fresh Rust-first Kalshi Vessel for BTC/ETH 15-minute markets. Autotrading is allowed again in PAPER mode after explicit run start, stream-health checks, risk gates, and database journaling. Polymarket is not an execution desk now; it is an auxiliary signal stream for Kalshi decisions. No ARMED live order is authorized by this document.
+
 1. **Built Strictly for AI Agent Operation**: The trading studio is engineered for AI agent usability, execution speed, and token efficiency—not human visual UI or terminal eye-candy.
 2. **No UI Code in Trading Studio (Yet)**: No visual UI components, web dashboards, or elaborate decorative terminal graphics belong inside the core trading studio codebase (`kalshi_desk/`). UI is lowest priority and will remain completely separate.
 3. **Compact Text & Data Table Outputs**: All system outputs, status reports, and prediction summaries must be streamlined into fast, compact plain-text or structured data tables tailored for instant parsing and minimal context consumption by AI models.
@@ -106,7 +108,7 @@ Zero latency is not real, so we log it: provider time -> recieved time -> hot sn
 
 One AI at a time to perform trades thru respective CLI app (Codex, OpenCode, antigravity, anyone else)
 
-Main idea is an AI we can talk to that sees the same fresh datas and can make/adjust its strategy during one run, not old hardcoded bots trying to do everything forever. AI gets read-only datas commands and has to record the snapshot/version it saw before it does anything. Trading commands stay separate and ARMED stays hard blocked unless explicitly armed.
+Main idea after the 2026-08-10 rewrite is a Rust-first Kalshi Vessel that can automatically PAPER trade from deterministic strategy code. The system must record the snapshot/version it saw before every action, including pass decisions. ARMED stays hard blocked unless explicitly armed later.
 
 They each have to keep a trading log, a journal of what they saw, what they thought was going to happen and why, versus what actually happened and why, and their next strategy tweaks
 
@@ -139,7 +141,7 @@ Full_Forward - THE KILLSWITCH. The vessel state being Full_Forward is itself the
   `opportunities` — see what edges exist across the active universe
   `journal <text>` — log reasoning so future AIs see the thought process
 
-No automated tick loop evaluates or fires trades. The code does not decide. It only executes the AI's expressed intent, with latency simulation, price-drift checks, fee accounting, and journaling as guardrails. The AI is the trader. Full_Forward is the state that makes that legal.
+Historical manual-operator stance, superseded for the new PAPER vessel: the old system said no automated tick loop evaluates or fires trades. The new Rust Vessel may evaluate and fire PAPER trades automatically after explicit run start, with stream-health checks, risk gates, fee accounting, snapshot-version journaling, and replayable database records. Full_Forward remains the state that makes trading legal; ARMED live mode still requires a later explicit directive.
 
 ### 5.2 PAPER Wallet and ARMED Wallet
 

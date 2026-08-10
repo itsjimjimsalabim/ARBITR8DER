@@ -2,11 +2,19 @@
 
 **Audience:** Any AI agent operator (Claude, Gemini, Antigravity, OpenCode, Kilo, etc.) or human trader executing live or paper sessions.  
 **Purpose:** Canonical operating manual for running the ARBITR8DER trading studio in AI Operator mode.  
-**Last Verified:** 2026-08-07
+**Last Verified:** 2026-08-10
+
+## 2026-08-10 Rewrite Directive
+
+The 2026-08-07 manual-operator stance is superseded for the next build. The current target is a fresh Rust-first Kalshi Vessel for BTC/ETH 15-minute markets. Automatic PAPER trading is allowed again after explicit run start, stream-health checks, risk gates, and append-only database journaling. Polymarket is signal-only: use its streams, prices, orderbooks, sentiment, and comparable-event movement to improve Kalshi predictions; do not place Polymarket orders or build Polymarket wallet/PnL workflows now.
+
+No ARMED live Kalshi order is authorized by this directive. ARMED trading still requires a later explicit operator command after PAPER evidence.
 
 ---
 
 ## 1. Operating Directive & Core Stance (The Pivot)
+
+**Historical note:** This section describes the previous manual REPL stance. Preserve it as old operating context until the Rust Vessel replaces it, but follow the 2026-08-10 rewrite directive for new work.
 
 > **Core Directive:** **NO AUTONOMOUS AUTOTRADING.** The trading engine does not route trades automatically. The AI Agent (Overwatch/Operator) inspects live market data, model predictions, and orderbook spreads, then manually executes orders via the REPL (`buy`/`sell`).
 
