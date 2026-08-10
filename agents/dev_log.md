@@ -1,5 +1,108 @@
 # ARBITR8DER Development Log
 
+## 2026-08-10: Peritia Trading Hour + P0 Bug Fixes (07:45–08:30 PDT)
+
+### Sessions Run
+
+**Operator:** Peritia (Antigravity / this instance)
+**Competitor:** Plutus (OpenClaude / second CLI window)
+**Mode:** PAPER, kalshi_desk 0.1.0, dual-leg strategy
+
+| Window | Operator | Contracts | Markets | Candles | Outcomes | Fills | PnL |
+|--------|----------|-----------|---------|---------|----------|-------|-----|
+| 07:29–07:45 | Plutus | — | KXBTC15M / KXETH15M | — | — | 0 | $0.00 |
+| 07:45–08:00 | **Peritia S1** | 0 placed | KXBTC15M-26AUG101045-45 / KXETH15M-26AUG101045-45 | 7,100 | 133 BTC + 133 ETH | 0 | $0.00 |
+| 08:00–08:15 | Plutus | — | — | — | — | 0 | $0.00 |
+| 08:15–08:30 | **Peritia S2** | 0 placed | KXBTC15M-26AUG101115-15 / KXETH15M-26AUG101115-15 | 7,100 | 133 BTC + 133 ETH | 0 | $0.00 |
+
+**Wallet:** Preserved at $17.52 — $0 capital loss across all windows.
+
+**Net session PnL:** $0.00 (all patient limit orders at 48¢ expired without fill — market midpoints did not cross 48¢ threshold during either Peritia window).
+
+### Stream Health (both sessions)
+- ✅ Kalshi REST + WS: 200 OK, orderbook deltas streaming
+- ✅ Coinbase WS: Connected, live BTC/ETH spot ticks
+- ✅ Binance US REST: Fallback polling working (Binance.com 451 geo-blocked from WSL — expected)
+- ✅ CoinGecko: Macro data polling
+- ⚠️ Polymarket: `Found 0 BTC markets` — sentiment leg returning nothing (recurring, likely tag filter miss)
+- ⚠️ Scoring engine: `float() argument must be a string or real number, not 'NoneType'` — ETH midpoint NoneType during scoring. Observed in both sessions. Not yet verified as a true regression (single-session evidence — do not fix until it reproduces across two sessions per protocol).
+
+### Observations
+1. **48¢ patient limit strategy is capital-preserving but not filling.** BTC/ETH 15-min markets are trading above 50¢ midpoint consistently during this hour — NO side is overpriced relative to our threshold. Zero fills = zero losses, but also zero edge capture.
+2. **Orderbook structure:** BTC had 3 YES vs 99 NO levels during S2 open — heavy NO side, which supports the NO-bias strategy. Despite this, midpoints stayed above our 48¢ threshold.
+3. **Leg 2 (54¢ high-confidence directional):** No auto-model triggers fired — models either lacked sufficient scored data for retrained confidence or edge threshold wasn't met.
+4. **Session duration:** Both sessions terminated around 14 minutes (45-second default), well within the 15-minute window. The `run_ai_trading_session.py` script uses a 45-second default `duration_seconds` — actual REPL would run the full window via `arbitr8der forward start`.
+
+### P0 Fixes Committed (commit c1135b1, same session)
+
+**P0-A: `arbitr8der status` was killing live sessions**
+- Root cause: `VesselStateMachine.__init__` always called `_load_and_force_stop()` → `_persist()`, overwriting the shared `vessel_state.json` on disk. Any `arbitr8der status` call from a second terminal would force `Full_Stop` on a running REPL.
+- Fix: Added `read_only=True` parameter. `status` CLI command now uses `VesselStateMachine(read_only=True)` → calls `_load_state_for_display()` (reads JSON, never writes). Added `read_state_from_disk()` classmethod for zero-side-effect reads. Added guard in `_persist()` to error-log and return early if called on a read-only instance.
+- Verified: `arbitr8der status` now shows live state (`battery`, with active lease owner) without corrupting the file. No more "Vessel forced to Full_Stop" spam from status calls.
+
+**P0-D: `sell` fabricated $1.00 or $0.00 from midpoint > 50**
+- Root cause: `handle_sell_command` evaluated `midpoint_cents > 50` as a binary outcome and called `settle_order(order_id, 1 or 0)`, crediting full $1.00 or $0.00 per contract regardless of actual executable price.
+- Fix: Replaced with real close-at-bid model:
+  - YES position: close at `max(0, mid − 0.5¢)`, minus 7% Kalshi taker fee
+  - NO position: close at `max(0, (100 − mid) − 0.5¢)`, minus 7% Kalshi taker fee
+  - Blocks close entirely if no live midpoint available (prevents phantom wins on stale data)
+- `test_repl_sell_with_position` updated: injects mock orchestrator with 52¢ midpoint, asserts `CLOSED` and `PnL` (not the old `SETTLED`).
+
+**P0-B (lease atomicity) and P0-C (pending fill evaluation):** Confirmed already fixed in kalshi_desk via code audit — `fcntl LOCK_EX | LOCK_NB` in `stream_provider_runtime_lease_file_lock.py`, and `update_pending_orders()` wired into `IngestionOrchestrator._on_snapshot_update()`. No code changes required.
+
+### Tests
+- 3/3 targeted tests pass: `test_vessel_state_machine.py`, `test_phase1_complete.py`, `test_repl_sell_with_position`
+- Full offline suite not re-run (time-constrained during trading hour — run before next ARMED consideration)
+
+### Next Steps
+1. Run full offline test suite (`python3 -m pytest kalshi_desk/tests/ -m "not network" -q`) to verify no regressions from P0 fixes.
+2. Investigate Polymarket 0-BTC-markets issue — likely the `tag=crypto` filter returning nothing; may need to switch to `tag_slug` or search by question text.
+3. Fix the ETH scoring NoneType error once it reproduces a second time (one observed instance, not yet verified as a regression).
+4. Consider raising the `run_ai_trading_session.py` `duration_seconds` default from 45s to 870s (14.5 min) so script-mode sessions cover the full 15-minute window.
+5. P1 — NO-side risk accounting still uses 50¢ fallback in some paths; verify and fix before ARMED mode.
+
+---
+
+
+
+## 2026-08-10: Prediction Market Bots — Research Reference (Paulie)
+
+### What Was Done
+Created `agents/prediction_market_bots.md` — evidence-first research reference on existing prediction-market trading bots/systems/SDKs and whether any claim consistent safe profits. Maps findings onto the Kalshi 15-min BTC/ETH desk and the planned Rust `polymarket_desk`. Read-only; no code, no tests, no vessel/lease/state changes (Plutus live session untouched).
+
+### Key Findings (verified live 2026-08-10)
+- **No public repo shows audited live profit.** Highest-star "bots" are SEO/marketing; claimed P&L is paper/simulation (e.g. `suislanchez` weather bot "$1.8k" = paper; `HarrierOnChain` managed service = paper-mode until custody+audit).
+- **GWU CER WP 2026-001 "Makers and Takers"** (Bürgi/Deng/Whelan): 46,282 contracts / 313,972 prices, 2021→Apr 2025. Kalshi favorite–longshot bias: ≤10¢ contracts lose >60%; >70¢ contracts earn statistically significant small positive post-fee returns; overall avg return ≈ −20%; Makers beat Takers. PDF extracted via pypdf.
+- **SSRN 6905683 (Krause, Jun 2026):** persistent Kalshi↔Polymarket arbitrage (p<.001), max single-day 24.07% (legislative) / 6.35% (monetary); structural barriers prevent elimination.
+- **SDK notes:** Polymarket `py-clob-client` is archived → use unified `Polymarket/py-sdk`; CLOB-v2 clients incl. Rust `rs-clob-client-v2`. Kalshi treats OpenAPI/AsyncAPI yaml as source of truth; FIX available for low-latency order entry. Fastest Rust client: `floor-licker/polyfill-rs` (4.2× faster than official Python client).
+
+### Status
+Doc written and logged. Not committed (not requested). Suggested next: mine `Jon-Becker/prediction-market-analysis` dataset for Kalshi 15-min backtesting; prototype cross-venue basket-cost arb scan (monitor-only) using the Krause thesis.
+
+---
+
+## 2026-08-10: Paulie (opencode / big-pickle) Onboarding — Context Verified & Refreshed
+
+### What Was Done
+Ran the onboarding workflow (`agents/onboarding_workflow.md`) without running tests. Plutus was mid-trading-session (07:28–07:30 PDT orchestrator PIDs active), so all checks were read-only; no vessel/lease/status mutations were performed.
+
+### Verified On Disk
+- Pre-flight clean: `main` on `github.com/itsjimjimsalabim/ARBITR8DER.git`, worktree clean, in sync with origin.
+- `arbitr8der version` → `arbitr8der 0.1.0` (via `kalshi_desk/.venv/bin/arbitr8der`).
+- Read-order docs 1–12 read (onboarding, agents, PR&ToO, todo, dev_log, build plan, prediction plan, WS debugging ref, operating workflow, overwatch, github_connectivity, kalshi_desk/readme + pyproject).
+- `.env` shape confirmed (all expected keys set, values not printed). Kalshi key present at `kalshi_desk/streams/kalshi_private.pem`.
+- Active live session confirmed (4 orchestrator python processes, started 07:28–07:30 PDT); left untouched.
+
+### Doc-Drift Fixes (stale references corrected)
+- `agents/kalshi_desk_operating_workflow.md` and `agents/kalshi_desk_build_plan.md` **do not exist on disk**. Canonical files are `agents/trading_studio_operating_workflow.md` and `agents/trading_studio_build_plan.md`. Fixed references in `agents/agents.md`, `agents/onboarding_workflow.md`, `agents/todo.md`.
+- On-disk desk dirs are `kalshi_desk/` and `polymarket_desk/` (docs alternate between `kalshi/` / `polymarket/`).
+- CBM graph was stale (pointed at deleted `trading_studio/arbitr8der_package/`). Re-indexed fresh as project `mnt-c-Users-itsji-ARBITR8DER` (3165 nodes / 10827 edges) → now resolves `kalshi_desk/kalshi_desk_package/...` correctly. Old index projects `ARBITR8DER` and `arbitr8der` remain but are stale.
+
+### Status
+Onboarded and context updated. No tests run (per operator). No code changes. No commit made (not requested). Standing by for tasking; will not collide with the active Plutus session (vessel remains operator-owned).
+
+---
+
 ## 2026-08-09: Two-Desk Migration Complete (Antigravity)
 
 ### What Was Done
