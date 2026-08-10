@@ -63,7 +63,7 @@ Do NOT trust.
 - **The human is not a developer.** Paths, commands, and configurations that "should work" frequently don't. The human cannot debug this. You must.
 
 Read these before making architecture or trading decisions:
-- `agents/kalshi_desk_operating_workflow.md` (Canonical Operating Manual for AI operators)
+- `agents/trading_studio_operating_workflow.md` (Canonical Operating Manual for AI operators; on-disk name — `kalshi_desk_operating_workflow.md` does NOT exist)
 - `agents/Product_Requirements_&_Theories_of_Operations.md`
 - `agents/todo.md`
 - `agents/dev_log.md`
@@ -80,7 +80,7 @@ All trading studio code, configs, launchers, tests, and documentation live here.
 ARBITR8DER/
   agents/                 <- Per-agent desks + this file (agents.md = one brain)
     agents.md             <- THIS FILE — the single source of truth for all agents
-    kalshi_desk_operating_workflow.md <- CANONICAL OPERATING MANUAL for AI operators
+    trading_studio_operating_workflow.md <- CANONICAL OPERATING MANUAL for AI operators
     todo.md               <- never-ending current backlog
     Product_Requirements_&_Theories_of_Operations.md <- product requirements + operating theory
     dev_log.md            <- current development log

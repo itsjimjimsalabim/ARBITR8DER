@@ -1,6 +1,6 @@
 # ARBITR8DER Active Todo
 
-**Canonical plan:** `agents/kalshi_desk_build_plan.md`
+**Canonical plan:** `agents/trading_studio_build_plan.md` (on-disk name; `kalshi_desk_build_plan.md` no longer exists)
 **Onboarding workflow:** `agents/onboarding_workflow.md` (read this first if new)
 **Current implementation state:** Phase 8 — Prediction System (8a-8l complete, retraining loop closed, auto-trader wired)
 

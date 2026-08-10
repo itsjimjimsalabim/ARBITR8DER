@@ -2,7 +2,7 @@
 
 **Audience:** Any AI agent (Claude, OpenCode, Codex, Gemini, Kilo, Antigravity, etc.) or human opening this repo for the first time.
 **Purpose:** A single, accurate, on-disk-verified map of the repo and the order to read it in. Use this instead of trusting path references in older docs — those may lie.
-**Last verified:** 2026-08-02
+**Last verified:** 2026-08-10
 
 ---
 
@@ -15,10 +15,13 @@ git status --short     # know what is dirty/deleted before you touch anything
 ls -la                 # confirm layout matches §1 below
 ```
 
-Current expected worktree state (verified 2026-08-09):
+Current expected worktree state (verified 2026-08-10 by Paulie / opencode big-pickle):
 
-- Branch `main`, tracking `origin/main`, **in sync with origin** (the old PAT-in-history push block was resolved by history pruning; you should not see "commits ahead").
-- Two deletions in the worktree that are intentional and can be left alone: `CLAUDE.md` and `opencode.json`. Neither is needed — `agents/agents.md` is the agent pointer and `opencode` uses its own config.
+- Branch `main`, tracking `origin/main`, **in sync with origin**. Worktree clean (no deletions pending).
+- Two intentional deletions noted in earlier docs (`CLAUDE.md`, `opencode.json`) are now committed/resolved — `git status` shows clean.
+- **Doc-drift fixed this pass:** the canonical files are `agents/trading_studio_operating_workflow.md` and `agents/trading_studio_build_plan.md`. The names `kalshi_desk_operating_workflow.md` / `kalshi_desk_build_plan.md` do NOT exist on disk.
+- On-disk desk dirs are `kalshi_desk/` and `polymarket_desk/` (older docs alternate between `kalshi/` and `polymarket/` — disk wins).
+- CBM (codebase-memory-mcp) graph re-indexed fresh (2026-08-10) under project `mnt-c-Users-itsji-ARBITR8DER`; older index names `ARBITR8DER` (root) and `arbitr8der` (deleted `trading_studio/`) are stale.
 
 If any of the above surprises you, fix the environment before touching code. Prior agents lie about paths. OneDrive sync, deleted folders, and stale configs are common. Verify, don't trust.
 
@@ -44,7 +47,7 @@ ARBITR8DER/                                  <- repo root, canonical home
 │   ├── dev_log.md                           <- development log / history
 │   ├── Product_Requirements_&_Theories_of_Operations.md
 │   ├── overwatch_workflow.md                <- AI trading-session playbook
-│   ├── kalshi_desk_build_plan.md         <- how the studio is intended to be built
+│   ├── trading_studio_build_plan.md      <- how the studio is intended to be built (on-disk name; kalshi_desk_build_plan.md is gone)
 │   ├── prediction_system_plan.md            <- Phase 8 prediction design notes
 │   ├── kalshi_websocket_debugging_reference.md <- Kalshi WS auth gotchas
 │   ├── github_connectivity.md               <- git/gh/SSH notes
@@ -93,10 +96,10 @@ Read in this order. Each file is short and assumes the previous. If a file in th
 | 3 | `agents/Product_Requirements_&_Theories_of_Operations.md` | What we are building and why. Vision, strategies, technical standards, theories. |
 | 4 | `agents/todo.md` | Current backlog and phase status. Tells you what's done vs next. |
 | 5 | `agents/dev_log.md` | What has been built, what broke, what was fixed. Real history — read the newest entry first. |
-| 6 | `agents/kalshi_desk_build_plan.md` | The plan for how the studio is built. Read before proposing structure changes. |
+| 6 | `agents/trading_studio_build_plan.md` | The plan for how the studio is built. Read before proposing structure changes. |
 | 7 | `agents/prediction_system_plan.md` | Design notes for the Phase 8 prediction pipeline (features, models, scoring). |
 | 8 | `agents/kalshi_websocket_debugging_reference.md` | Kalshi WS auth gotchas (RSA-PSS salt length, subscribe format). Read before touching WS code. |
-| 9 | `agents/kalshi_desk_operating_workflow.md` | **Canonical Operating Manual** — Live REPL playbook, 15-min cadence, and patient limit rules. |
+| 9 | `agents/trading_studio_operating_workflow.md` | **Canonical Operating Manual** — Live REPL playbook, 15-min cadence, and patient limit rules. |
 | 10 | `agents/overwatch_workflow.md` | Legacy Overwatch workflow reference. |
 | 11 | `agents/github_connectivity.md` | How to push/pull/PR. HTTPS via `gh` is the working path. |
 | 11 | `kalshi_desk/readme.md` | "You are here" map of the package. |
