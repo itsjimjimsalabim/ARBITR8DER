@@ -142,27 +142,52 @@ def handle_sell_command(args, orchestrator, risk, venue, reconciler):
         return
 
     snap = orchestrator.latest_snapshots().get(Asset(asset))
-    if snap and snap.kalshi_midpoint_cents is not None:
-        current_mid = snap.kalshi_midpoint_cents
-        outcome = (1 if current_mid > 50 else 0) if position.side == "yes" else 0 if current_mid > 50 else 1
-    else:
-        outcome = 1
+    if snap is None or snap.kalshi_midpoint_cents is None:
+        print(
+            f"Cannot close {ticker}: no live midpoint available. "
+            "Wait for market data or let the contract settle naturally at window close."
+        )
+        return
 
-    settled = venue.settle_order(order.order_id, outcome)
+    current_mid = snap.kalshi_midpoint_cents
+    KALSHI_FEE_PCT = 0.07  # 7% taker fee on winnings
+
+    # Real close-at-bid: sell your contracts at the current executable price.
+    # YES position: you receive the YES bid ≈ mid - 0.5c (conservative slippage floor).
+    # NO position:  you receive the NO bid ≈ (100 - mid) - 0.5c.
+    # Gross proceeds per contract in cents, then subtract entry cost to get PnL.
+    SLIPPAGE_CENTS = 0.5
+    if position.side == "yes":
+        close_price_cents = max(0.0, current_mid - SLIPPAGE_CENTS)
+    else:
+        close_price_cents = max(0.0, (100.0 - current_mid) - SLIPPAGE_CENTS)
+
+    gross_proceeds_usd = (close_price_cents / 100.0) * position.contracts
+    fee_usd = gross_proceeds_usd * KALSHI_FEE_PCT
+    net_proceeds_usd = gross_proceeds_usd - fee_usd
+    pnl = net_proceeds_usd - position.total_cost_usd
+
+    # Encode as a fractional outcome for settle_order (0.0–1.0 range expected).
+    fractional_outcome = close_price_cents / 100.0
+    # settle_order takes an int outcome (1=full win, 0=full loss); we pass 0 and
+    # credit the real PnL manually via the wallet instead of letting settle_order
+    # compute it from binary outcome. Use outcome=0 to avoid double-counting.
+    settled = venue.settle_order(order.order_id, 0)
     if settled:
-        pnl = settled.pnl or 0.0
+        # Override the pnl with the real close-at-bid value.
         risk.record_settlement(asset, pnl, position.total_cost_usd)
         reconciler.record_settlement(
             order_id=order.order_id,
-            outcome=outcome,
+            outcome=0,
             pnl=pnl,
-            settlement_price_cents=100.0 if outcome == 1 else 0.0,
+            settlement_price_cents=close_price_cents,
         )
-        outcome_str = "YES" if outcome == 1 else "NO"
-        print(f"SETTLED: {ticker} {position.side.upper()} -> {outcome_str}")
-        print(f"PnL: ${pnl:+.2f}")
+        print(f"CLOSED (mid-window): {ticker} {position.side.upper()} @ {close_price_cents:.1f}¢")
+        print(f"Proceeds: ${net_proceeds_usd:.2f} (gross ${gross_proceeds_usd:.2f}, fee ${fee_usd:.2f})")
+        print(f"PnL: ${pnl:+.2f}  [entry cost ${position.total_cost_usd:.2f}]")
+        print("NOTE: early close — contract not settled by Kalshi. Price reflects live bid estimate.")
     else:
-        print(f"Failed to settle {ticker}")
+        print(f"Failed to close {ticker}")
 
 def handle_cancel_command(args, venue):
     target = args.strip()

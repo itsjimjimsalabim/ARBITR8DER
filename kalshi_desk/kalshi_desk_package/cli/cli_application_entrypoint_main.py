@@ -51,12 +51,14 @@ def version() -> None:
 
 @app.command()
 def status(json_output: bool = typer.Option(False, "--json", help="Output as JSON")) -> None:
-    """Show vessel state, mode, and connections."""
+    """Show vessel state, mode, and connections. Read-only — never touches live session state."""
     from kalshi_desk_package.config.cwd_independent_path_resolver import LEASE_FILE_PATH
     from kalshi_desk_package.config.stream_provider_runtime_lease_file_lock import RuntimeLease
 
     settings = load_settings()
-    machine = VesselStateMachine()
+    # read_only=True: loads state for display only, never persists Full_Stop,
+    # never corrupts the state file owned by a running REPL/orchestrator.
+    machine = VesselStateMachine(read_only=True)
     state_info = machine.get_state()
     lease = RuntimeLease(LEASE_FILE_PATH)
     lease_owner = lease.current_owner()

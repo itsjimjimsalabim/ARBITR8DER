@@ -592,8 +592,11 @@ class TestREPLPhase7Integration:
         assert "No open position" in captured.out
 
     def test_repl_sell_with_position(self, capsys: pytest.CaptureFixture[str]) -> None:
+        from unittest.mock import MagicMock
+
         from kalshi_desk_package.cli.interactive_trading_repl_loop import TradingREPL
         from kalshi_desk_package.core.vessel_state_machine import VesselState
+        from kalshi_desk_package.data_contracts.event_data_models import Asset
 
         repl = TradingREPL()
         repl._machine._current_state = VesselState.FULL_FORWARD
@@ -607,10 +610,18 @@ class TestREPLPhase7Integration:
         assert len(positions) == 1
         ticker = positions[0].ticker
 
-        # Sell
+        # Inject a mock orchestrator with a live midpoint so sell can compute close price.
+        mock_snap = MagicMock()
+        mock_snap.kalshi_midpoint_cents = 52.0
+        mock_orchestrator = MagicMock()
+        mock_orchestrator.latest_snapshots.return_value = {Asset("BTC"): mock_snap}
+        repl._orchestrator = mock_orchestrator
+
+        # Sell — should close at real bid price, not fabricate binary outcome
         repl._cmd_sell(f"BTC {ticker}")
         captured = capsys.readouterr()
-        assert "SETTLED" in captured.out
+        assert "CLOSED" in captured.out
+        assert "PnL" in captured.out
 
         # Verify position closed
         positions = repl._venue.get_open_positions()

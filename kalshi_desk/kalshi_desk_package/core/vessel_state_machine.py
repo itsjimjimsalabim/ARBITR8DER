@@ -50,17 +50,44 @@ class IllegalTransitionError(Exception):
 class VesselStateMachine:
     """Manages vessel state with persistence and audit trail.
 
-    On every instantiation, state is forced to Full_Stop regardless of
-    what was persisted. The operator must explicitly re-arm.
+    On every instantiation with read_only=False (default), state is forced
+    to Full_Stop and persisted — the safe default for a new session owner.
+
+    Use read_only=True for inspection-only callers (e.g. ``arbitr8der status``)
+    that must NEVER overwrite the state of a running session. In read_only mode
+    the state file is loaded for display but _persist() is never called.
+
+    Use the classmethod ``read_state_from_disk()`` for the lightest possible
+    read — no instantiation side-effects at all.
     """
 
-    def __init__(self, state_file: Path | None = None) -> None:
+    def __init__(self, state_file: Path | None = None, read_only: bool = False) -> None:
         ensure_runtime_dirs()
         self._state_file = state_file or VESSEL_STATE_PATH
+        self._read_only = read_only
         self._current_state = VesselState.FULL_STOP
         self._last_activity_ts = time.time()
         self._audit_log: list[dict[str, Any]] = []
-        self._load_and_force_stop()
+        if read_only:
+            self._load_state_for_display()
+        else:
+            self._load_and_force_stop()
+
+    @classmethod
+    def read_state_from_disk(cls, state_file: Path | None = None) -> dict[str, Any]:
+        """Read persisted state from disk with zero side-effects.
+
+        Safe to call from any process at any time — does not instantiate the
+        state machine, does not persist anything, does not force Full_Stop.
+        Returns a dict with 'vessel_state', 'last_activity_ts', 'audit_log'.
+        """
+        path = state_file or VESSEL_STATE_PATH
+        if not path.exists():
+            return {"vessel_state": VesselState.FULL_STOP.value, "last_activity_ts": 0.0, "audit_log": []}
+        try:
+            return json.loads(path.read_text(encoding="utf-8"))
+        except (json.JSONDecodeError, KeyError):
+            return {"vessel_state": VesselState.FULL_STOP.value, "last_activity_ts": 0.0, "audit_log": []}
 
     @property
     def current_state(self) -> VesselState:
@@ -95,7 +122,8 @@ class VesselStateMachine:
         self._record_transition(self._current_state, VesselState.FULL_STOP, reason)
         self._current_state = VesselState.FULL_STOP
         self._last_activity_ts = time.time()
-        self._persist()
+        if not self._read_only:
+            self._persist()
         logger.warning("Vessel forced to Full_Stop: %s", reason)
 
     def _load_and_force_stop(self) -> None:
@@ -110,6 +138,22 @@ class VesselStateMachine:
                 logger.warning("Corrupt vessel state file, starting fresh")
         self._force_stop("startup: forced full stop")
 
+    def _load_state_for_display(self) -> None:
+        """Load persisted state for read-only display. Never calls _persist()."""
+        if self._state_file.exists():
+            try:
+                data = json.loads(self._state_file.read_text(encoding="utf-8"))
+                self._audit_log = data.get("audit_log", [])
+                state_str = data.get("vessel_state", VesselState.FULL_STOP.value)
+                try:
+                    self._current_state = VesselState(state_str)
+                except ValueError:
+                    self._current_state = VesselState.FULL_STOP
+                self._last_activity_ts = data.get("last_activity_ts", time.time())
+                logger.info("Read-only load: vessel_state=%s", self._current_state.value)
+            except (json.JSONDecodeError, KeyError):
+                logger.warning("Corrupt vessel state file, reporting full_stop")
+
     def _is_timed_out(self) -> bool:
         return (time.time() - self._last_activity_ts) > _AUTO_STOP_SECONDS
 
@@ -122,6 +166,9 @@ class VesselStateMachine:
         })
 
     def _persist(self) -> None:
+        if self._read_only:
+            logger.error("BUG: _persist() called on read-only VesselStateMachine — skipping write")
+            return
         data = {
             "vessel_state": self._current_state.value,
             "last_activity_ts": self._last_activity_ts,
