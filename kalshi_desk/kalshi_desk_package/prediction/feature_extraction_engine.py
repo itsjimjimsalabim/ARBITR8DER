@@ -172,8 +172,13 @@ class FeatureExtractionEngine:
         if snapshot:
             self._extract_freshness(features, snapshot)
 
-        logger.info("Extracted %d features for %s (v%d, %.0f%% complete)",
-                     features.feature_count, asset, snapshot_version, features.completeness_pct)
+        logger.info(
+            "Extracted %d features for %s (v%d, %.0f%% complete)",
+            features.feature_count,
+            asset,
+            snapshot_version,
+            features.completeness_pct,
+        )
         return features
 
     def _extract_directions(self, features: PredictionFeatures, candles: list[Any]) -> None:
