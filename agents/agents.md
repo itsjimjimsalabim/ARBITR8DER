@@ -236,6 +236,34 @@ Current verified tools on this laptop:
 | Bun | `bun --version` | `1.3.14` | OpenCode / JS runtime support |
 | Ollama | `ollama --version` | `0.32.3` | local model runtime |
 
+## GitHub Push Procedure
+
+Canonical GitHub auth for this repo is HTTPS through the Windows GitHub CLI. Do not assume WSL SSH works. The observed WSL SSH state has no GitHub private key, and `git@github.com` can fail with `Permission denied (publickey)`.
+
+Use the repo root and verify before pushing:
+
+```bash
+cd /mnt/c/Users/itsji/ARBITR8DER
+git status --short --branch
+git remote -v
+```
+
+If `origin` is SSH, switch it to HTTPS:
+
+```bash
+git remote set-url origin https://github.com/itsjimjimsalabim/ARBITR8DER.git
+```
+
+From WSL, call the Windows GitHub CLI and Windows Git by absolute path when plain `gh` or `cmd.exe` are not on PATH:
+
+```bash
+'/mnt/c/Program Files/GitHub CLI/gh.exe' auth status
+'/mnt/c/Program Files/GitHub CLI/gh.exe' auth setup-git
+'/mnt/c/Program Files/Git/bin/git.exe' push origin main
+```
+
+Expected working auth: `gh auth status` reports logged in to `github.com` as `itsjimjimsalabim`, active account true, and git operations protocol `https`. Never print or commit the token. More detail lives in `agents/github_connectivity.md`.
+
 Installed local Ollama models:
 
 | Model | Size | Role |
