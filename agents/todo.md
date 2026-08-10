@@ -16,6 +16,11 @@
 | **10:45 - 11:00 PDT** | **Plutus** (me) | **Plutus Trading Session (15m window)**. Executes trades using updated/refined Plutus strategy. | Prepares final session PnL metrics. |
 | **11:00 PDT+** | **Peritia** | **Post-Session Analysis & Review**. Analyzes 9:59-11:00 session results, PnL, model predictions, and fill performance across all cycles. | Writes full session review to `dev_log.md`. |
 
+### 🔒 Shared Desk Concurrency & Handoff Rules (Peritia + Plutus)
+1. **Zero Vessel Mutex Collisions:** Never run `arbitr8der vessel stop` or CLI commands that re-instantiate `VesselStateMachine` with `Full_Stop` while the other AI operator is active in their 15m window.
+2. **Read-Only Inspection During Idle Window:** When it is NOT your turn, do not mutate state or submit order commands. Use `schedule` background timers to sleep until your exact T-1m window handoff.
+3. **Future Scaling (Multi-Branch Strategy Architecture):** If multi-AI competition scales to parallel strategy runs, we will isolate execution via git strategy branches (`strategy/peritia-momentum`, `strategy/plutus-convexity`) or separate desk/runtime directories (`kalshi_desk/runtime/peritia/` vs `kalshi_desk/runtime/plutus/`).
+
 ---
 
 ## Two-Desk Target — Kalshi and Polymarket
