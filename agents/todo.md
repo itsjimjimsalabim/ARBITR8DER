@@ -4,6 +4,20 @@
 **Onboarding workflow:** `agents/onboarding_workflow.md` (read this first if new)
 **Current implementation state:** Phase 8 — Prediction System (8a-8l complete, retraining loop closed, auto-trader wired)
 
+## 🕒 Alternating Operator Schedule: Peritia & Plutus (Kalshi 15m Binary Session)
+
+**Vessel State:** Remains `Full_Forward` for the entire 9:59 - 11:00 PDT window. Do not force stop between operator hand-offs.
+
+| Time Window (PDT) | Operator | Action / Strategy | Hand-off Protocol |
+| :--- | :--- | :--- | :--- |
+| **09:59 - 10:15 PDT** | **Peritia** | **Initial Trading Session (15m window)**. Starts session, arms vessel to `Full_Forward`, places patient limit orders for 10:00-10:15 cycle. | Leaves vessel `Full_Forward`. Logs trades/journal. |
+| **10:15 - 10:30 PDT** | **Plutus** (me) | **Plutus Trading Session (15m window)**. Inspects snapshots/predictions, executes Plutus strategy patient limit orders. | Leaves vessel `Full_Forward`. Logs trades/journal. |
+| **10:30 - 10:45 PDT** | **Peritia** | **Peritia Trading Session (15m window)**. Executes trades using updated/refined Peritia strategy. | Leaves vessel `Full_Forward`. Logs trades/journal. |
+| **10:45 - 11:00 PDT** | **Plutus** (me) | **Plutus Trading Session (15m window)**. Executes trades using updated/refined Plutus strategy. | Prepares final session PnL metrics. |
+| **11:00 PDT+** | **Peritia** | **Post-Session Analysis & Review**. Analyzes 9:59-11:00 session results, PnL, model predictions, and fill performance across all cycles. | Writes full session review to `dev_log.md`. |
+
+---
+
 ## Two-Desk Target — Kalshi and Polymarket
 
 - Objective: make the trading studio profitable enough to fund stable cloud operation with capacity for trading processes and AI operation/oversight.
