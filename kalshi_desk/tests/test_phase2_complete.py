@@ -430,7 +430,7 @@ class TestArchiveRetentionPolicy:
 class TestCWDIndependentPaths:
     def test_sqlite_path_is_package_relative(self):
         assert str(SQLITE_DB_PATH).startswith(str(get_package_root()))
-        assert "runtime/data" in str(SQLITE_DB_PATH)
+        assert "runtime" in SQLITE_DB_PATH.parts and "data" in SQLITE_DB_PATH.parts
 
     def test_get_package_root_consistent(self) -> None:
         assert get_package_root().name == "kalshi_desk"

@@ -1,14 +1,54 @@
-import fcntl
 import json
+import os
 import time
 from pathlib import Path
+from typing import TextIO
 
 from kalshi_desk_package.config.cwd_independent_path_resolver import LEASE_FILE_PATH
 from kalshi_desk_package.config.structured_logging_configuration_module import get_logger
 
 logger = get_logger(__name__)
 
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - Windows
+    fcntl = None
+    import msvcrt
+
 _LEASE_TTL_SECONDS = 5 * 60  # 5 minutes
+
+
+def _lock_exclusive_nonblocking(f: TextIO) -> bool:
+    fd = f.fileno()
+    if fcntl is not None:
+        try:
+            fcntl.flock(fd, fcntl.LOCK_EX | fcntl.LOCK_NB)
+            return True
+        except IOError:
+            return False
+    # Windows: msvcrt locks relative to the current file pointer and requires
+    # the locked byte range to exist. Ensure a byte exists and seek to 0.
+    if os.fstat(fd).st_size == 0:
+        f.write("\n")
+        f.flush()
+    f.seek(0)
+    try:
+        msvcrt.locking(fd, msvcrt.LK_NBLCK, 1)
+        return True
+    except OSError:
+        return False
+
+
+def _unlock(f: TextIO) -> None:
+    fd = f.fileno()
+    if fcntl is not None:
+        fcntl.flock(fd, fcntl.LOCK_UN)
+        return
+    try:
+        f.seek(0)
+        msvcrt.locking(fd, msvcrt.LK_UNLCK, 1)
+    except OSError:
+        pass
 
 
 class RuntimeLease:
@@ -27,9 +67,7 @@ class RuntimeLease:
         now = time.time()
         
         with open(self._lease_file, "a+") as f:
-            try:
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except IOError:
+            if not _lock_exclusive_nonblocking(f):
                 logger.warning("Lease file locked by another process — cannot acquire for %s", owner_id)
                 return False
                 
@@ -57,16 +95,14 @@ class RuntimeLease:
                 f.flush()
                 return True
             finally:
-                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+                _unlock(f)
 
     def release(self, owner_id: str) -> bool:
         """Release the lease atomically."""
         if not self._lease_file.exists():
             return False
         with open(self._lease_file, "a+") as f:
-            try:
-                fcntl.flock(f.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
-            except IOError:
+            if not _lock_exclusive_nonblocking(f):
                 return False
             try:
                 f.seek(0)
@@ -81,7 +117,7 @@ class RuntimeLease:
                 logger.info("Lease released by %s", owner_id)
                 return True
             finally:
-                fcntl.flock(f.fileno(), fcntl.LOCK_UN)
+                _unlock(f)
 
     def current_owner(self) -> str | None:
         """Return the current lease owner, or None if expired/absent."""
