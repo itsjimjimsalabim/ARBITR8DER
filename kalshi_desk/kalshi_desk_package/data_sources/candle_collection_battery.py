@@ -89,6 +89,7 @@ class CandleCollectionBattery:
 
         self._state.running = True
         self._state.started_at = time.time()
+        self._state.total_candles_stored = 0
         self._running.set()
 
         logger.info("Starting candle collection battery")
@@ -368,7 +369,6 @@ class CandleCollectionBattery:
 
         except Exception as e:
             logger.debug("Binance poll error for %s: %s", symbol, e)
-
     async def _poll_coinbase(self, client: httpx.AsyncClient, asset: str) -> None:
         """Fetch latest few 1m candles from Coinbase."""
         product_id = self._coinbase_products[asset]

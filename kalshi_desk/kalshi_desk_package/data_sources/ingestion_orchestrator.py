@@ -286,6 +286,7 @@ class IngestionOrchestrator:
         # Start all providers as background tasks
         self._tasks = [
             asyncio.create_task(self._run_kalshi_discovery(), name="kalshi-discovery"),
+            asyncio.create_task(self._run_kalshi_rest_orderbook_poller(), name="kalshi-rest-orderbook"),
             asyncio.create_task(self._binance.connect_and_run(_KALSHI_SYMBOLS), name="binance-ws"),
             asyncio.create_task(self._coinbase.connect_and_run(_COINBASE_PRODUCTS), name="coinbase-ws"),
             asyncio.create_task(self._run_polymarket_poller(), name="polymarket-poll"),
@@ -576,6 +577,49 @@ class IngestionOrchestrator:
 
             # Re-discover every 60 seconds
             await asyncio.sleep(60)
+
+    async def _run_kalshi_rest_orderbook_poller(self) -> None:
+        """Poll Kalshi public REST orderbooks and feed the snapshot merger.
+
+        Fallback source of top-of-book midpoints when the authenticated
+        order-book WebSocket is unavailable (e.g. 401 from a rotated API
+        key). Public REST orderbook endpoints need no auth, so this keeps
+        ``kalshi_midpoint_cents`` populated and lets the auto-trader
+        evaluate edge. Read-only, safe for paper trading.
+        """
+        while self._running:
+            for market in list(self._active_markets):
+                if not self._running:
+                    break
+                try:
+                    book = await self._kalshi_rest.get_orderbook_snapshot(market.ticker)
+                    if book is None:
+                        continue
+                    asset = Asset.BTC if "BTC" in market.ticker.upper() else Asset.ETH
+                    now = datetime.now(UTC)
+                    event = KalshiOrderBookEvent(
+                        provider_event_id=f"kalshi-rest-{uuid.uuid4().hex[:8]}",
+                        provider_ts=now,
+                        receive_ts=now,
+                        source_status=SourceHealthStatus.HEALTHY,
+                        asset=asset,
+                        market_ticker=market.ticker,
+                        yes_bid=book.get("yes_bid"),
+                        yes_ask=book.get("yes_ask"),
+                        no_bid=book.get("no_bid"),
+                        no_ask=book.get("no_ask"),
+                        yes_depth=book.get("yes_levels", []),
+                        no_depth=book.get("no_levels", []),
+                        last_sequence=book.get("last_sequence"),
+                        is_snapshot=True,
+                    )
+                    self._merger.update_kalshi(event)
+                    self._health.record_event(f"kalshi_{asset.value.lower()}")
+                except Exception as exc:
+                    logger.debug("Kalshi REST orderbook poll error for %s: %s", market.ticker, exc)
+
+            # Poll orderbooks every 5 seconds (covers top-of-book freshness)
+            await asyncio.sleep(5)
 
     async def _run_polymarket_poller(self) -> None:
         """Periodically poll Polymarket for sentiment data."""

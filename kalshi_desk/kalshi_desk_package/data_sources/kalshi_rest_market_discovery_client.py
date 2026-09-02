@@ -172,6 +172,80 @@ class KalshiRestMarketDiscoveryClient:
         """Return cached market detail without network call."""
         return self._markets_cache.get(ticker)
 
+    async def get_orderbook_snapshot(
+        self,
+        ticker: str,
+        client: httpx.AsyncClient | None = None,
+    ) -> dict[str, Any] | None:
+        """Fetch the public order book snapshot for a market ticker.
+
+        Uses the unauthenticated REST ``/markets/{ticker}/orderbook``
+        endpoint so top-of-book midpoints remain available even when the
+        authenticated WebSocket stream is unavailable (e.g. 401 on a
+        rotated API key). This is read-only and safe for paper trading.
+
+        Returns a normalized dict with yes/no bids, asks and depth levels,
+        or None on failure.
+        """
+        own_client = client is None
+        if own_client:
+            client = httpx.AsyncClient(timeout=_REQUEST_TIMEOUT)
+
+        try:
+            url = f"{self._markets_url()}/{ticker}/orderbook"
+            response = await client.get(url)
+            if response.status_code == 429:
+                retry_after = float(response.headers.get("Retry-After", "1"))
+                logger.warning("Rate limited fetching orderbook %s, waiting %.1fs", ticker, retry_after)
+                await asyncio.sleep(retry_after)
+                return await self.get_orderbook_snapshot(ticker, client=client)
+            if response.status_code != 200:
+                logger.debug("Orderbook fetch failed for %s: HTTP %d", ticker, response.status_code)
+                return None
+
+            data = response.json().get("orderbook", {})
+            yes_levels: list[tuple[int, float]] = []
+            no_levels: list[tuple[int, float]] = []
+            yes_bid: int | None = None
+            yes_ask: int | None = None
+            no_bid: int | None = None
+            no_ask: int | None = None
+
+            for price_str, qty_str in data.get("yes", []):
+                price_cents = int(round(float(price_str) * 100))
+                qty = float(qty_str)
+                yes_levels.append((price_cents, qty))
+            for price_str, qty_str in data.get("no", []):
+                price_cents = int(round(float(price_str) * 100))
+                qty = float(qty_str)
+                no_levels.append((price_cents, qty))
+
+            # Kalshi NOR orderbook: 'yes' holds YES bids, 'no' holds NO bids.
+            # Implied asks: yes_ask = 100 - no_bid, no_ask = 100 - yes_bid.
+            if yes_levels:
+                yes_bid = max(p for p, _ in yes_levels)
+            if no_levels:
+                no_bid = max(p for p, _ in no_levels)
+            if yes_bid is not None:
+                no_ask = 100 - yes_bid
+            if no_bid is not None:
+                yes_ask = 100 - no_bid
+
+            return {
+                "ticker": ticker,
+                "yes_bid": yes_bid,
+                "yes_ask": yes_ask,
+                "no_bid": no_bid,
+                "no_ask": no_ask,
+                "yes_levels": yes_levels,
+                "no_levels": no_levels,
+                "last_sequence": data.get("seq"),
+                "fetched_at": time.time(),
+            }
+        finally:
+            if own_client:
+                await client.aclose()
+
     @staticmethod
     def _load_private_key(path: str) -> Any:
         """Load RSA private key from PEM file for request signing."""
