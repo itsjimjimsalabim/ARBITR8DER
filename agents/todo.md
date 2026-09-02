@@ -8,6 +8,14 @@
 
 Build a fresh Kalshi-only trading vessel for BTC/ETH 15-minute markets. The new vessel is Rust-first, multi-language only where required, and designed to automatically fire PAPER trades from deterministic strategy code after the operator explicitly starts the run. Polymarket is not a trading desk target. Polymarket streams are decision inputs for better Kalshi predictions and execution timing.
 
+## Session Status - 2026-09-02 (OpenCode on RED-Laptop)
+
+- **Root cause of silent paper-autotrader diagnosed and fixed.** All 130 logged auto-trade decisions during the 2026-09-01 1-hour session were `skip_reason=no_kalshi_midpoint`. The Kalshi order book arrived only via the authenticated WebSocket, which is 401-rejected after the API key rotated.
+- **Fix (pushed `ab5a8b2`):** added a public REST orderbook fallback (`get_orderbook_snapshot` on the discovery client + a 5s `kalshi-rest-orderbook` poller task feeding the snapshot merger) so `kalshi_midpoint_cents` stays populated for paper trading without auth. Added `test_kalshi_rest_orderbook.py`. Full suite now **415 passed, 3 skipped**.
+- **Candle telemetry clarified:** the persistent "9940 candles" was a benign misleading counter (counts upserts incl. replacements, never reset). Polling works live (DB holds contiguous candles through the session's final minute). Reset `total_candles_stored` per session for meaningful telemetry.
+- **Rust toolchain installed:** Rust 1.98.0 stable (cargo/rustc) via winget rustup on RED-Laptop.
+- **Next action:** launch the next 1-hour paper session (4×15m) at the next :59 mark with the REST-orderbook fix live; verify midpoints now flow and the auto-trader can see edge.
+
 ## Session Status - 2026-09-01 (OpenCode on RED-Laptop)
 
 - Repo replaced with `origin/main` (tip `f142383`, 2026-08-10) on `C:\Users\RED-Laptop\GitHub\PaulieStudios\ARBITR8DER`; legacy root trading studio cleared (backed up to `%LOCALAPPDATA%\Temp\opencode\arb8_legacy_removed`).
