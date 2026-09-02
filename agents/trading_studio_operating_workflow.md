@@ -1,8 +1,8 @@
-# ARBITR8DER Trading Studio Operating Workflow
+﻿# ARBITR8DER Trading Studio Operating Workflow
 
 **Audience:** Any AI agent operator (Claude, Gemini, Antigravity, OpenCode, Kilo, etc.) or human trader executing live or paper sessions.  
 **Purpose:** Canonical operating manual for running the ARBITR8DER trading studio in AI Operator mode.  
-**Last Verified:** 2026-08-10
+**Last Verified:** 2026-09-01
 
 ## 2026-08-10 Rewrite Directive
 
@@ -12,7 +12,46 @@ No ARMED live Kalshi order is authorized by this directive. ARMED trading still 
 
 ---
 
-## 1. Operating Directive & Core Stance (The Pivot)
+## 1. One-Hour Paper Session Cadence (Current Operating Mode)
+
+**Supersedes the single 15-minute window playbook below for new work.** Runs are one full hour at a time = four consecutive 15-minute market cycles. Shut the studio down between hours for analysis and upgrades. Never run continuous multi-hour automation.
+
+### Cadence
+
+| Hour slot (start at :59) | 15-min cycles covered | Action |
+|---|---|---|
+| `:59` of hour H | H+1 `:00` | Launch 1-hour paper session (4Ã—15m cycles) |
+| ... | H+1 `:15`, `:30` | Continuous paper autotrade loop |
+| ... | H+1 `:45` (last cycle) | Finish batch |
+| H+1 `:59` | â€” | Shut down; analysis + upgrade window |
+
+- Launch at the **:59 minute mark** so the session is live before the `:00` market rollover.
+- After the 4th cycle ends, stop the studio, review journal/PnL/health, apply upgrades.
+- Next hourly launch re-aligns at the next `:59` mark.
+
+### Execution
+
+```bash
+# In repo: C:\Users\RED-Laptop\GitHub\PaulieStudios\ARBITR8DER
+# Full 1-hour session (4Ã—15m batches, 3600s):
+.\.venv\Scripts\python.exe .\kalshi_desk\scripts\run_ai_trading_session.py   # interactive REPL session runner
+# or launch the REPL directly for the full hour:
+arbitr8der forward start
+```
+
+- Use `--duration`/a `run_ai_trading_session` call with `duration_seconds=3600` for a 1-hour battery session, or run four 900s batches sequentially with a check between batches.
+- Auto-trader fires paper orders only after session start, stream-health checks, risk gates, and DB journaling are online.
+- After session end, `arbitr8der status` must report `full_stop` and a clean lease release before the next launch.
+
+### Safety
+
+- PAPER default, wallet `paper`, trading mode `hold` until armed via `vessel forward`.
+- No live Kalshi order is authorized by this directive. ARMED requires a later explicit operator command.
+- Stale/empty/crossed Kalshi book blocks trading; do not paper-trade on a broken book.
+
+---
+
+## 2. Operating Directive & Core Stance (The Pivot)
 
 **Historical note:** This section describes the previous manual REPL stance. Preserve it as old operating context until the Rust Vessel replaces it, but follow the 2026-08-10 rewrite directive for new work.
 
@@ -30,38 +69,38 @@ No ARMED live Kalshi order is authorized by this directive. ARMED trading still 
 
 ---
 
-## 2. 15-Minute Market Cycle & Timing Cadence
+## 3. 15-Minute Market Cycle & Timing Cadence
 
 15-minute Kalshi binary contracts close at `:00`, `:15`, `:30`, and `:45` of every hour.
 
 ```
-T-3min (e.g. 12:12 PDT)  ──► Launch REPL (`arbitr8der forward start`) & Arm Vessel (`vessel forward`)
-T-2min (e.g. 12:13 PDT)  ──► Orderbook & Candle Battery Warmup (wait 40s)
-T-0min (e.g. 12:15 PDT)  ──► Market Rollover (`markets`, `snapshot`, `predict BTC/ETH`)
-T+1min (e.g. 12:16 PDT)  ──► Patient Limit Order Submission (`buy ASSET SIDE N LIMIT`)
-T+13min (e.g. 12:28 PDT) ──► Pre-Expiration Status Check (`positions`, `snapshot`)
-T+15min (e.g. 12:30 PDT) ──► Market Expiry & Auto-Settlement (`settlement`, `wallet`)
-T+16min (e.g. 12:31 PDT) ──► Clean Exit & Log Archival (`exit`)
+T-3min (e.g. 12:12 PDT)  â”€â”€â–º Launch REPL (`arbitr8der forward start`) & Arm Vessel (`vessel forward`)
+T-2min (e.g. 12:13 PDT)  â”€â”€â–º Orderbook & Candle Battery Warmup (wait 40s)
+T-0min (e.g. 12:15 PDT)  â”€â”€â–º Market Rollover (`markets`, `snapshot`, `predict BTC/ETH`)
+T+1min (e.g. 12:16 PDT)  â”€â”€â–º Patient Limit Order Submission (`buy ASSET SIDE N LIMIT`)
+T+13min (e.g. 12:28 PDT) â”€â”€â–º Pre-Expiration Status Check (`positions`, `snapshot`)
+T+15min (e.g. 12:30 PDT) â”€â”€â–º Market Expiry & Auto-Settlement (`settlement`, `wallet`)
+T+16min (e.g. 12:31 PDT) â”€â”€â–º Clean Exit & Log Archival (`exit`)
 ```
 
 ---
 
-## 3. Patient Limit Order Execution Strategy (Adaptation Protocol)
+## 4. Patient Limit Order Execution Strategy (Adaptation Protocol)
 
 To maintain positive expected value and avoid overpaying for contracts:
 
-1. **Never buy Market NO/YES at > 65¢** unless confidence is $>90\%$. Paying 75¢+ creates a 3:1 negative risk/reward ratio where a single loss wipes out 3 wins.
+1. **Never buy Market NO/YES at > 65Â¢** unless confidence is $>90\%$. Paying 75Â¢+ creates a 3:1 negative risk/reward ratio where a single loss wipes out 3 wins.
 2. **Use Patient Limit Orders (`buy ASSET SIDE N LIMIT_CENTS`):**
-   - Place limit orders at a discount to current midpoints (e.g., target 45¢–50¢ entries).
-   - Example: `buy BTC no 2 48` (Places a limit order for 2 NO contracts at 48¢).
+   - Place limit orders at a discount to current midpoints (e.g., target 45Â¢â€“50Â¢ entries).
+   - Example: `buy BTC no 2 48` (Places a limit order for 2 NO contracts at 48Â¢).
 3. **Execution Advantage:**
    - Limits cost to $\le \$0.96$ per 2-contract trade (vs $\$1.50+$ market orders).
    - Improves Risk/Reward ratio to $\sim 1.1:1$ profit-to-risk.
-   - Amortizes Kalshi transaction fees ($\approx 1.75\text{¢}$ per contract/leg).
+   - Amortizes Kalshi transaction fees ($\approx 1.75\text{Â¢}$ per contract/leg).
 
 ---
 
-## 4. REPL Session Playbook
+## 5. REPL Session Playbook
 
 ### Step 1: Pre-Flight & Launch
 
@@ -123,10 +162,11 @@ arbitr8der [full_forward]> exit
 
 ---
 
-## 5. Supporting Reference Documents
+## 6. Supporting Reference Documents
 
-- [`agents/onboarding_workflow.md`](file:///mnt/c/Users/itsji/ARBITR8DER/agents/onboarding_workflow.md) — Skeptical pre-flight and repo map.
-- [`agents/agents.md`](file:///mnt/c/Users/itsji/ARBITR8DER/agents/agents.md) — Primary directives, tool inventory, and vessel rules.
-- [`agents/todo.md`](file:///mnt/c/Users/itsji/ARBITR8DER/agents/todo.md) — Current implementation backlog and active session log.
-- [`agents/dev_log.md`](file:///mnt/c/Users/itsji/ARBITR8DER/agents/dev_log.md) — Chronological development history and session autopsies.
-- [`agents/overwatch_workflow.md`](file:///mnt/c/Users/itsji/ARBITR8DER/agents/overwatch_workflow.md) — Legacy Overwatch playbook reference.
+- [`agents/onboarding_workflow.md`](file:///mnt/c/Users/itsji/ARBITR8DER/agents/onboarding_workflow.md) â€” Skeptical pre-flight and repo map.
+- [`agents/agents.md`](file:///mnt/c/Users/itsji/ARBITR8DER/agents/agents.md) â€” Primary directives, tool inventory, and vessel rules.
+- [`agents/todo.md`](file:///mnt/c/Users/itsji/ARBITR8DER/agents/todo.md) â€” Current implementation backlog and active session log.
+- [`agents/dev_log.md`](file:///mnt/c/Users/itsji/ARBITR8DER/agents/dev_log.md) â€” Chronological development history and session autopsies.
+- [`agents/overwatch_workflow.md`](file:///mnt/c/Users/itsji/ARBITR8DER/agents/overwatch_workflow.md) â€” Legacy Overwatch playbook reference.
+

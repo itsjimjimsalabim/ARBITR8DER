@@ -8,6 +8,15 @@
 
 Build a fresh Kalshi-only trading vessel for BTC/ETH 15-minute markets. The new vessel is Rust-first, multi-language only where required, and designed to automatically fire PAPER trades from deterministic strategy code after the operator explicitly starts the run. Polymarket is not a trading desk target. Polymarket streams are decision inputs for better Kalshi predictions and execution timing.
 
+## Session Status - 2026-09-01 (OpenCode on RED-Laptop)
+
+- Repo replaced with `origin/main` (tip `f142383`, 2026-08-10) on `C:\Users\RED-Laptop\GitHub\PaulieStudios\ARBITR8DER`; legacy root trading studio cleared (backed up to `%LOCALAPPDATA%\Temp\opencode\arb8_legacy_removed`).
+- Fresh venv `.venv` created; `pip install -e ./kalshi_desk[dev]`; CLI `arbitr8der version/status/snapshot/predict/forward` working. Binance WS geo-blocked (HTTP 451) with REST fallback; Kalshi market discovery + Coinbase + CoinGecko + Polymarket poll OK.
+- Windows port patch committed & pushed: `d7ac7c6 fix(config): make lease file locking cross-platform (fcntl/msvcrt) for Windows`. Full suite: **412 passed, 3 skipped**.
+- Kalshi authenticated endpoints (portfolio balance, orderbook WS auth) return `401 NOT_FOUND` — API key `27b3d8d5-...` not recognized/rotated. Paper runs proceed on $17.00 default paper wallet; Kalshi auth is a P0 for ARMED only. Key is documented in `C:\Users\RED-Laptop\Desktop\keys_manifest.txt`.
+- Operating cadence (dictated): 1-hour paper sessions = 4×15m cycles, aligned start at the :59 mark, full shutdown + analysis between hours. Documented in `agents/trading_studio_operating_workflow.md` §1.
+- Working tree clean; local `.env` + `kalshi_desk/streams/kalshi_private.pem` are gitignored runtime secrets.
+
 ### Operating Position
 
 - **Execution venue:** Kalshi only, BTC and ETH 15-minute binary markets.
