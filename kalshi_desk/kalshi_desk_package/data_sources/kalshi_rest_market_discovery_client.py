@@ -15,6 +15,7 @@ from __future__ import annotations
 import asyncio
 import base64
 import time
+from datetime import datetime
 from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
@@ -78,6 +79,16 @@ class KalshiMarketDetail:
             return self.last_price
         return None
 
+    @property
+    def close_epoch(self) -> float | None:
+        """Epoch seconds of the market close time, or None if unknown."""
+        if not self.close_time:
+            return None
+        try:
+            return datetime.fromisoformat(self.close_time.replace("Z", "+00:00")).timestamp()
+        except Exception:
+            return None
+
     def to_dict(self) -> dict[str, Any]:
         return {
             "ticker": self.ticker,
@@ -122,7 +133,9 @@ class KalshiRestMarketDiscoveryClient:
     async def discover_active_markets(self, client: httpx.AsyncClient | None = None) -> list[KalshiMarketDetail]:
         """Fetch all active BTC/ETH 15-minute markets from Kalshi.
 
-        Returns list of KalshiMarketDetail for matching open/pending markets.
+        Returns list of KalshiMarketDetail for matching open/pending markets,
+        ordered by nearness to expiry so the nearest (currently-live) market
+        settles first and gets picked as the trading target.
         """
         own_client = client is None
         if own_client:
@@ -134,10 +147,18 @@ class KalshiRestMarketDiscoveryClient:
                 m for m in markets
                 if m.is_active and self._is_btc_or_eth_15m(m.ticker)
             ]
+            # Prefer the market nearest to expiry: that is the one with a live
+            # order book and where edge trading is actionable. Far-future
+            # rolling markets exist with an empty/dormant book.
+            btc_eth_markets.sort(key=lambda m: m.close_epoch if m.close_epoch is not None else float("inf"))
             for m in btc_eth_markets:
                 self._markets_cache[m.ticker] = m
             self._last_discovery_ts = time.time()
-            logger.info("Discovered %d active BTC/ETH 15m markets", len(btc_eth_markets))
+            logger.info(
+                "Discovered %d active BTC/ETH 15m markets (nearest: %s)",
+                len(btc_eth_markets),
+                btc_eth_markets[0].ticker if btc_eth_markets else "none",
+            )
             return btc_eth_markets
         finally:
             if own_client:

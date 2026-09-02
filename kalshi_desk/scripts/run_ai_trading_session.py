@@ -179,10 +179,16 @@ async def run_trading_session(duration_seconds: int = 45) -> None:
                 )
                 print(pos_info)
 
-        # Soak for remaining duration
+        # Soak for remaining duration, printing auto-trader status periodically
         remaining = max(1, duration_seconds - 15)
         print(f"\nRunning active session for {remaining} seconds...")
-        await asyncio.sleep(remaining)
+        elapsed = 0
+        report_interval = 120
+        while elapsed < remaining:
+            step = min(report_interval, remaining - elapsed)
+            await asyncio.sleep(step)
+            elapsed += step
+            _print_auto_trader_status(orchestrator)
 
     finally:
         print("\nShutting down session gracefully...")
@@ -192,6 +198,31 @@ async def run_trading_session(duration_seconds: int = 45) -> None:
         machine.transition(VesselState.FULL_STOP, reason="AI Operator: Session End")
         print(f"Vessel State -> {machine.current_state.value}")
         print("Session completed successfully.")
+
+
+def _print_auto_trader_status(orchestrator: IngestionOrchestrator) -> None:
+    """Print a concise auto-trader status + recent decision summary."""
+    at = orchestrator.auto_trader
+    if at is None:
+        return
+    status = at.get_status()
+    print("\n----- Auto-Trader Status -----")
+    print(
+        f"enabled={status['enabled']} trades={status['total_trades']} "
+        f"skips={status['total_skips']} decisions={status['recent_decisions']} "
+        f"edge_threshold={status['edge_threshold_pct']}% "
+        f"last_eval={status['last_evaluated_at']}"
+    )
+    recent = at.recent_decisions
+    if recent:
+        by_reason: dict[str, int] = {}
+        for d in recent:
+            key = "TRADED" if d.traded else (d.skip_reason or "unknown")
+            by_reason[key] = by_reason.get(key, 0) + 1
+        print("recent decision count by reason:", by_reason)
+    else:
+        print("no decisions recorded yet")
+    print("-------------------------------\n")
 
 
 if __name__ == "__main__":
